@@ -1,0 +1,67 @@
+-- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
+--
+-- Host: localhost    Database: uds
+-- ------------------------------------------------------
+-- Server version	5.7.12-log
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+SET @MYSQLDUMP_TEMP_LOG_BIN = @@SESSION.SQL_LOG_BIN;
+SET @@SESSION.SQL_LOG_BIN= 0;
+
+--
+-- GTID state at the beginning of the backup 
+--
+
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '';
+
+--
+-- Table structure for table `center_allocation_patterns`
+--
+
+DROP TABLE IF EXISTS `center_allocation_patterns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `center_allocation_patterns` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `center_allocation` int(11) NOT NULL COMMENT '振り分けCD:2以降',
+  `center_cd` varchar(13) COLLATE utf8mb4_bin NOT NULL COMMENT 'センターCD',
+  `center_name` varchar(20) COLLATE utf8mb4_bin NOT NULL COMMENT 'センター名',
+  `priority` int(11) NOT NULL COMMENT '優先順位:（1 or 2）センター振り分けロジックで使用',
+  `created_at` datetime NOT NULL COMMENT '作成日時',
+  `updated_at` datetime NOT NULL COMMENT '更新日時',
+  `deleted_at` datetime DEFAULT NULL COMMENT '削除日時',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_center_allocation_center_cd` (`center_allocation`,`center_cd`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='センター振り分けパターンマスタ';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `center_allocation_patterns`
+--
+
+LOCK TABLES `center_allocation_patterns` WRITE;
+/*!40000 ALTER TABLE `center_allocation_patterns` DISABLE KEYS */;
+INSERT INTO `center_allocation_patterns` VALUES (1,2,'0100080000_01','南港センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(2,2,'3511000101_01','IoTセンター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(3,3,'0100080000_01','南港センター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(4,3,'0500011200_01','北海道センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(5,4,'0100080000_01','南港センター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(6,4,'0205692400_01','沖縄センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(7,5,'3511000101_01','IoTセンター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(8,5,'0500011200_01','北海道センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(9,6,'3511000101_01','IoTセンター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(10,6,'0205692400_01','沖縄センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(11,7,'0100080000_01','南港センター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(12,7,'3511000101_01','IoTセンター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(13,7,'0500011200_01','北海道センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(14,8,'0100080000_01','南港センター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(15,8,'3511000101_01','IoTセンター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(16,8,'0205692400_01','沖縄センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(17,9,'0100080000_01','南港センター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(18,9,'0500011200_01','北海道センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(19,9,'0205692400_01','沖縄センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(20,10,'3511000101_01','IoTセンター',2,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(21,10,'0500011200_01','北海道センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL),(22,10,'0205692400_01','沖縄センター',1,'2026-02-18 07:06:14','2026-02-18 07:06:14',NULL);
+/*!40000 ALTER TABLE `center_allocation_patterns` ENABLE KEYS */;
+UNLOCK TABLES;
+SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-05-07 11:56:16
