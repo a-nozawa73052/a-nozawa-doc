@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.4.0">
+  <diagram id="pPLM7lxVs8kTnB84Ofrz" name="ページ1">
+    <mxGraphModel dx="2126" dy="1123" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="81" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffe082;strokeWidth=1;opacity=30;shadow=0;" value="" vertex="1">
+          <mxGeometry height="260" width="1580" x="10" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="80" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#a5d6a7;strokeWidth=1;opacity=30;shadow=0;" value="" vertex="1">
+          <mxGeometry height="240" width="1580" x="10" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="79" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2f1;strokeColor=#80cbc4;strokeWidth=1;opacity=30;shadow=0;" value="" vertex="1">
+          <mxGeometry height="150" width="1390" x="10" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="78" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8eaf6;strokeColor=#9fa8da;strokeWidth=1;opacity=30;shadow=0;" value="" vertex="1">
+          <mxGeometry height="200" width="1390" x="10" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#333333;" value="GRS IoT 3階層管理画面 — 画面遷移図" vertex="1">
+          <mxGeometry height="40" width="700" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#90caf9;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:14px;color:#1565c0;&quot;&gt;IoT管理画面 TOP&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#bbdefb&quot;/&gt;&lt;b&gt;ヘッダー:&lt;/b&gt; [API連携バッジ] / [本社 / DX企業登録] ボタン&lt;br&gt;&lt;b&gt;検索フォーム:&lt;/b&gt; 検索タブ(6種) / キーワード / [検索] ボタン&lt;br&gt;&lt;b&gt;検索タブ:&lt;/b&gt; 本社CD / 本社名 / DX企業CD / DX企業名&lt;br&gt;　　　　　 設置先CD / 設置名&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#bbdefb&quot;/&gt;&lt;b&gt;左ペイン:&lt;/b&gt; ツリーパネル（本社 ▶ DX企業 ▶ 店舗×サービス）&lt;br&gt;&lt;b&gt;右ペイン:&lt;/b&gt; 詳細パネル（ノード選択で切り替わる）" vertex="1">
+          <mxGeometry height="170" width="380" x="440" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="21" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffe082;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:14px;color:#f57f17;&quot;&gt;登録ダイアログ [新規モード]&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;① &lt;b&gt;本社情報:&lt;/b&gt; 管理用UNISCD* / 本社名*（入力可）&lt;br&gt;　 サービスCD（任意）: neos_contracts確認用&lt;br&gt;② &lt;b&gt;DX企業情報:&lt;/b&gt; DX企業名*（入力可）&lt;br&gt;　 ※DX企業CDは自動発番&lt;br&gt;③ &lt;b&gt;支店情報:&lt;/b&gt; 顧客CD* / サービスCD*（入力可）&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;[キャンセル]　[登録実行]（必須入力後活性化）" vertex="1">
+          <mxGeometry height="190" width="320" x="1050" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="30" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#90caf9;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#1565c0;&quot;&gt;候補一覧（名前検索・複数ヒット）&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#bbdefb&quot;/&gt;「複数の本社が該当（N件）」&lt;br&gt;本社名（太字）/ 本社CD / 顧客CD を一覧表示&lt;br&gt;&lt;br&gt;アクション: &lt;b&gt;[この本社を表示]&lt;/b&gt; ボタン" vertex="1">
+          <mxGeometry height="120" width="280" x="230" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="31" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#90caf9;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#1565c0;&quot;&gt;ツリー表示状態（詳細未選択）&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#bbdefb&quot;/&gt;左ペイン: 本社 / DX企業 / 店舗のツリーが表示&lt;br&gt;右ペイン: 「ノードを選択してください」表示&lt;br&gt;&lt;br&gt;アクション: ノード（行）クリックで詳細表示へ" vertex="1">
+          <mxGeometry height="120" width="280" x="770" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="40" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#a5d6a7;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#2e7d32;&quot;&gt;詳細パネル: 本社詳細&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#c8e6c9&quot;/&gt;&lt;b&gt;基本情報:&lt;/b&gt; 本社名 / [本社] チップ&lt;br&gt;　　　　　顧客CD / 本社CD（読取専用）&lt;br&gt;&lt;b&gt;配下情報:&lt;/b&gt; 配下DX企業チップ一覧&lt;br&gt;&lt;b&gt;直下店舗:&lt;/b&gt; サービスごとの期間&lt;br&gt;　　　　　UMID一覧（アカウント名 / 仮・本登録バッジ）&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#c8e6c9&quot;/&gt;アクション:&lt;br&gt;→ &lt;b&gt;[DX企業追加]&lt;/b&gt;&lt;br&gt;→ &lt;b&gt;[UMアカウント作成]&lt;/b&gt;（アカウントあり時: 非活性）" vertex="1">
+          <mxGeometry height="220" width="280" x="240" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="41" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#a5d6a7;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#2e7d32;&quot;&gt;詳細パネル: DX企業詳細&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#c8e6c9&quot;/&gt;&lt;b&gt;基本情報:&lt;/b&gt; DX企業名 / [DX企業CD] チップ&lt;br&gt;　　　　　DX企業CD / 所属本社名&lt;br&gt;&lt;b&gt;配下店舗テーブル:&lt;/b&gt;&lt;br&gt;　店舗名 / サービスCD / UMID数 / ▶&lt;br&gt;　（行クリックで店舗詳細へ遷移）&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#c8e6c9&quot;/&gt;アクション:&lt;br&gt;→ &lt;b&gt;[店舗追加]&lt;/b&gt;" vertex="1">
+          <mxGeometry height="210" width="280" x="770" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="42" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#a5d6a7;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#2e7d32;&quot;&gt;詳細パネル: 店舗詳細&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#c8e6c9&quot;/&gt;&lt;b&gt;基本情報:&lt;/b&gt; 店舗名 / 選択中サービスCDチップ&lt;br&gt;　（ツリーで選択した1サービス分のみ表示）&lt;br&gt;&lt;b&gt;サービス期間:&lt;/b&gt; 開始日 / 終了日&lt;br&gt;&lt;b&gt;UMID一覧:&lt;/b&gt;&lt;br&gt;　アカウント名 / UMID / 仮・本登録バッジ&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#c8e6c9&quot;/&gt;アクション:&lt;br&gt;→ &lt;b&gt;[UMアカウント作成]&lt;/b&gt;（アカウントあり時: 非活性）" vertex="1">
+          <mxGeometry height="220" width="280" x="1240" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="50" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffe082;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#f57f17;&quot;&gt;登録ダイアログ [DX企業追加モード]&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;① &lt;b&gt;本社情報:&lt;/b&gt; 管理用UNISCD / 本社名&lt;br&gt;　 （自動入力・読取専用）&lt;br&gt;② &lt;b&gt;DX企業情報:&lt;/b&gt; DX企業名*（入力）&lt;br&gt;③ &lt;b&gt;支店情報:&lt;/b&gt; 顧客CD* / サービスCD*（入力）&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;[キャンセル]　[登録実行]" vertex="1">
+          <mxGeometry height="190" width="280" x="170" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="51" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffe082;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#f57f17;&quot;&gt;UMアカウント作成ダイアログ [本社レベル]&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;対象サービスCDはヘッダーに自動表示&lt;br&gt;&lt;b&gt;統合フロー（モード選択なし）:&lt;/b&gt;&lt;br&gt;　認証用メアド*（既存なら自動紐づけ）&lt;br&gt;　アカウント名*&lt;br&gt;&lt;b&gt;権限CD: 自動設定（20: 本社管理 固定）&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color:#888;&quot;&gt;作成後、ご利用案内メール自動送信&lt;/i&gt;&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;[キャンセル]　[作成・紐づけ]" vertex="1">
+          <mxGeometry height="210" width="280" x="480" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="52" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffe082;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#f57f17;&quot;&gt;店舗追加ダイアログ&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;&lt;b&gt;追加先情報:&lt;/b&gt;&lt;br&gt;　DX企業名 / CD（自動表示・読取専用）&lt;br&gt;&lt;b&gt;店舗情報:&lt;/b&gt;&lt;br&gt;　追加する店舗の顧客CD*（入力）&lt;br&gt;　サービスCD*（入力）&lt;br&gt;&lt;br&gt;&lt;i style=&quot;color:#888;&quot;&gt;※既存店舗へのサービス追加（upsert）にも対応&lt;/i&gt;&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;[キャンセル]　[追加登録]" vertex="1">
+          <mxGeometry height="220" width="280" x="900" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="53" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffe082;fontSize=12;align=left;verticalAlign=top;spacingLeft=12;spacingTop=12;spacingRight=12;shadow=1;fontColor=#333333;" value="&lt;b style=&quot;font-size:13px;color:#f57f17;&quot;&gt;UMアカウント作成ダイアログ [支店レベル]&lt;/b&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;対象サービスCDはヘッダーに自動表示&lt;br&gt;&lt;b&gt;統合フロー（モード選択なし）:&lt;/b&gt;&lt;br&gt;　認証用メアド*（既存なら自動紐づけ）&lt;br&gt;　アカウント名*&lt;br&gt;&lt;b&gt;権限CD: 自動設定（30: 支店管理 固定）&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color:#888;&quot;&gt;作成後、ご利用案内メール自動送信&lt;/i&gt;&lt;br&gt;&lt;hr size=&quot;1&quot; color=&quot;#ffecb3&quot;/&gt;[キャンセル]　[作成・紐づけ]" vertex="1">
+          <mxGeometry height="210" width="280" x="1240" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="60" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#cccccc;fontColor=#555555;fontSize=12;dashed=1;" value="&lt;b&gt;モーダル共通の動作:&lt;/b&gt;  登録/追加成功時 → モーダルを閉じてスナックバーを表示。 [キャンセル] リック時は何もしない。" vertex="1">
+          <mxGeometry height="40" width="560" x="40" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="61" parent="1" style="rounded=1;arcSize=5;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#cccccc;fontColor=#555555;fontSize=12;dashed=1;" value="&lt;b&gt;検索結果の分岐:&lt;/b&gt;  コード検索・完全一致など【1件】の場合は即座にツリー表示。名前検索等で【複数件】の場合は候補一覧を表示。ツリー表示後、検索キーに一致したノードを自動ハイライト（選択状態）。" vertex="1">
+          <mxGeometry height="40" width="650" x="640" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="20" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="30" value="名前検索等で複数ヒット">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="20" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="31" value="CD検索等で 1件のみヒット">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="20" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="21" value="「本社 / DX企業登録」クリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="30" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="31" value="「この本社を表示」クリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="31" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#2e7d32;strokeColor=#81c784;strokeWidth=2;" target="40" value="本社ノードクリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="31" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#2e7d32;strokeColor=#81c784;strokeWidth=2;" target="41" value="DX企業ノードクリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="31" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.9;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#2e7d32;strokeColor=#81c784;strokeWidth=2;" target="42" value="店舗ノードクリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="40" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;fontSize=11;fontColor=#888888;strokeColor=#cccccc;dashed=1;" target="41" value="配下テーブル行クリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="41" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;fontSize=11;fontColor=#888888;strokeColor=#cccccc;dashed=1;" target="42" value="配下テーブル行クリック">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="40" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="50" value="「DX企業追加」ボタン">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="40" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="51" value="「UMID作成・紐づけ」ボタン">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="41" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="52" value="「店舗追加」ボタン">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="42" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#444444;strokeColor=#999999;" target="53" value="「UMID作成・紐づけ」ボタン">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="62" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#e0e0e0;shadow=0;" value="" vertex="1">
+          <mxGeometry height="50" width="530" x="500" y="16" as="geometry" />
+        </mxCell>
+        <mxCell id="63" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;" value="凡例:" vertex="1">
+          <mxGeometry height="30" width="45" x="505" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="64" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;shadow=1;" value="画面・状態" vertex="1">
+          <mxGeometry height="26" width="110" x="555" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="65" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontStyle=1;shadow=1;" value="詳細パネル" vertex="1">
+          <mxGeometry height="26" width="110" x="685" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="66" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;shadow=1;" value="モーダル" vertex="1">
+          <mxGeometry height="26" width="75" x="815" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="67" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;fontStyle=1;shadow=1;" value="注記" vertex="1">
+          <mxGeometry height="26" width="80" x="910" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="68" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;fontColor=#5c6bc0;align=left;verticalAlign=top;" value="TOP画面層" vertex="1">
+          <mxGeometry height="20" width="100" x="20" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="69" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;fontColor=#00897b;align=left;verticalAlign=top;" value="検索結果層" vertex="1">
+          <mxGeometry height="20" width="100" x="20" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="70" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;fontColor=#2e7d32;align=left;verticalAlign=top;" value="詳細パネル層" vertex="1">
+          <mxGeometry height="20" width="100" x="20" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="71" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;fontColor=#f57f17;align=left;verticalAlign=top;" value="モーダル層" vertex="1">
+          <mxGeometry height="20" width="100" x="30" y="820" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

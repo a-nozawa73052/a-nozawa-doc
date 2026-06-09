@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT 本社/企業/支店管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.7.3/dist/vuetify.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet" />
+  <style>
+    [v-cloak] { display: none; }
+    /* デザイン調整 */
+    .tree-node { display: flex !important; align-items: center; width: 100%; box-sizing: border-box; cursor: pointer; transition: background-color 0.15s; min-height: 44px; border-bottom: 1px solid #f0f0f0; }
+    .tree-node:hover { background-color: rgba(var(--v-theme-primary), 0.05); }
+    .tree-node-active { background-color: rgba(var(--v-theme-primary), 0.10) !important; }
+    .tree-node-active .tree-label { color: rgb(var(--v-theme-primary)); font-weight: 600; }
+    .tree-node-title { font-size: 0.875rem; line-height: 1.2; }
+    .store-row:hover { background-color: rgba(var(--v-theme-primary), 0.05); cursor: pointer; }
+    /* インデント設定 */
+    .indent-sg { padding-left: 32px; }
+    .indent-store { padding-left: 64px; }
+    .gap-2 { gap: 8px; }
+    .gap-1 { gap: 4px; }
+    /* 選択リスト用 */
+    .result-card { border: 2px solid rgb(var(--v-theme-primary)); }
+    .result-item:hover { background-color: rgba(var(--v-theme-primary), 0.05); cursor: pointer; }
+    /* カードボーダー */
+    .custom-card-border { border: 1px solid #e0e0e0 !important; box-shadow: none !important; }
+    /* メンバー行 */
+    .member-row { cursor: pointer; transition: background-color 0.15s; }
+    .member-row:hover { background-color: rgba(var(--v-theme-primary), 0.04) !important; }
+    .member-detail { border-top: 1px solid #e3eaf5; background-color: #f0f4fb; }
+    .member-chevron { transition: transform 0.2s ease; }
+    .member-chevron.expanded { transform: rotate(180deg); }
+    /* カスタムテーブル（v-tableの崩れ対策） */
+    .custom-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .custom-table th { padding: 12px 16px; border-bottom: 1px solid #e0e0e0; color: #424242; font-weight: bold; font-size: 0.875rem; }
+    .custom-table td { padding: 12px 16px; border-bottom: 1px solid #e0e0e0; font-size: 0.875rem; color: #424242; vertical-align: middle; }
+    .custom-table tbody tr:hover { background-color: rgba(var(--v-theme-primary), 0.04); cursor: pointer; transition: background-color 0.2s; }
+  </style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <v-app>
+    <v-main class="bg-grey-lighten-4">
+      <v-container class="pa-4" style="max-width:1400px">
+
+        <!-- ヘッダー -->
+        <div class="d-flex align-center gap-2 mb-4">
+          <h1 class="text-h5">IoT 本社/企業/支店管理</h1>
+          <v-chip color="blue" size="small" variant="tonal">API連携</v-chip>
+          <v-spacer></v-spacer>
+          <v-btn variant="outlined" color="primary" size="small" @click="openRegisterCompanyGroup">
+            <v-icon start size="small">mdi-plus-box-multiple</v-icon>
+            本社 / DX企業登録
+          </v-btn>
+        </div>
+
+        <!-- 検索フォーム -->
+        <v-card class="mb-4 pa-4 custom-card-border">
+          <v-btn-toggle v-model="searchMode" mandatory color="primary" density="compact" class="mb-3" style="flex-wrap: wrap;">
+            <v-btn value="company_cd" size="small">
+              <v-icon start size="small">mdi-office-building</v-icon>本社CD
+            </v-btn>
+            <v-btn value="company_name" size="small">
+              <v-icon start size="small">mdi-office-building-search</v-icon>本社名
+            </v-btn>
+            <v-btn value="group_cd" size="small">
+              <v-icon start size="small">mdi-layers</v-icon>DX企業CD
+            </v-btn>
+            <v-btn value="group_name" size="small">
+              <v-icon start size="small">mdi-text-search</v-icon>DX企業名
+            </v-btn>
+            <v-btn value="inst_store_cd" size="small">
+              <v-icon start size="small">mdi-store</v-icon>設置先CD
+            </v-btn>
+            <v-btn value="store_name" size="small">
+              <v-icon start size="small">mdi-store-search</v-icon>設置名
+            </v-btn>
+          </v-btn-toggle>
+          <v-row dense>
+            <v-col cols="12" md="10">
+              <v-text-field v-if="searchMode === 'company_cd'" v-model="searchQuery" label="本社CD" placeholder="例: PD000012264" hide-details clearable density="compact" variant="outlined" @keyup.enter="doSearch"></v-text-field>
+              <v-text-field v-else-if="searchMode === 'company_name'" v-model="searchQuery" label="本社名" placeholder="例: メガスポーツ" hide-details clearable density="compact" variant="outlined" @keyup.enter="doSearch"></v-text-field>
+              <v-text-field v-else-if="searchMode === 'group_cd'" v-model="searchQuery" label="DX企業CD" placeholder="例: 009WK" hide-details clearable density="compact" variant="outlined" @keyup.enter="doSearch"></v-text-field>
+              <v-text-field v-else-if="searchMode === 'group_name'" v-model="searchQuery" label="DX企業名" placeholder="例: メガスポーツ" hide-details clearable density="compact" variant="outlined" @keyup.enter="doSearch"></v-text-field>
+              <v-text-field v-else-if="searchMode === 'inst_store_cd'" v-model="searchQuery" label="設置先CD" placeholder="例: 750000001" hide-details clearable density="compact" variant="outlined" @keyup.enter="doSearch"></v-text-field>
+              <v-text-field v-else v-model="searchQuery" label="設置名" placeholder="例: 水戸内原店" hide-details clearable density="compact" variant="outlined" @keyup.enter="doSearch"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="2">
+              <v-btn color="primary" block height="40" :loading="loading" @click="doSearch">
+                <v-icon start>mdi-magnify</v-icon>検索
+              </v-btn>
+            </v-col>
+          </v-row>
+          <div class="text-caption text-grey mt-2">
+            ※デモ用キーワード: 「メガスポーツ」（複数ヒット確認用）、「PD000012264」、「009WK」など
+          </div>
+        </v-card>
+
+        <!-- 検索中ローディング -->
+        <div v-if="loading" class="d-flex justify-center py-10">
+          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+        </div>
+
+        <!-- 複数ヒット時の選択リスト -->
+        <v-expand-transition>
+          <v-card v-if="!loading && searchResults.length > 1 && !searched" class="mb-6 result-card">
+            <v-card-title class="text-body-1 bg-blue-lighten-5 py-3 d-flex align-center">
+              <v-icon start color="primary">mdi-format-list-bulleted</v-icon>
+              複数の本社が該当しました（{{ searchResults.length }}件）
+              <v-spacer></v-spacer>
+              <span class="text-caption text-grey-darken-1">表示する本社を選択してください</span>
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-list density="compact" class="pa-0">
+              <v-list-item
+                v-for="res in searchResults"
+                :key="res.id"
+                class="result-item py-3"
+                @click="selectCompanyResult(res)"
+              >
+                <template v-slot:prepend>
+                  <v-avatar color="blue-lighten-4" size="40">
+                    <v-icon color="blue-darken-2">mdi-office-building</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-bold text-body-1">{{ res.name }}</v-list-item-title>
+                <v-list-item-subtitle class="mt-1">
+                  本社CD: <span class="text-primary font-weight-bold mr-3">{{ res.company_cd }}</span>
+                  管理用店舗UNISCD: <span class="text-grey-darken-2">{{ res.unis_customer_cd }}</span>
+                </v-list-item-subtitle>
+                <template v-slot:append>
+                  <v-btn variant="flat" color="primary" size="small">この本社を表示</v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-expand-transition>
+
+        <!-- 初期状態 -->
+        <v-card v-if="!loading && !searched && searchResults.length === 0" class="d-flex align-center justify-center" style="min-height:200px; box-shadow: none; border: 1px solid #e0e0e0;">
+          <div class="text-center text-grey">
+            <v-icon size="48" class="mb-2" color="grey">mdi-magnify</v-icon>
+            <div class="text-body-2">{{ currentSearchLabel }}を入力して検索してください</div>
+          </div>
+        </v-card>
+
+        <!-- ツリーと詳細表示 -->
+        <v-row v-if="!loading && searched && treeData.length > 0">
+          <!-- 左: ツリーパネル -->
+          <v-col cols="12" md="4" lg="4">
+            <v-card class="fill-height custom-card-border">
+              <v-card-title class="text-body-2 d-flex align-center py-3 bg-white border-b">
+                <v-icon start size="small" color="grey-darken-3">mdi-graph</v-icon>
+                本社 / DX企業 / 店舗
+                <v-spacer></v-spacer>
+                <v-btn variant="text" size="x-small" @click="openAll = !openAll" color="grey-darken-2">
+                  {{ openAll ? '全て閉じる' : '全て展開' }}
+                </v-btn>
+              </v-card-title>
+              <v-divider></v-divider>
+              <v-card-text class="pa-0" style="max-height: 800px; overflow-y: auto;">
+                <div v-for="company in treeData" :key="company.id">
+                  <!-- 本社ノード -->
+                  <div class="tree-node px-2 bg-grey-lighten-3" :class="selectedNode && selectedNode.id === company.id ? 'tree-node-active' : ''" @click="selectNode(company)">
+                    <v-btn variant="text" size="x-small" icon density="compact" class="mr-1" @click.stop="company._open = !company._open">
+                      <v-icon size="18">{{ (company._open || openAll) ? 'mdi-chevron-down' : 'mdi-chevron-right' }}</v-icon>
+                    </v-btn>
+                    <v-icon :color="company.iconColor" size="small" class="mr-2">{{ company.icon }}</v-icon>
+                    <span class="tree-node-title font-weight-bold text-blue-darken-3">{{ company.name }}</span>
+                  </div>
+
+                  <div v-if="company._open || openAll">
+                    <div v-for="sg in company.children" :key="sg.id">
+                      <!-- DX企業ノード -->
+                      <div class="tree-node indent-sg px-2" :class="selectedNode && selectedNode.id === sg.id ? 'tree-node-active' : ''" @click="selectNode(sg)">
+                        <v-btn variant="text" size="x-small" icon density="compact" class="mr-1" @click.stop="sg._open = !sg._open">
+                          <v-icon size="18">{{ (sg._open || openAll) ? 'mdi-chevron-down' : 'mdi-chevron-right' }}</v-icon>
+                        </v-btn>
+                        <v-icon :color="sg.iconColor" size="small" class="mr-2">{{ sg.icon }}</v-icon>
+                        <span class="tree-node-title">{{ sg.name }}</span>
+                      </div>
+
+                      <div v-if="sg._open || openAll">
+                        <!-- 店舗ノード（1行 = 1店舗×1サービス） -->
+                        <template v-for="store in sg.children" :key="store.id">
+                          <div v-for="svc in store.services" :key="store.id + '-' + svc.service_cd"
+                               class="tree-node indent-store px-2"
+                               :class="isStoreServiceSelected(store, svc) ? 'tree-node-active' : ''"
+                               @click="selectStoreService(store, svc)">
+                            <v-icon color="blue-grey" size="small" class="mr-2">mdi-store</v-icon>
+                            <span class="tree-node-title">{{ store.name }}</span>
+                            <v-chip size="x-small" variant="flat" class="ml-2 font-weight-bold bg-grey-lighten-2 text-grey-darken-3 px-2">
+                              {{ serviceLabel(svc.service_cd) }}
+                            </v-chip>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- 右: 詳細パネル -->
+          <v-col cols="12" md="8" lg="8">
+            <v-card v-if="!selectedNode" class="fill-height d-flex align-center justify-center border-dashed" style="min-height:300px; border: 2px dashed #eee; box-shadow: none;">
+              <div class="text-center text-grey">
+                <v-icon size="48" class="mb-2">mdi-cursor-default-click</v-icon>
+                <div class="text-body-2">左のツリーから項目を選択してください</div>
+              </div>
+            </v-card>
+
+            <template v-else>
+              <div :key="'detail-panel-' + (selectedNode?.id || 'none')">
+                
+                <!-- =============================== -->
+                <!-- 本社 (company) 選択時           -->
+                <!-- =============================== -->
+                <template v-if="selectedNode?.type === 'company'">
+                  <!-- 基本情報カード -->
+                  <v-card class="mb-4 custom-card-border" color="white">
+                    <v-card-title class="d-flex align-center gap-2 py-4">
+                      <v-icon :color="selectedNode?.iconColor" size="large">{{ selectedNode?.icon }}</v-icon>
+                      <span class="text-h6 font-weight-bold text-blue-darken-3">{{ selectedNode?.name }}</span>
+                      <v-chip size="small" color="blue-lighten-4" text-color="blue-darken-3" variant="flat" class="font-weight-bold px-3 ml-2">
+                        本社
+                      </v-chip>
+                      <v-spacer></v-spacer>
+                      <v-btn variant="outlined" color="green-darken-2" size="small" @click="openAddGroup(selectedNode)">
+                        <v-icon start size="small">mdi-layers-plus</v-icon>DX企業追加
+                      </v-btn>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text class="py-6 px-6">
+                      <v-row dense class="mb-6">
+                        <v-col cols="12" sm="6" class="d-flex align-center">
+                          <v-icon size="small" color="grey" class="mr-3">mdi-identifier</v-icon>
+                          <div class="text-caption text-grey mr-6" style="width: 70px;">管理用店舗<br>UNISCD</div>
+                          <div class="text-body-1 text-grey-darken-3">{{ selectedNode?.unis_customer_cd || '-' }}</div>
+                        </v-col>
+                        <v-col cols="12" sm="6" class="d-flex align-center">
+                          <v-icon size="small" color="grey" class="mr-3">mdi-domain</v-icon>
+                          <div class="text-caption text-grey mr-6" style="width: 60px;">本社CD</div>
+                          <div class="text-body-1 text-grey-darken-3">{{ selectedNode?.company_cd || '-' }}</div>
+                        </v-col>
+                      </v-row>
+                      
+                      <v-divider class="my-4"></v-divider>
+                      <div class="text-caption text-grey mb-3">配下のDX企業一覧 ({{ selectedNode?.children?.length ?? 0 }}件)</div>
+                      <div class="d-flex flex-wrap gap-2">
+                        <v-chip v-for="sg in selectedNode?.children" :key="sg.id" variant="outlined" color="grey-darken-2" size="small" class="px-3 bg-white">
+                          {{ sg.name }}
+                        </v-chip>
+                      </div>
+                    </v-card-text>
+                  </v-card>
+
+                  <!-- 本社店舗（store_cdでグループ化、UMIDは全サービス統合表示） -->
+                  <v-card v-for="group in honshaGroups" :key="group.store_cd || group.id" class="mb-4 custom-card-border" color="white">
+                    <v-card-title class="d-flex align-center gap-2 py-4 bg-grey-lighten-4">
+                      <v-icon color="blue-grey" size="large">mdi-store</v-icon>
+                      <span class="text-h6 font-weight-bold text-grey-darken-3">{{ group.store_name }}</span>
+                      <v-chip v-for="hs in group.services" :key="hs.service_cd" size="small" color="grey-lighten-2" text-color="grey-darken-3" variant="flat" class="font-weight-bold px-3 ml-1">{{ serviceLabel(hs.service_cd) }}</v-chip>
+                      <v-chip size="small" color="blue-lighten-4" text-color="blue-darken-3" variant="flat" class="font-weight-bold px-3 ml-1">本社</v-chip>
+                    </v-card-title>
+                    <v-divider></v-divider>
+
+                    <!-- 店舗情報（1回だけ） -->
+                    <v-card-text class="pt-5 pb-4 px-6">
+                      <div class="text-caption text-grey-darken-1 font-weight-bold mb-3">店舗情報</div>
+                      <v-row dense>
+                        <v-col cols="6">
+                          <div class="text-caption text-grey mb-1">店舗CD</div>
+                          <div class="text-body-1 text-black">{{ group.store_cd || '-' }}</div>
+                        </v-col>
+                        <v-col cols="6">
+                          <div class="text-caption text-grey mb-1">店舗名</div>
+                          <div class="text-body-1 text-black font-weight-bold">{{ group.store_name || '-' }}</div>
+                        </v-col>
+                        <v-col cols="12">
+                          <div class="text-caption text-grey mb-1">管理用店舗UNISCD</div>
+                          <div class="text-body-2 text-black">{{ group.unis_customer_cd || '-' }}</div>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+
+                    <!-- サービスごとのループ（サービス利用期間 + サービス別UMIDボタン） -->
+                    <template v-for="hs in group.services" :key="hs.service_cd">
+                      <v-divider></v-divider>
+                      <v-card-text class="pt-4 pb-3 px-6">
+                        <div class="d-flex align-center gap-2 mb-3">
+                          <v-icon size="14" color="grey-darken-1">mdi-calendar-range</v-icon>
+                          <span class="text-caption text-grey-darken-1 font-weight-bold">サービス利用期間</span>
+                          <v-chip size="x-small" variant="tonal" color="grey-darken-2" class="font-weight-bold">{{ serviceLabel(hs.service_cd) }}</v-chip>
+                          <v-spacer></v-spacer>
+                          <v-btn size="x-small" color="primary" variant="outlined" :disabled="!!hs.members?.length" @click="openUmidDialog(hs, 'honsha')">
+                            <v-icon start size="small">mdi-account-plus</v-icon>UMアカウント作成
+                          </v-btn>
+                        </div>
+                        <v-row dense>
+                          <v-col cols="6">
+                            <div class="text-caption text-grey mb-1">開始日</div>
+                            <div class="text-body-2 text-black">{{ hs.service_activation_date || '-' }}</div>
+                          </v-col>
+                          <v-col cols="6">
+                            <div class="text-caption text-grey mb-1">終了日</div>
+                            <div class="text-body-2 text-black">{{ hs.service_deactivation_date || '-' }}</div>
+                          </v-col>
+                        </v-row>
+                      </v-card-text>
+                    </template>
+
+                    <!-- 統合 USENMEMBERSアカウント（全サービス合算） -->
+                    <v-divider></v-divider>
+                    <div class="px-6 py-3 bg-grey-lighten-4 d-flex align-center gap-2">
+                      <v-icon size="small" color="primary">mdi-link-variant</v-icon>
+                      <span class="text-body-2 font-weight-bold text-grey-darken-3">USENMEMBERSアカウント</span>
+                      <v-chip size="x-small" color="blue-lighten-5" text-color="primary" variant="flat" class="font-weight-bold ml-1 px-2">{{ group.mergedMembers.length }}件</v-chip>
+                    </div>
+                    <v-divider></v-divider>
+                    <v-card-text class="pa-0">
+                      <v-list lines="two" class="pa-0">
+                        <template v-for="(m, i) in group.mergedMembers" :key="m.umid || i">
+                          <v-divider v-if="i > 0"></v-divider>
+                          <v-list-item class="py-4 px-6 member-row" @click="m._expanded = !m._expanded">
+                            <template v-slot:prepend>
+                              <v-avatar color="blue-darken-2" size="44" class="mr-4">
+                                <v-icon color="white">mdi-account</v-icon>
+                              </v-avatar>
+                            </template>
+                            <v-list-item-title class="d-flex align-center gap-2 mb-2">
+                              <span class="text-caption text-grey-darken-1 font-weight-bold">{{ m.account_name || '-' }}</span>
+                              <v-chip size="x-small" :color="m.is_registered ? 'green' : 'orange'" variant="tonal" class="font-weight-bold px-2">{{ m.is_registered ? '本登録' : '仮登録' }}</v-chip>
+                              <v-chip size="x-small" color="blue-grey" variant="tonal" class="font-weight-bold px-2">{{ grantLabel(m.service_entries[0]?.grant_cd) }}</v-chip>
+                            </v-list-item-title>
+                            <v-list-item-subtitle class="text-body-2 text-black font-weight-medium">{{ m.umid || '-' }}</v-list-item-subtitle>
+                            <template v-slot:append>
+                              <div class="d-flex align-center gap-2">
+                                <v-chip v-for="se in m.service_entries" :key="se.service_cd" size="x-small" color="grey-lighten-3" text-color="grey-darken-2" variant="flat" class="font-weight-bold px-2">{{ serviceLabel(se.service_cd) }}</v-chip>
+                                <v-icon size="18" color="grey" :class="['member-chevron', m._expanded ? 'expanded' : '']">mdi-chevron-down</v-icon>
+                              </div>
+                            </template>
+                          </v-list-item>
+                          <v-expand-transition>
+                            <div v-if="m._expanded" class="member-detail px-6 py-4">
+                              <v-row dense class="mb-3">
+                                <v-col cols="12"><div class="text-caption text-grey mb-1">UMID</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.umid || '-' }}</div></v-col>
+                                <v-col cols="6"><div class="text-caption text-grey mb-1">ログインID</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.login_id || '-' }}</div></v-col>
+                                <v-col cols="6"><div class="text-caption text-grey mb-1">アカウント名</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.account_name || '-' }}</div></v-col>
+                                <v-col cols="12"><div class="text-caption text-grey mb-1">認証用メールアドレス</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.auth_email || '-' }}</div></v-col>
+                                <v-col cols="12"><div class="text-caption text-grey mb-1">連絡先メールアドレス</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.contact_email || '-' }}</div></v-col>
+                              </v-row>
+                              <v-divider class="mb-3"></v-divider>
+                              <div v-for="se in m.service_entries" :key="se.service_cd" class="mb-3">
+                                <div class="d-flex align-center gap-2 mb-2">
+                                  <v-chip size="x-small" variant="tonal" color="grey-darken-2" class="font-weight-bold">{{ serviceLabel(se.service_cd) }}</v-chip>
+                                  <span class="text-caption text-grey-darken-1 font-weight-bold">サービス情報</span>
+                                </div>
+                                <v-row dense>
+                                  <v-col cols="6"><div class="text-caption text-grey mb-1">利用開始日</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ se.start_date || '-' }}</div></v-col>
+                                  <v-col cols="6"><div class="text-caption text-grey mb-1">利用終了日</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ se.end_date || '-' }}</div></v-col>
+                                </v-row>
+                              </div>
+                            </div>
+                          </v-expand-transition>
+                        </template>
+                        <v-list-item v-if="!group.mergedMembers.length">
+                          <v-list-item-title class="text-grey text-center py-6">アカウントなし</v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+                    </v-card-text>
+                  </v-card>
+                </template>
+
+                <!-- =============================== -->
+                <!-- SG (DX企業) 選択時              -->
+                <!-- =============================== -->
+                <template v-else-if="selectedNode?.type === 'sg'">
+                  <v-card class="mb-4 custom-card-border" color="white" elevation="0">
+                    <v-card-title class="d-flex align-center gap-2 py-4">
+                      <v-icon :color="selectedNode?.iconColor" size="large">{{ selectedNode?.icon }}</v-icon>
+                      <span class="text-h6 font-weight-bold text-grey-darken-4">{{ selectedNode?.name }}</span>
+                      <v-chip size="small" color="green-lighten-5" text-color="green-darken-3" variant="flat" class="font-weight-bold px-3 ml-2">
+                        DX企業
+                      </v-chip>
+                      <v-spacer></v-spacer>
+                      <v-btn variant="flat" color="blue-darken-2" size="small" @click="openAddStore(selectedNode)" class="px-4 font-weight-bold">
+                        <v-icon start size="small">mdi-store-plus</v-icon>店舗追加
+                      </v-btn>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text class="py-6 px-6">
+                      <div class="d-flex mb-5">
+                        <v-icon size="small" color="grey-darken-1" class="mr-4 mt-1">mdi-code-tags</v-icon>
+                        <div>
+                          <div class="text-caption text-grey-darken-1 mb-1">DX企業CD</div>
+                          <div class="text-body-2 text-grey-darken-3">{{ selectedNode?.service_group_cd || '-' }}</div>
+                        </div>
+                      </div>
+                      <div class="d-flex">
+                        <v-icon size="small" color="grey-darken-1" class="mr-4 mt-1">mdi-office-building</v-icon>
+                        <div>
+                          <div class="text-caption text-grey-darken-1 mb-1">所属本社</div>
+                          <div class="text-body-2 text-grey-darken-3">{{ selectedNode?.parentName || '-' }}</div>
+                        </div>
+                      </div>
+                    </v-card-text>
+                    
+                    <div class="text-caption text-grey-darken-1 px-6 py-4 border-t">配下の店舗/サービス ({{ selectedNode?.children?.length ?? 0 }}件)</div>
+                    <v-card-text class="pa-0">
+                      <table class="custom-table">
+                        <thead>
+                          <tr>
+                            <th style="width: 40%; padding-left: 24px;">店舗名</th>
+                            <th style="width: 30%;">サービスCD</th>
+                            <th style="width: 20%;">UMID数</th>
+                            <th style="width: 10%;"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="child in (selectedNode?.children || [])" :key="child.id" @click="openStoreDetail(child)">
+                            <td style="padding-left: 24px;">
+                              <div class="d-flex align-center">
+                                <v-icon size="small" color="blue-grey" class="mr-3">mdi-store</v-icon>
+                                <span class="font-weight-medium text-grey-darken-3">{{ child?.name }}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="d-flex align-center flex-wrap gap-1">
+                                <v-chip v-for="svc in (child?.services || [])" :key="svc.service_cd" color="grey-lighten-4" text-color="blue-grey-darken-3" size="small" variant="flat" class="font-weight-bold px-3 border">
+                                  {{ serviceLabel(svc.service_cd) }}
+                                </v-chip>
+                                <span v-if="!child?.services?.length">-</span>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="d-flex align-center text-grey-darken-2 text-body-2">
+                                {{ child?.services?.reduce((sum, svc) => sum + (svc.members?.length || 0), 0) || 0 }}件
+                              </div>
+                            </td>
+                            <td class="text-right pr-4"><v-icon size="small" color="grey-lighten-1">mdi-chevron-right</v-icon></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </v-card-text>
+                  </v-card>
+                </template>
+
+                <!-- =============================== -->
+                <!-- 店舗 (store) 選択時             -->
+                <!-- =============================== -->
+                <template v-else-if="selectedNode?.type === 'store' && selectedService">
+                  <v-card class="mb-4 custom-card-border" color="white">
+                    <v-card-title class="d-flex align-center gap-2 py-4 bg-grey-lighten-4">
+                      <v-icon color="blue-grey" size="large">mdi-store</v-icon>
+                      <span class="text-h6 font-weight-bold text-grey-darken-3">{{ selectedNode?.name }}</span>
+                      <v-chip size="small" color="grey-lighten-2" text-color="grey-darken-3" variant="flat" class="font-weight-bold px-3 ml-1">{{ serviceLabel(selectedService.service_cd) }}</v-chip>
+                    </v-card-title>
+                    <v-divider></v-divider>
+
+                    <!-- サービス利用期間（1サービス分） -->
+                    <v-card-text class="pt-4 pb-4 px-6">
+                      <div class="text-caption text-grey-darken-1 font-weight-bold mb-3 d-flex align-center gap-1">
+                        <v-icon size="14" color="grey-darken-1">mdi-calendar-range</v-icon>
+                        サービス利用期間
+                      </div>
+                      <v-row dense>
+                        <v-col cols="6">
+                          <div class="text-caption text-grey mb-1">開始日</div>
+                          <div class="text-body-1 text-black">{{ selectedService.service_activation_date || '-' }}</div>
+                        </v-col>
+                        <v-col cols="6">
+                          <div class="text-caption text-grey mb-1">終了日</div>
+                          <div class="text-body-1 text-black">{{ selectedService.service_deactivation_date || '-' }}</div>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                    <v-divider></v-divider>
+
+                    <!-- USENMEMBERSアカウント -->
+                    <div class="px-6 py-3 bg-grey-lighten-4 d-flex align-center gap-2">
+                      <v-icon size="small" color="primary">mdi-link-variant</v-icon>
+                      <span class="text-body-2 font-weight-bold text-grey-darken-3">USENMEMBERSアカウント</span>
+                      <v-chip size="x-small" color="blue-lighten-5" text-color="primary" variant="flat" class="font-weight-bold ml-1 px-2">{{ selectedService.members?.length || 0 }}件</v-chip>
+                      <v-spacer></v-spacer>
+                      <v-btn size="small" color="primary" variant="outlined" :disabled="!!selectedService.members?.length" @click="openUmidDialog(selectedService, 'store')">
+                        <v-icon start size="small">mdi-account-plus</v-icon>UMアカウント作成
+                      </v-btn>
+                    </div>
+                    <v-divider></v-divider>
+                    <v-card-text class="pa-0">
+                      <v-list lines="two" class="pa-0">
+                        <template v-for="(m, i) in (selectedService.members || [])" :key="m.umid || i">
+                          <v-divider v-if="i > 0"></v-divider>
+                          <v-list-item class="py-4 px-6 member-row" @click="m._expanded = !m._expanded">
+                            <template v-slot:prepend>
+                              <v-avatar color="blue-darken-2" size="44" class="mr-4">
+                                <v-icon color="white">mdi-account</v-icon>
+                              </v-avatar>
+                            </template>
+                            <v-list-item-title class="d-flex align-center gap-2 mb-2">
+                              <span class="text-caption text-grey-darken-1 font-weight-bold">{{ m.account_name || '-' }}</span>
+                              <v-chip size="x-small" :color="m.is_registered ? 'green' : 'orange'" variant="tonal" class="font-weight-bold px-2">{{ m.is_registered ? '本登録' : '仮登録' }}</v-chip>
+                              <v-chip size="x-small" color="blue-grey" variant="tonal" class="font-weight-bold px-2">{{ grantLabel(m.umembers_grant_cd) }}</v-chip>
+                            </v-list-item-title>
+                            <v-list-item-subtitle class="text-body-2 text-black font-weight-medium">{{ m.umid || '-' }}</v-list-item-subtitle>
+                            <template v-slot:append>
+                              <v-icon size="18" color="grey" :class="['member-chevron', m._expanded ? 'expanded' : '']">mdi-chevron-down</v-icon>
+                            </template>
+                          </v-list-item>
+                          <v-expand-transition>
+                            <div v-if="m._expanded" class="member-detail px-6 py-4">
+                              <v-row dense>
+                                <v-col cols="12"><div class="text-caption text-grey mb-1">UMID</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.umid || '-' }}</div></v-col>
+                                <v-col cols="6"><div class="text-caption text-grey mb-1">ログインID</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.login_id || '-' }}</div></v-col>
+                                <v-col cols="6"><div class="text-caption text-grey mb-1">アカウント名</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.account_name || '-' }}</div></v-col>
+                                <v-col cols="6"><div class="text-caption text-grey mb-1">利用開始日</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.start_date || '-' }}</div></v-col>
+                                <v-col cols="6"><div class="text-caption text-grey mb-1">利用終了日</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.end_date || '-' }}</div></v-col>
+                                <v-col cols="12"><div class="text-caption text-grey mb-1">認証用メールアドレス</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.auth_email || '-' }}</div></v-col>
+                                <v-col cols="12"><div class="text-caption text-grey mb-1">連絡先メールアドレス</div><div class="text-body-2 font-weight-medium text-grey-darken-3">{{ m.contact_email || '-' }}</div></v-col>
+                              </v-row>
+                            </div>
+                          </v-expand-transition>
+                        </template>
+                        <v-list-item v-if="!selectedService.members?.length">
+                          <v-list-item-title class="text-grey text-center py-6">アカウントなし</v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+                    </v-card-text>
+                  </v-card>
+                </template>
+              </div>
+            </template>
+          </v-col>
+        </v-row>
+
+        <!-- 登録ダイアログ（本社 / DX企業登録） -->
+        <v-dialog v-model="registerDialog" max-width="600" persistent scrollable>
+          <v-card>
+            <v-card-title class="d-flex align-center gap-2 bg-white text-black py-4 border-b">
+              <v-icon color="primary">{{ registerMode === 'addGroup' ? 'mdi-layers-plus' : 'mdi-plus-box-multiple' }}</v-icon>
+              {{ registerMode === 'addGroup' ? 'DX企業追加' : '本社 / DX企業登録' }}
+            </v-card-title>
+            <v-card-text class="pt-6 px-6 bg-grey-lighten-5" style="max-height: 65vh;">
+              <!-- 本社情報 -->
+              <v-card variant="outlined" class="mb-6 bg-white border-none shadow-sm">
+                <v-card-title class="text-subtitle-2 text-blue-darken-2 font-weight-bold py-3 px-4 border-b bg-blue-lighten-5">
+                  <v-icon size="small" class="mr-2">mdi-office-building</v-icon>本社情報
+                </v-card-title>
+                <v-card-text class="pt-5 pb-2 px-4">
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-text-field v-model="registerForm.unis_customer_cd" label="管理用UNISCD*" density="comfortable" variant="outlined" :readonly="registerMode === 'addGroup'" :bg-color="registerMode === 'addGroup' ? 'grey-lighten-4' : undefined" placeholder="例: 133918410"></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field v-model="registerForm.company_name" label="本社名*" density="comfortable" variant="outlined" :readonly="registerMode === 'addGroup'" :bg-color="registerMode === 'addGroup' ? 'grey-lighten-4' : undefined" placeholder="例: 株式会社メガスポーツ"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" v-if="registerMode !== 'addGroup'">
+                      <v-text-field v-model="registerForm.honsha_service_cd" label="サービスCD*" density="comfortable" variant="outlined" placeholder="例: U40"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" v-if="neosExistingUmid">
+                      <v-alert type="info" variant="tonal" density="compact" class="text-body-2">
+                        <strong>neos_contracts に既存UMIDが見つかりました</strong><br>
+                        UMID: <code>{{ neosExistingUmid.umid }}</code><br>
+                        登録後、このサービスのUMIDは自動で表示されます。本社ノードでの新規作成は不要です。
+                      </v-alert>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+              
+              <!-- DX企業情報 -->
+              <v-card variant="outlined" class="mb-6 bg-white border-none shadow-sm">
+                <v-card-title class="text-subtitle-2 text-green-darken-2 font-weight-bold py-3 px-4 border-b bg-green-lighten-5">
+                  <v-icon size="small" class="mr-2">mdi-layers</v-icon>DX企業情報
+                </v-card-title>
+                <v-card-text class="pt-5 pb-2 px-4">
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-text-field v-model="registerForm.service_group_name" label="DX企業名*" density="comfortable" variant="outlined" placeholder="例: メガスポーツ"></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+              
+              <!-- 支店情報 -->
+              <v-card variant="outlined" class="mb-4 bg-white border-none shadow-sm">
+                <v-card-title class="text-subtitle-2 text-teal-darken-2 font-weight-bold py-3 px-4 border-b bg-teal-lighten-5">
+                  <v-icon size="small" class="mr-2">mdi-store</v-icon>支店情報
+                </v-card-title>
+                <v-card-text class="pt-5 pb-2 px-4">
+                  <v-row dense>
+                    <v-col cols="7"><v-text-field v-model="registerForm.shiten_unis_customer_cd" label="設置先UNISCD*" density="comfortable" variant="outlined" placeholder="例: 750000001"></v-text-field></v-col>
+                    <v-col cols="5"><v-text-field v-model="registerForm.shiten_service_cd" label="サービスCD*" density="comfortable" variant="outlined" placeholder="例: U40"></v-text-field></v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4 bg-white">
+              <v-spacer></v-spacer>
+              <v-btn variant="outlined" color="grey-darken-1" @click="registerDialog = false" class="px-4">キャンセル</v-btn>
+              <v-btn color="primary" variant="flat" @click="submitRegister" :disabled="!isFormValid" class="px-6">登録実行</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- 店舗追加ダイアログ -->
+        <v-dialog v-model="addStoreDialog" max-width="500" persistent scrollable>
+          <v-card>
+            <v-card-title class="d-flex align-center gap-2 bg-white text-black py-4 border-b">
+              <v-icon color="blue-darken-2">mdi-store-plus</v-icon>店舗追加
+            </v-card-title>
+            <v-card-text class="pt-6 px-6 bg-grey-lighten-5" style="max-height: 60vh;">
+              <v-card variant="outlined" class="mb-5 bg-white border-none shadow-sm">
+                <v-card-text class="pa-4">
+                  <div class="text-caption text-grey mb-1">追加先 DX企業</div>
+                  <div class="d-flex align-center gap-2">
+                    <span class="text-body-1 font-weight-bold text-green-darken-3">{{ addStoreForm.service_group_name }}</span>
+                    <v-chip size="x-small" color="green-lighten-4" text-color="green-darken-3" variant="flat" class="font-weight-bold px-2">
+                      {{ addStoreForm.service_group_cd }}
+                    </v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-text-field v-model="addStoreForm.unis_customer_cd" label="追加する店舗の設置先UNISCD*" density="comfortable" variant="outlined" bg-color="white" placeholder="例: 750000XXX"></v-text-field>
+                </v-col>
+                <v-col cols="12">
+                  <v-text-field v-model="addStoreForm.service_cd" label="サービスCD*" density="comfortable" variant="outlined" bg-color="white" placeholder="例: U40"></v-text-field>
+                </v-col>
+                <v-col cols="12">
+                  <v-alert type="info" variant="tonal" density="compact" class="text-body-2">
+                    <strong>入力したUNISCDがすでに登録済みの店舗の場合、</strong>新しい店舗は作成されず、その店舗に対してサービスが追加されます。
+                  </v-alert>
+                </v-col>
+              </v-row>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4 bg-white">
+              <v-spacer></v-spacer>
+              <v-btn variant="outlined" color="grey-darken-1" @click="addStoreDialog = false" class="px-4">キャンセル</v-btn>
+              <v-btn color="blue-darken-2" variant="flat" @click="submitAddStore" :disabled="!addStoreForm.unis_customer_cd || !addStoreForm.service_cd" class="px-6 text-white">追加登録</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- UMアカウント作成ダイアログ -->
+        <v-dialog v-model="umidDialog" max-width="480" persistent scrollable>
+          <v-card>
+            <v-card-title class="d-flex align-center gap-2 bg-white text-black py-4 border-b">
+              <v-icon color="primary">mdi-account-plus</v-icon>
+              <span class="text-h6 font-weight-bold text-grey-darken-4">UMアカウント作成</span>
+              <v-chip size="small" :color="umidForm.level === 'honsha' ? 'blue-grey' : 'teal'" variant="flat" class="font-weight-bold px-3 ml-2 text-white">
+                {{ umidForm.level === 'honsha' ? '本社' : '支店' }}
+              </v-chip>
+              <v-chip size="small" color="grey-lighten-2" variant="flat" class="font-weight-bold px-2">{{ serviceLabel(umidForm.target_service_cd) }}</v-chip>
+            </v-card-title>
+            <v-card-text class="pt-5 px-6 bg-grey-lighten-5" style="max-height: 65vh;">
+              <v-alert type="info" variant="tonal" density="compact" class="text-body-2 mb-4">
+                入力したメールアドレスが既存アカウントの場合は自動で紐づけを行います。<br>
+                作成後、ご利用案内メールがアカウントに送信されます。
+              </v-alert>
+              <v-card variant="outlined" class="bg-white border-none shadow-sm">
+                <v-card-text class="pa-5">
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-text-field v-model="umidForm.email" label="認証用メールアドレス*" density="comfortable" variant="outlined" placeholder="例: tanaka@example.co.jp" bg-color="white"></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field v-model="umidForm.username" label="アカウント名*" density="comfortable" variant="outlined" placeholder="例: 田中 一郎" bg-color="white"></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4 bg-white">
+              <v-spacer></v-spacer>
+              <v-btn variant="outlined" color="grey-darken-1" @click="umidDialog = false" class="px-4">キャンセル</v-btn>
+              <v-btn color="primary" variant="flat" @click="submitUmid" :disabled="!isUmidFormValid" class="px-6">作成・紐づけ</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <v-snackbar v-model="snackbar" :timeout="4000" color="grey-darken-3">
+          {{ snackbarText }}
+          <template v-slot:actions>
+            <v-btn color="white" variant="text" @click="snackbar = false">閉じる</v-btn>
+          </template>
+        </v-snackbar>
+
+      </v-container>
+    </v-main>
+  </v-app>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.7.3/dist/vuetify.min.js"></script>
+<script>
+const { createApp, ref, reactive, nextTick, computed, watch } = Vue
+const { createVuetify } = Vue.Vuetify || Vuetify
+const vuetify = createVuetify()
+
+// サービスコード→サービス名マッピング
+const SERVICE_NAMES = { 'U40': 'Camera', 'U90': 'サイネージ', 'U91': 'Wifi' }
+
+// neos_contracts に存在する既存UMIDのサンプル（本社登録時の確認用）
+const NEOS_CONTRACTS = [
+  { unis_customer_cd: '133918410', service_cd: 'U40', umid: '01NEOS_MEGA_U40_SAMPLE00001', account_name: 'SGSシステム連携' }
+]
+
+// 画像に基づくデータ構造に合わせたモックデータ
+const SAMPLE_COMPANIES = [
+  {
+    id: 'co-1', type: 'company', name: '株式会社メガスポーツ', icon: 'mdi-office-building', iconColor: 'blue-darken-2', unis_customer_cd: '133918410', company_cd: 'PD000012264', _open: true,
+    honshaStores: [
+      {
+        id: 'hs-1', name: '株式会社メガスポーツ', icon: 'mdi-store', serviceName: 'U40', serviceColor: 'blue-grey', service_cd: 'U40', store_cd: '0000', store_name: '株式会社メガスポーツ', unis_customer_cd: '133918410', service_activation_date: '2022-12-20', service_deactivation_date: '',
+        members: [
+          { umid: '01GYGYSA2CK7KTZ01V6TJ4V4S1', umembers_grant_cd: '21', linked: true, is_registered: true, login_id: 'yamada_taro', account_name: '山田 太郎', start_date: '2022-12-20', end_date: '', auth_email: 'yamada@mega-sports.co.jp', contact_email: 'yamada.t@mega-sports.co.jp', _expanded: false },
+          { umid: '01GQKVNDC42GTJHF7AG43H8V7R', umembers_grant_cd: '21', linked: true, is_registered: false, login_id: 'suzuki_hanako', account_name: '鈴木 花子', start_date: '2023-03-01', end_date: '', auth_email: 'suzuki@mega-sports.co.jp', contact_email: 'suzuki.h@mega-sports.co.jp', _expanded: false }
+        ]
+      },
+      {
+        id: 'hs-2', name: '株式会社メガスポーツ', icon: 'mdi-store', serviceName: 'U90', serviceColor: 'purple', service_cd: 'U90', store_cd: '0000', store_name: '株式会社メガスポーツ', unis_customer_cd: '133918410', service_activation_date: '2023-06-01', service_deactivation_date: '',
+        members: [
+          { umid: '01GYGYSA2CK7KTZ01V6TJ4V4S1', umembers_grant_cd: '21', linked: true, is_registered: true, login_id: 'yamada_taro', account_name: '山田 太郎', start_date: '2023-06-01', end_date: '', auth_email: 'yamada@mega-sports.co.jp', contact_email: 'yamada.t@mega-sports.co.jp', _expanded: false }
+        ]
+      }
+    ],
+    children: [
+      {
+        id: 'sg-1', type: 'sg', name: 'メガスポーツ', icon: 'mdi-layers', iconColor: 'green-darken-2', service_group_cd: '009WK', parentName: '株式会社メガスポーツ', _open: true,
+        children: [
+          { id: 'st-1', type: 'store', name: 'M S 水戸内原店', unis_customer_cd: '750000001', store_cd: '0001', services: [{ service_cd: 'U40', icon: 'mdi-store', serviceName: 'U40', serviceColor: 'blue-grey', service_activation_date: '2022-09-21', service_deactivation_date: '', members: [{ umid: '01GR00PS9CNAYY6ZTSMXGMKY0T', umembers_grant_cd: '30', linked: true, is_registered: true, login_id: 'mito_staff01', account_name: '水戸 一郎', start_date: '2022-09-21', end_date: '', auth_email: 'mito01@mega-sports.co.jp', contact_email: 'mito01@mega-sports.co.jp', _expanded: false }] }] },
+          { id: 'st-2', type: 'store', name: 'M S 高崎店', unis_customer_cd: '750000002', store_cd: '0002', services: [{ service_cd: 'U40', icon: 'mdi-store', serviceName: 'U40', serviceColor: 'blue-grey', service_activation_date: '2022-09-21', service_deactivation_date: '', members: [{ umid: '01GR00PS9CNAYY6ZTSMXGMKY0T', umembers_grant_cd: '30', linked: true, is_registered: true, login_id: 'takasaki_m', account_name: '高崎 誠', start_date: '2022-09-21', end_date: '', auth_email: 'takasaki@mega-sports.co.jp', contact_email: 'takasaki@mega-sports.co.jp', _expanded: false }] }] },
+          { id: 'st-3', type: 'store', name: 'M S 新百合ヶ丘店', unis_customer_cd: '750000003', store_cd: '0003', services: [{ service_cd: 'U40', icon: 'mdi-store', serviceName: 'U40', serviceColor: 'blue-grey', service_activation_date: '2022-09-21', service_deactivation_date: '', members: [{ umid: '01GR00PS9CNAYY6ZTSMXGMKY0T', umembers_grant_cd: '30', linked: true, is_registered: false, login_id: 'shinyuri_k', account_name: '新百合 健太', start_date: '2022-09-21', end_date: '', auth_email: 'shinyuri@mega-sports.co.jp', contact_email: 'shinyuri@mega-sports.co.jp', _expanded: false }] }] },
+          { id: 'st-4', type: 'store', name: 'M S 越谷レイクタウン店', unis_customer_cd: '750000004', store_cd: '0004', services: [
+              { service_cd: 'U40', icon: 'mdi-store', serviceName: 'U40', serviceColor: 'blue-grey', service_activation_date: '2022-09-21', service_deactivation_date: '', members: [{ umid: '01GR00PS9CNAYY6ZTSMXGMKY0T', umembers_grant_cd: '30', linked: true, is_registered: true, login_id: 'koshigaya_a', account_name: '越谷 明', start_date: '2022-09-21', end_date: '', auth_email: 'koshigaya@mega-sports.co.jp', contact_email: 'koshigaya@mega-sports.co.jp', _expanded: false }, { umid: '01GKGH27WSCEX99BGH2VRCZFFS', umembers_grant_cd: '31', linked: true, is_registered: false, login_id: 'koshigaya_b', account_name: '越谷 二郎', start_date: '2023-06-01', end_date: '2024-03-31', auth_email: 'koshigaya2@mega-sports.co.jp', contact_email: '', _expanded: false }] },
+              { service_cd: 'U90', icon: 'mdi-cctv', serviceName: 'U90', serviceColor: 'purple', service_activation_date: '2023-11-01', service_deactivation_date: '', members: [{ umid: '01GR00PS9CNAYY6ZTSMXGMKY0T', umembers_grant_cd: '30', linked: true, is_registered: true, login_id: 'koshigaya_a', account_name: '越谷 明', start_date: '2023-11-01', end_date: '', auth_email: 'koshigaya@mega-sports.co.jp', contact_email: 'koshigaya@mega-sports.co.jp', _expanded: false }] }
+            ] }
+        ]
+      },
+      {
+        id: 'sg-2', type: 'sg', name: 'CORNERS', icon: 'mdi-layers', iconColor: 'green-darken-2', service_group_cd: '009WL', parentName: '株式会社メガスポーツ', _open: false,
+        children: []
+      },
+      {
+        id: 'sg-3', type: 'sg', name: 'OUTSIDE THE BOX', icon: 'mdi-layers', iconColor: 'green-darken-2', service_group_cd: '009WM', parentName: '株式会社メガスポーツ', _open: false,
+        children: []
+      }
+    ]
+  },
+  {
+    id: 'co-2', type: 'company', name: '株式会社メガスポーツ関西', icon: 'mdi-office-building', iconColor: 'blue-darken-2', unis_customer_cd: '133918500', company_cd: 'PD000012299', _open: false,
+    honshaStores: [],
+    children: [
+      {
+        id: 'sg-4', type: 'sg', name: 'メガスポーツ関西 DX部門', icon: 'mdi-layers', iconColor: 'green-darken-2', service_group_cd: '009WN', parentName: '株式会社メガスポーツ関西', _open: true,
+        children: [
+          { id: 'st-5', type: 'store', name: 'M S 大阪店', unis_customer_cd: '750000101', store_cd: '0001', services: [{ service_cd: 'U40', icon: 'mdi-store', serviceName: 'U40', serviceColor: 'blue-grey', service_activation_date: '2023-01-10', service_deactivation_date: '', members: [] }] }
+        ]
+      }
+    ]
+  }
+];
+
+createApp({
+  setup() {
+    const searchMode = ref('company_cd');
+    const searchQuery = ref('');
+    const searchOptions = [
+      { title: '本社CD', value: 'company_cd' },
+      { title: '本社名', value: 'company_name' },
+      { title: 'DX企業CD', value: 'group_cd' },
+      { title: 'DX企業名', value: 'group_name' },
+      { title: '設置先CD', value: 'inst_store_cd' },
+      { title: '設置名', value: 'store_name' },
+    ];
+    // タブ切り替え時に検索クエリをクリア
+    watch(searchMode, () => { searchQuery.value = '' });
+
+    const GRANT_LABELS = { '20': '本社管理', '21': '本社シェア', '30': '支店管理', '31': '支店シェア' }
+    const grantLabel = (cd) => GRANT_LABELS[cd] || cd
+    const serviceLabel = (cd) => SERVICE_NAMES[cd] ? cd + ' ' + SERVICE_NAMES[cd] : (cd || '')
+
+    // 複数サービスのメンバーを UMID 単位でマージ（同一 UMID は1行に統合）
+    const mergeGroupMembers = (services) => {
+      const map = {}
+      for (const svc of (services || [])) {
+        for (const m of (svc.members || [])) {
+          const key = m.umid || ('_null_' + svc.service_cd + '_' + Math.random())
+          if (!map[key]) {
+            map[key] = {
+              umid: m.umid, login_id: m.login_id, account_name: m.account_name,
+              auth_email: m.auth_email, contact_email: m.contact_email,
+              is_registered: m.is_registered,
+              _expanded: false, service_entries: []
+            }
+          }
+          map[key].service_entries.push({
+            service_cd: svc.service_cd,
+            grant_cd: m.umembers_grant_cd,
+            start_date: m.start_date,
+            end_date: m.end_date
+          })
+        }
+      }
+      return Object.values(map)
+    }
+
+    // honshaStores を store_cd 単位でグループ化（店舗情報の重複表示を防ぐ）
+    const groupHonshaStores = (honshaStores) => {
+      const groups = {}
+      for (const hs of (honshaStores || [])) {
+        const key = hs.store_cd || hs.unis_customer_cd || hs.id
+        if (!groups[key]) groups[key] = { ...hs, services: [] }
+        groups[key].services.push(hs)
+      }
+      return Object.values(groups)
+    }
+
+    const loading = ref(false);
+    const searched = ref(false);
+    const openAll = ref(false);
+    const selectedNode = ref(null);
+    const selectedService = ref(null); // 店舗ノード選択時に選択されたサービス
+    const treeData = ref([]);
+
+    // honshaStores をグループ化し mergedMembers を事前計算（reactive で包んで _expanded 状態を保持）
+    const honshaGroups = computed(() => {
+      if (selectedNode.value?.type !== 'company') return []
+      const groups = groupHonshaStores(selectedNode.value.honshaStores)
+      groups.forEach(g => { g.mergedMembers = mergeGroupMembers(g.services) })
+      return reactive(groups)
+    })
+
+    // 店舗×サービス行が選択中かどうか判定
+    const isStoreServiceSelected = (store, svc) => {
+      return selectedNode.value?.id === store.id && selectedService.value?.service_cd === svc.service_cd
+    }
+
+    // 店舗×サービス行をクリックして選択
+    const selectStoreService = (store, svc) => {
+      selectedService.value = null
+      selectedNode.value = null
+      nextTick(() => {
+        selectedNode.value = store
+        selectedService.value = svc
+      })
+    }
+
+    // DX企業テーブルから店舗をクリックした場合、最初のサービスで開く
+    const openStoreDetail = (store) => {
+      if (store.services && store.services.length > 0) {
+        selectStoreService(store, store.services[0])
+      }
+    }
+    const searchResults = ref([]);
+    const snackbar = ref(false);
+    const snackbarText = ref('');
+
+    // 登録用フォーム
+    const registerDialog = ref(false);
+    const registerMode = ref('new');
+    const registerForm = reactive({
+      unis_customer_cd: '', company_name: '', honsha_service_cd: '',
+      service_group_name: '',
+      shiten_unis_customer_cd: '', shiten_service_cd: ''
+    });
+
+    // neos_contracts の既存UMID確認
+    const neosExistingUmid = computed(() => {
+      if (!registerForm.unis_customer_cd || !registerForm.honsha_service_cd) return null
+      return NEOS_CONTRACTS.find(c =>
+        c.unis_customer_cd === registerForm.unis_customer_cd &&
+        c.service_cd === registerForm.honsha_service_cd
+      ) || null
+    });
+
+    const addStoreDialog = ref(false);
+    const addStoreForm = reactive({
+      service_group_cd: '', service_group_name: '',
+      unis_customer_cd: '', service_cd: ''
+    });
+
+    const umidDialog = ref(false);
+    const umidForm = reactive({
+      level: 'honsha',
+      email: '',
+      username: '',
+      target_service_cd: ''
+    });
+
+    const currentSearchLabel = computed(() => {
+      const opt = searchOptions.find(o => o.value === searchMode.value);
+      return opt ? opt.title : '検索キーワード';
+    });
+    const currentSearchPlaceholder = computed(() => {
+      if (['company_name', 'group_name', 'store_name'].includes(searchMode.value)) return '名称をキーワードで入力';
+      return '正確なコードを入力';
+    });
+
+    const isFormValid = computed(() => {
+      const baseValid = registerForm.unis_customer_cd && registerForm.company_name &&
+             registerForm.service_group_name &&
+             registerForm.shiten_unis_customer_cd && registerForm.shiten_service_cd;
+      if (registerMode.value === 'new') return baseValid && !!registerForm.honsha_service_cd;
+      return baseValid;
+    });
+
+    const isUmidFormValid = computed(() => umidForm.email && umidForm.username);
+
+    const doSearch = async () => {
+      if (!searchQuery.value) return;
+      loading.value = true;
+      searched.value = false;
+      selectedNode.value = null;
+      searchResults.value = [];
+      treeData.value = [];
+
+      setTimeout(() => {
+        const query = searchQuery.value.toLowerCase();
+        let hits = [];
+        switch (searchMode.value) {
+          case 'company_cd':
+            hits = SAMPLE_COMPANIES.filter(c => c.company_cd.toLowerCase() === query);
+            break;
+          case 'group_cd':
+            hits = SAMPLE_COMPANIES.filter(c => c.children.some(sg => sg.service_group_cd.toLowerCase() === query));
+            break;
+          case 'inst_store_cd':
+            hits = SAMPLE_COMPANIES.filter(c => c.children.some(sg => sg.children.some(st => st.unis_customer_cd === query)));
+            break;
+          case 'company_name':
+            hits = SAMPLE_COMPANIES.filter(c => c.name.toLowerCase().includes(query));
+            break;
+          case 'group_name':
+            hits = SAMPLE_COMPANIES.filter(c => c.children.some(sg => sg.name.toLowerCase().includes(query)));
+            break;
+          case 'store_name':
+            hits = SAMPLE_COMPANIES.filter(c => c.children.some(sg => sg.children.some(st => st.name.toLowerCase().includes(query))));
+            break;
+        }
+
+        loading.value = false;
+        if (hits.length > 1) {
+          searchResults.value = hits;
+        } else if (hits.length === 1) {
+          setTree(hits[0], searchMode.value, searchQuery.value);
+        } else {
+          snackbarText.value = '該当するデータが見つかりませんでした';
+          snackbar.value = true;
+        }
+      }, 400);
+    }
+
+    const setTree = (company, highlightMode, highlightQuery) => {
+      treeData.value = [JSON.parse(JSON.stringify(company))];
+      searched.value = true;
+      searchResults.value = [];
+      nextTick(() => {
+        const root = treeData.value[0];
+        // 検索モードに応じてハイライト対象のノードを特定
+        if (highlightMode === 'group_cd' || highlightMode === 'group_name') {
+          const q = (highlightQuery || '').toLowerCase();
+          for (const sg of (root.children || [])) {
+            const match = highlightMode === 'group_cd'
+              ? sg.service_group_cd?.toLowerCase() === q
+              : sg.name?.toLowerCase().includes(q);
+            if (match) { root._open = true; selectNode(sg); return; }
+          }
+        } else if (highlightMode === 'inst_store_cd' || highlightMode === 'store_name') {
+          const q = (highlightQuery || '').toLowerCase();
+          for (const sg of (root.children || [])) {
+            for (const st of (sg.children || [])) {
+              const match = highlightMode === 'inst_store_cd'
+                ? st.unis_customer_cd === q
+                : st.name?.toLowerCase().includes(q);
+              if (match) {
+                root._open = true; sg._open = true;
+                if (st.services?.length > 0) { selectStoreService(st, st.services[0]); }
+                else { selectNode(st); }
+                return;
+              }
+            }
+          }
+        }
+        // デフォルト: 本社ノードを選択
+        selectNode(root);
+      });
+    }
+
+    const selectCompanyResult = (res) => { setTree(res, searchMode.value, searchQuery.value); }
+
+    const selectNode = (node) => {
+      if (!node) return;
+      if (selectedNode.value && selectedNode.value.id === node.id) return;
+      selectedNode.value = null;
+      nextTick(() => { selectedNode.value = node; });
+    }
+
+    const openRegisterCompanyGroup = () => {
+      registerMode.value = 'new';
+      Object.assign(registerForm, { unis_customer_cd: '', company_name: '', honsha_service_cd: '', service_group_name: '', shiten_unis_customer_cd: '', shiten_service_cd: '' });
+      registerDialog.value = true;
+    }
+
+    const openAddGroup = (node) => {
+      registerMode.value = 'addGroup';
+      Object.assign(registerForm, { unis_customer_cd: node?.unis_customer_cd, company_name: node?.name, service_group_name: '', shiten_unis_customer_cd: '', shiten_service_cd: '' });
+      registerDialog.value = true;
+    }
+
+    const submitRegister = () => {
+      registerDialog.value = false;
+      snackbarText.value = '登録を完了しました（モック動作）';
+      snackbar.value = true;
+    }
+
+    const openAddStore = (sg) => {
+      Object.assign(addStoreForm, { service_group_cd: sg?.service_group_cd, service_group_name: sg?.name, unis_customer_cd: '', service_cd: '' });
+      addStoreDialog.value = true;
+    }
+
+    const submitAddStore = () => {
+      addStoreDialog.value = false;
+      snackbarText.value = '店舗を追加登録しました';
+      snackbar.value = true;
+    }
+
+    const openUmidDialog = (target, level) => {
+      umidForm.level = level;
+      umidForm.target_service_cd = target?.service_cd || '';
+      umidForm.email = '';
+      umidForm.username = '';
+      umidDialog.value = true;
+    }
+
+    const submitUmid = () => {
+      umidDialog.value = false;
+      snackbarText.value = 'UMアカウントを作成・紐づけしました（モック動作）';
+      snackbar.value = true;
+    }
+
+    return {
+      grantLabel, serviceLabel, groupHonshaStores, honshaGroups,
+      isStoreServiceSelected, selectStoreService, openStoreDetail,
+      searchMode, searchQuery, searchOptions, currentSearchLabel, currentSearchPlaceholder,
+      loading, searched, openAll, selectedNode, selectedService, treeData, searchResults,
+      snackbar, snackbarText, registerDialog, registerMode, registerForm, isFormValid,
+      neosExistingUmid,
+      addStoreDialog, addStoreForm,
+      umidDialog, umidForm, isUmidFormValid,
+      doSearch, selectNode, selectCompanyResult,
+      openRegisterCompanyGroup, openAddGroup, submitRegister, openAddStore, submitAddStore,
+      openUmidDialog, submitUmid
+    }
+  }
+}).use(vuetify).mount('#app')
+</script>
+</body>
+</html>
