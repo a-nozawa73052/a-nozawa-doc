@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スマホ版UDS — 操作可能モック</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 62.5%; }
+    body {
+      color: #15191C;
+      font-size: 1.6rem;
+      font-family: "メイリオ", Meiryo, sans-serif;
+      word-break: break-all;
+      background: #fff;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #app {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      transform: translateX(100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.22s ease, opacity 0.22s ease;
+    }
+    .screen.active {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ヘッダー */
+    .l-header {
+      background: #264D8B;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .l-header-logo {
+      background: #264D8B;
+      padding: 14px 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .l-header-logo span {
+      color: #fff;
+      font-size: 2.4rem;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+    }
+    .back-btn {
+      color: rgba(255,255,255,0.85);
+      font-size: 1.5rem;
+      border: none;
+      background: none;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 6px 0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .header-info { display: flex; flex-direction: column; gap: 2px; }
+    .header-branch { color: rgba(255,255,255,0.65); font-size: 1.1rem; }
+    .header-title  { color: #fff; font-size: 1.6rem; font-weight: bold; }
+
+    /* コンテンツ */
+    .l-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .spacer { flex: 1; min-height: 8px; }
+    .divider { border: none; border-top: 1px solid #e8e8e8; }
+
+    /* ボタン */
+    .btn {
+      display: block;
+      width: 100%;
+      color: #fff;
+      font-size: 1.7rem;
+      text-align: center;
+      background: #12BA80;
+      padding: 16px 8px;
+      border: 3px solid #12ba80;
+      border-radius: 5em;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn:active { opacity: 0.75; }
+    .btn.blue    { background: #377BE8; border-color: #377be8; }
+    .btn.white   { color: #7B7B7B; background: #fff; border: 3px solid #ccc; box-shadow: none; }
+    .btn.disabled{ color: #7B7B7B; background: #ccc; border: 3px solid #ccc; box-shadow: none; pointer-events: none; }
+    .btn.large   { padding: 20px 8px; font-size: 1.9rem; }
+    .btn-group   { display: flex; flex-direction: column; gap: 10px; }
+
+    /* 機能選択 */
+    .branch-block { text-align: center; padding: 16px 0 4px; }
+    .branch-label { font-size: 1.2rem; color: #7B7B7B; margin-bottom: 4px; }
+    .branch-name  { font-size: 2.4rem; font-weight: bold; }
+    .guide-text   { font-size: 1.3rem; color: #7B7B7B; text-align: center; }
+
+    /* スキャンボタン */
+    .scan-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 8px;
+    }
+    .scan-circle-btn {
+      width: 112px; height: 112px;
+      border-radius: 50%;
+      background: #377BE8;
+      border: none;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(55,123,232,0.4);
+      font-family: inherit;
+    }
+    .scan-circle-btn:active { transform: scale(0.93); }
+    .scan-icon { font-size: 3rem; color: #fff; line-height: 1; }
+    .scan-text { font-size: 1.1rem; color: rgba(255,255,255,0.92); text-align: center; line-height: 1.3; }
+
+    /* スキャンリスト */
+    .scan-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 8px; border-bottom: 1px solid #e8e8e8;
+    }
+    .scan-header-label { font-size: 1.3rem; color: #7B7B7B; }
+    .scan-header-count { font-size: 1.5rem; font-weight: bold; }
+    .scan-empty { text-align: center; padding: 24px 0; color: #bebebe; font-size: 1.3rem; margin-top: 8px; }
+    .scan-list  { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .scan-item  {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #f5f5f5; border-radius: 8px; padding: 10px 14px;
+    }
+    .scan-serial { font-family: monospace; font-size: 1.4rem; color: #15191C; }
+    .del-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #e0e0e0; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #7B7B7B; font-size: 1.2rem;
+      flex-shrink: 0; font-family: inherit;
+    }
+
+    /* モーダル */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.52);
+      z-index: 100;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .overlay.hidden { display: none; }
+    .sheet {
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      padding: 14px 16px 28px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .sheet-handle {
+      width: 40px; height: 4px; background: #ccc;
+      border-radius: 2px; margin: 0 auto 2px;
+    }
+    .sheet-title { font-size: 1.5rem; font-weight: bold; text-align: center; }
+    .camera-preview {
+      background: #1a1a1a; border-radius: 10px; height: 160px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .viewfinder {
+      width: 188px; height: 60px;
+      border: 2px solid rgba(255,255,255,0.55); border-radius: 4px;
+      position: relative;
+    }
+    .viewfinder::after {
+      content: '';
+      position: absolute; left: 0; right: 0; top: 50%;
+      height: 2px; background: rgba(248,82,82,0.85);
+    }
+    .camera-hint { color: rgba(255,255,255,0.55); font-size: 1.1rem; }
+    .input-row { display: flex; gap: 8px; }
+    .serial-input {
+      flex: 1; padding: 10px 12px;
+      border: 2px solid #ddd; border-radius: 8px;
+      font-size: 1.4rem; font-family: inherit;
+      outline: none; min-width: 0;
+    }
+    .serial-input:focus { border-color: #377BE8; }
+    .add-btn {
+      padding: 10px 16px; background: #377BE8; color: #fff;
+      border: none; border-radius: 8px; font-size: 1.4rem;
+      cursor: pointer; font-family: inherit; flex-shrink: 0;
+    }
+    .mock-btn {
+      width: 100%; padding: 10px;
+      background: #f0f0f0; border: 2px dashed #ccc; border-radius: 8px;
+      font-size: 1.3rem; color: #7B7B7B; cursor: pointer;
+      font-family: inherit; text-align: center;
+    }
+    .mock-hint { font-size: 1.1rem; color: #aaa; text-align: center; }
+
+    /* トースト */
+    .toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: rgba(21,25,28,0.88); color: #fff;
+      padding: 10px 20px; border-radius: 8px; font-size: 1.3rem;
+      white-space: nowrap; z-index: 200;
+      pointer-events: none; opacity: 1;
+      transition: opacity 0.3s;
+    }
+    .toast.hidden { opacity: 0; }
+
+    /* 処理結果 */
+    .result-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; }
+    .result-icon {
+      width: 62px; height: 62px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.8rem;
+    }
+    .result-icon.ok   { background: #E6F7F2; color: #12BA80; }
+    .result-icon.warn { background: #FFF4E0; color: #F09A30; }
+    .result-title { font-size: 1.8rem; font-weight: bold; }
+    .result-summary {
+      background: #f5f5f5; border-radius: 10px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .result-row { display: flex; justify-content: space-between; align-items: center; }
+    .result-label { font-size: 1.3rem; color: #7B7B7B; }
+    .result-val   { font-size: 2rem; font-weight: bold; }
+    .result-val.ok  { color: #12BA80; }
+    .result-val.err { color: #F05252; }
+    .result-sep { border: none; border-top: 1px solid #ddd; }
+    .error-section { display: flex; flex-direction: column; gap: 8px; }
+    .error-section-title { font-size: 1.3rem; color: #7B7B7B; }
+    .error-item {
+      background: #FDE8E8; border-radius: 8px; padding: 10px 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .error-serial { font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #D93030; }
+    .error-msg    { font-size: 1.2rem; color: #7B7B7B; line-height: 1.5; }
+
+    /* E-01 */
+    .error-body {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 24px; gap: 20px; text-align: center;
+    }
+    .error-body-icon  { font-size: 5rem; color: #F05252; }
+    .error-body-title { font-size: 2rem; font-weight: bold; }
+    .error-body-desc  { font-size: 1.4rem; color: #7B7B7B; line-height: 1.8; }
+
+    /* デモバー */
+    .demo-bar {
+      background: #FFF3CD; border-top: 1px solid #FFD700;
+      padding: 5px 12px; font-size: 1.05rem; color: #7B5800;
+      text-align: center; flex-shrink: 0; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- E-01: 支店コード不正 -->
+  <div class="screen" id="s-error">
+    <div class="l-header-logo"><span>UDS</span></div>
+    <div class="error-body">
+      <div class="error-body-icon">✕</div>
+      <div class="error-body-title">アクセスできません</div>
+      <div class="error-body-desc">このQRコードは無効です。<br>正しいQRコードから<br>アクセスしてください。</div>
+    </div>
+    <div class="demo-bar">デモ: ?branch_cd=INVALID でこの画面が表示されます</div>
+  </div>
+
+  <!-- M-01: 機能選択 -->
+  <div class="screen" id="s-select">
+    <div class="l-header-logo"><span>UDS</span></div>
+    <div class="l-content">
+      <div class="branch-block">
+        <div class="branch-label">支店</div>
+        <div class="branch-name" id="branch-name">渋谷支店</div>
+      </div>
+      <hr class="divider">
+      <div class="guide-text">処理を選択してください</div>
+      <div class="btn-group">
+        <button class="btn large" id="btn-store">入庫処理</button>
+        <button class="btn blue large" id="btn-return">端末回収登録</button>
+      </div>
+      <div class="spacer"></div>
+    </div>
+    <div class="demo-bar">デモ: シリアルに「ERR」を含めるとエラーになります</div>
+  </div>
+
+  <!-- M-02: バーコード読み取り -->
+  <div class="screen" id="s-scan">
+    <div class="l-header">
+      <button class="back-btn" id="btn-back">&#8249; 戻る</button>
+      <div class="header-info">
+        <span class="header-branch" id="scan-branch"></span>
+        <span class="header-title" id="scan-title"></span>
+      </div>
+    </div>
+    <div class="l-content">
+      <div class="scan-area">
+        <button class="scan-circle-btn" id="btn-open-camera">
+          <span class="scan-icon">▦</span>
+          <span class="scan-text">バーコードを<br>読み取る</span>
+        </button>
+      </div>
+      <div>
+        <div class="scan-header">
+          <span class="scan-header-label">読み取り済み</span>
+          <span class="scan-header-count"><span id="scan-count">0</span>件</span>
+        </div>
+        <div id="scan-empty" class="scan-empty">バーコードを読み取ると<br>ここに表示されます</div>
+        <div id="scan-list" class="scan-list"></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="btn-group">
+        <button class="btn disabled" id="btn-execute">入庫処理する（0件）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- M-04: 処理結果 -->
+  <div class="screen" id="s-result">
+    <div class="l-header">
+      <div class="header-info">
+        <span class="header-branch" id="result-branch"></span>
+        <span class="header-title">処理結果</span>
+      </div>
+    </div>
+    <div class="l-content">
+      <div class="result-hero">
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-title" id="result-title"></div>
+      </div>
+      <div class="result-summary" id="result-summary"></div>
+      <div class="error-section" id="result-errors" style="display:none">
+        <div class="error-section-title">エラーの端末</div>
+        <div id="result-error-list"></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="btn-group">
+        <button class="btn" id="btn-continue">続けて処理する</button>
+        <button class="btn white" id="btn-to-select">機能選択に戻る</button>
+      </div>
+    </div>
+    <div class="demo-bar" id="result-demo"></div>
+  </div>
+
+</div>
+
+<!-- カメラモーダル -->
+<div class="overlay hidden" id="modal">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">バーコードを読み取ってください</div>
+    <div class="camera-preview">
+      <div class="viewfinder"></div>
+      <div class="camera-hint">枠内にバーコードを合わせてください</div>
+    </div>
+    <div class="input-row">
+      <input class="serial-input" id="serial-input" type="text"
+             placeholder="シリアルコードを入力" maxlength="30"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="add-btn" id="btn-add">追加</button>
+    </div>
+    <button class="mock-btn" id="btn-mock">▦ &nbsp;ランダムスキャン（デモ）</button>
+    <div class="mock-hint">※ 実機ではカメラが自動検出します</div>
+    <button class="btn white" id="btn-close-modal">閉じる</button>
+  </div>
+</div>
+
+<!-- トースト -->
+<div class="toast hidden" id="toast"></div>
+
+<script>
+var mode = 'store';
+var scanList = [];
+var lastErrors = [];
+var mockSeq = 1;
+var toastTimer = null;
+
+// ===== 画面切り替え =====
+function showScreen(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].classList.remove('active');
+  }
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== URLパラメータで支店設定 =====
+var branchName = '渋谷支店';
+var search = location.search;
+var m = search.match(/branch_cd=([^&]+)/);
+if (m) {
+  var cd = m[1];
+  if (cd === 'INVALID') {
+    showScreen('s-error');
+  } else {
+    var map = { SBY001: '渋谷支店', NJK001: '中目黒支店', SKG001: '新宿支店', YBK001: '横浜支店' };
+    branchName = map[cd] || (cd + '支店');
+    document.getElementById('branch-name').textContent = branchName;
+    showScreen('s-select');
+  }
+} else {
+  showScreen('s-select');
+}
+
+// ===== イベント登録 =====
+document.getElementById('btn-store').onclick = function() { startScan('store'); };
+document.getElementById('btn-return').onclick = function() { startScan('return'); };
+document.getElementById('btn-back').onclick = function() { goBack(); };
+document.getElementById('btn-open-camera').onclick = function() { openModal(); };
+document.getElementById('btn-execute').onclick = function() { execute(); };
+document.getElementById('btn-continue').onclick = function() { continueProcess(); };
+document.getElementById('btn-to-select').onclick = function() { goToSelect(); };
+document.getElementById('btn-add').onclick = function() { addFromInput(); };
+document.getElementById('btn-mock').onclick = function() { addMock(); };
+document.getElementById('btn-close-modal').onclick = function() { closeModal(); };
+document.getElementById('modal').onclick = function(e) { if (e.target === this) closeModal(); };
+document.getElementById('serial-input').onkeydown = function(e) { if (e.key === 'Enter') addFromInput(); };
+
+// ===== スキャン開始 =====
+function startScan(m) {
+  mode = m;
+  scanList = [];
+  lastErrors = [];
+  mockSeq = 1;
+  var label = m === 'store' ? '入庫処理' : '端末回収登録';
+  document.getElementById('scan-branch').textContent = branchName;
+  document.getElementById('scan-title').textContent = label;
+  renderList();
+  showScreen('s-scan');
+}
+
+// ===== リスト描画 =====
+function renderList() {
+  var modeLabel = mode === 'store' ? '入庫処理する' : '端末回収登録する';
+  document.getElementById('scan-count').textContent = scanList.length;
+  document.getElementById('scan-empty').style.display = scanList.length === 0 ? '' : 'none';
+
+  var html = '';
+  for (var i = 0; i < scanList.length; i++) {
+    html += '<div class="scan-item">'
+          + '<span class="scan-serial">' + esc(scanList[i]) + '</span>'
+          + '<button class="del-btn" data-i="' + i + '">✕</button>'
+          + '</div>';
+  }
+  document.getElementById('scan-list').innerHTML = html;
+
+  // 削除ボタンのイベント
+  var dels = document.querySelectorAll('.del-btn');
+  for (var j = 0; j < dels.length; j++) {
+    dels[j].onclick = function() {
+      var idx = parseInt(this.getAttribute('data-i'));
+      scanList.splice(idx, 1);
+      renderList();
+    };
+  }
+
+  var btn = document.getElementById('btn-execute');
+  btn.textContent = modeLabel + '（' + scanList.length + '件）';
+  if (scanList.length === 0) {
+    btn.className = 'btn disabled';
+  } else {
+    btn.className = 'btn';
+  }
+}
+
+// ===== モーダル =====
+function openModal() {
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('serial-input').value = '';
+  setTimeout(function() { document.getElementById('serial-input').focus(); }, 80);
+}
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// ===== シリアル追加 =====
+function addFromInput() {
+  var val = document.getElementById('serial-input').value.trim().toUpperCase();
+  if (!val) return;
+  addSerial(val);
+  document.getElementById('serial-input').value = '';
+  document.getElementById('serial-input').focus();
+}
+function addMock() {
+  var prefix = mode === 'store' ? 'SN-STK' : 'SN-RTN';
+  addSerial(prefix + pad(mockSeq++, 5));
+}
+function addSerial(s) {
+  for (var i = 0; i < scanList.length; i++) {
+    if (scanList[i] === s) { showToast('⚠ すでに読み取り済みです'); return; }
+  }
+  scanList.push(s);
+  renderList();
+  showToast('✓ ' + s);
+}
+
+// ===== 処理実行 =====
+function execute() {
+  if (scanList.length === 0) return;
+
+  var errors = [], success = [];
+  for (var i = 0; i < scanList.length; i++) {
+    if (scanList[i].indexOf('ERR') !== -1 || scanList[i].indexOf('err') !== -1) {
+      errors.push(scanList[i]);
+    } else {
+      success.push(scanList[i]);
+    }
+  }
+  lastErrors = errors.slice();
+
+  var modeLabel = mode === 'store' ? '入庫処理' : '端末回収登録';
+  document.getElementById('result-branch').textContent = branchName + ' / ' + modeLabel;
+
+  var iconEl    = document.getElementById('result-icon');
+  var titleEl   = document.getElementById('result-title');
+  var sumEl     = document.getElementById('result-summary');
+  var errSecEl  = document.getElementById('result-errors');
+  var errListEl = document.getElementById('result-error-list');
+  var demoEl    = document.getElementById('result-demo');
+
+  if (errors.length === 0) {
+    iconEl.className = 'result-icon ok';
+    iconEl.textContent = '✓';
+    titleEl.textContent = '処理が完了しました';
+    sumEl.innerHTML = '<div class="result-row"><span class="result-label">成功</span><span class="result-val ok">' + success.length + '件</span></div>';
+    errSecEl.style.display = 'none';
+    demoEl.textContent = '「続けて処理する」でリスト初期化、「機能選択に戻る」でM-01へ';
+  } else {
+    iconEl.className = 'result-icon warn';
+    iconEl.textContent = '⚠';
+    titleEl.textContent = '一部の処理に失敗しました';
+
+    var rows = '';
+    if (success.length > 0) {
+      rows += '<div class="result-row"><span class="result-label">成功</span><span class="result-val ok">' + success.length + '件</span></div>'
+            + '<hr class="result-sep">';
+    }
+    rows += '<div class="result-row"><span class="result-label">エラー</span><span class="result-val err">' + errors.length + '件</span></div>';
+    sumEl.innerHTML = rows;
+
+    var errHtml = '';
+    for (var j = 0; j < errors.length; j++) {
+      errHtml += '<div class="error-item">'
+               + '<span class="error-serial">' + esc(errors[j]) + '</span>'
+               + '<span class="error-msg">端末管理管轄が異なります。再度、端末をご確認ください。</span>'
+               + '</div>';
+    }
+    errListEl.innerHTML = errHtml;
+    errSecEl.style.display = '';
+    demoEl.textContent = '「続けて処理する」でエラー端末（' + errors.length + '件）をリストに復元します';
+  }
+
+  scanList = [];
+  closeModal();
+  showScreen('s-result');
+}
+
+// ===== 続けて処理する =====
+function continueProcess() {
+  scanList = lastErrors.slice();
+  lastErrors = [];
+  renderList();
+  showScreen('s-scan');
+}
+
+// ===== 戻る =====
+function goBack() {
+  scanList = [];
+  lastErrors = [];
+  showScreen('s-select');
+}
+function goToSelect() {
+  scanList = [];
+  lastErrors = [];
+  showScreen('s-select');
+}
+
+// ===== トースト =====
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.add('hidden'); }, 2000);
+}
+
+// ===== ユーティリティ =====
+function esc(s) {
+  return s.replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function pad(n, w) {
+  var s = String(n);
+  while (s.length < w) s = '0' + s;
+  return s;
+}
+</script>
+</body>
+</html>

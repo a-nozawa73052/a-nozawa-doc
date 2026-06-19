@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UIモック — スマホ版UDS</title>
+  <style>
+    /* ===== リセット・ベース（style.css流用） ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 62.5%; }
+    body {
+      color: #15191C;
+      font-size: 1.6rem;
+      font-family: "メイリオ", Meiryo, sans-serif;
+      word-break: break-all;
+      background: #e8ecf0;
+      padding: 40px;
+    }
+    p, a, span, div { word-break: break-all; }
+
+    /* ===== モック並べ表示用 ===== */
+    .mock-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      align-items: flex-start;
+    }
+    .mock-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .mock-label {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #264D8B;
+      background: #fff;
+      padding: 4px 12px;
+      border-radius: 4px;
+      border-left: 4px solid #264D8B;
+    }
+
+    /* ===== iPhoneフレーム ===== */
+    .phone-frame {
+      width: 375px;
+      height: 780px;
+      background: #111;
+      border-radius: 44px;
+      border: 10px solid #222;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4), inset 0 0 0 1px #444;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .phone-notch {
+      height: 28px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .phone-notch__pill {
+      width: 110px;
+      height: 8px;
+      background: #333;
+      border-radius: 4px;
+    }
+    .phone-screen {
+      flex: 1;
+      background: #fff;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== スマホ版UDS レイアウト ===== */
+    .l-mobile {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .l-mobile-header {
+      background: #264D8B;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .l-mobile-header__back {
+      color: rgba(255,255,255,0.85);
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .l-mobile-header__back::before {
+      content: '‹';
+      font-size: 2rem;
+      line-height: 1;
+      margin-top: -1px;
+    }
+    .l-mobile-header__info { display: flex; flex-direction: column; gap: 1px; }
+    .l-mobile-header__branch { color: rgba(255,255,255,0.65); font-size: 1.1rem; }
+    .l-mobile-header__title { color: #fff; font-size: 1.5rem; font-weight: bold; }
+    .l-mobile-header__logo {
+      background: #264D8B;
+      padding: 14px 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .l-mobile-header__logo-text {
+      color: #fff;
+      font-size: 2.2rem;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+    }
+
+    .l-mobile-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ===== ボタン（style.css完全準拠） ===== */
+    .c-btn {
+      display: block;
+      width: 100%;
+      color: #fff;
+      font-size: 1.7rem;
+      text-align: center;
+      background: #12BA80;
+      padding: 16px 8px;
+      border: 3px solid #12ba80;
+      border-radius: 5em;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-family: "メイリオ", Meiryo, sans-serif;
+      transition: all ease 0.2s;
+    }
+    .c-btn.is-yes   { background: #377BE8; border-color: #377be8; }
+    .c-btn.is-cancel { color: #7B7B7B; background: #fff; border: 3px solid #ccc; box-shadow: none; }
+    .c-btn.is-disable { color: #7B7B7B; background: #ccc; border: 3px solid #ccc; box-shadow: none; pointer-events: none; }
+    .c-btn.is-no    { background: #F05252; border-color: #F05252; }
+    .c-btn.is-large { padding: 20px 8px; font-size: 1.9rem; }
+
+    /* ===== 機能選択画面 ===== */
+    .c-branch-block {
+      text-align: center;
+      padding: 20px 0 8px;
+    }
+    .c-branch-block__label {
+      font-size: 1.2rem;
+      color: #7B7B7B;
+      margin-bottom: 4px;
+    }
+    .c-branch-block__name {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #15191C;
+    }
+    .c-divider { border: none; border-top: 1px solid #e8e8e8; }
+    .c-select-guide { font-size: 1.3rem; color: #7B7B7B; text-align: center; }
+    .c-btn-group { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ===== スキャンボタン ===== */
+    .c-scan-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+      gap: 10px;
+    }
+    .c-scan-btn {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      background: #377BE8;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(55,123,232,0.45);
+      font-family: "メイリオ", Meiryo, sans-serif;
+    }
+    .c-scan-btn__icon { font-size: 3rem; color: #fff; line-height: 1; }
+    .c-scan-btn__text { font-size: 1.1rem; color: rgba(255,255,255,0.9); text-align: center; line-height: 1.3; }
+
+    /* ===== 読み取りリスト ===== */
+    .c-scan-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .c-scan-header__label { font-size: 1.3rem; color: #7B7B7B; }
+    .c-scan-header__count { font-size: 1.5rem; font-weight: bold; color: #15191C; }
+    .c-scan-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .c-scan-list--empty {
+      text-align: center;
+      padding: 20px 0;
+      color: #bebebe;
+      font-size: 1.3rem;
+      margin-top: 8px;
+    }
+    .c-scan-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .c-scan-item__serial {
+      font-family: monospace, monospace;
+      font-size: 1.4rem;
+      color: #15191C;
+    }
+    .c-scan-item__del {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #ddd;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #7B7B7B;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      font-family: "メイリオ", Meiryo, sans-serif;
+    }
+
+    /* ===== カメラモーダル（ハーフシート） ===== */
+    .c-camera-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      z-index: 10;
+    }
+    .c-camera-sheet {
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      padding: 20px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .c-camera-sheet__handle {
+      width: 40px;
+      height: 4px;
+      background: #ccc;
+      border-radius: 2px;
+      margin: 0 auto -4px;
+    }
+    .c-camera-sheet__title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .c-camera-preview {
+      background: #1a1a1a;
+      border-radius: 10px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      position: relative;
+    }
+    .c-camera-preview__viewfinder {
+      width: 190px;
+      height: 70px;
+      border: 2px solid rgba(255,255,255,0.6);
+      border-radius: 4px;
+      position: relative;
+    }
+    .c-camera-preview__viewfinder::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      height: 2px;
+      background: rgba(248,82,82,0.8);
+      box-shadow: 0 0 6px rgba(248,82,82,0.6);
+    }
+    .c-camera-preview__corners::before,
+    .c-camera-preview__corners::after {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      border-color: #fff;
+      border-style: solid;
+    }
+    .c-camera-preview__hint {
+      color: rgba(255,255,255,0.6);
+      font-size: 1.2rem;
+    }
+
+    /* ===== 処理結果 ===== */
+    .c-result-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 0;
+    }
+    .c-result-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+    }
+    .c-result-icon--ok   { background: #E6F7F2; color: #12BA80; }
+    .c-result-icon--warn { background: #FFF4E0; color: #F09A30; }
+    .c-result-hero__title { font-size: 1.7rem; font-weight: bold; }
+
+    .c-result-summary {
+      background: #f5f5f5;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .c-result-summary__row { display: flex; justify-content: space-between; align-items: center; }
+    .c-result-summary__label { font-size: 1.3rem; color: #7B7B7B; }
+    .c-result-summary__val { font-size: 1.8rem; font-weight: bold; }
+    .c-result-summary__val--ok  { color: #12BA80; }
+    .c-result-summary__val--err { color: #F05252; }
+    .c-result-summary__sep { border: none; border-top: 1px solid #ddd; }
+
+    .c-result-errors { display: flex; flex-direction: column; gap: 8px; }
+    .c-result-errors__title { font-size: 1.3rem; color: #7B7B7B; }
+    .c-result-error-item {
+      background: #FDE8E8;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .c-result-error-item__serial { font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #D93030; }
+    .c-result-error-item__msg { font-size: 1.2rem; color: #7B7B7B; line-height: 1.5; }
+
+    /* ===== エラー画面 ===== */
+    .l-mobile-error {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 20px;
+      text-align: center;
+    }
+    .c-error-icon { font-size: 4.8rem; color: #F05252; }
+    .c-error-title { font-size: 1.9rem; font-weight: bold; }
+    .c-error-desc { font-size: 1.4rem; color: #7B7B7B; line-height: 1.8; }
+
+    /* スペーサー */
+    .u-spacer { flex: 1; }
+  </style>
+</head>
+<body>
+
+<div style="margin-bottom:32px;">
+  <h1 style="font-size:2rem; font-weight:bold; color:#264D8B; margin-bottom:6px;">UIモック — スマホ版UDS</h1>
+  <p style="font-size:1.3rem; color:#7B7B7B;">既存UDSのデザイン（色・フォント・ボタン）に準拠したモック。実装時は mobile.css として分離する。</p>
+</div>
+
+<div class="mock-wrapper">
+
+  <!-- ========== M-01 機能選択 ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-01｜機能選択</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header__logo">
+            <span class="l-mobile-header__logo-text">UDS</span>
+          </div>
+
+          <div class="l-mobile-content">
+            <div class="c-branch-block">
+              <div class="c-branch-block__label">支店</div>
+              <div class="c-branch-block__name">渋谷支店</div>
+            </div>
+
+            <hr class="c-divider">
+            <div class="c-select-guide">処理を選択してください</div>
+
+            <div class="c-btn-group">
+              <button class="c-btn is-large">
+                入庫処理
+              </button>
+              <button class="c-btn is-yes is-large">
+                端末回収登録
+              </button>
+            </div>
+
+            <div class="u-spacer"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-02 読み取り前（0件） ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-02｜バーコード読み取り（0件）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header">
+            <a class="l-mobile-header__back">戻る</a>
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店</span>
+              <span class="l-mobile-header__title">入庫処理</span>
+            </div>
+          </div>
+
+          <div class="l-mobile-content">
+            <div class="c-scan-area">
+              <button class="c-scan-btn">
+                <span class="c-scan-btn__icon">▦</span>
+                <span class="c-scan-btn__text">バーコードを<br>読み取る</span>
+              </button>
+            </div>
+
+            <div>
+              <div class="c-scan-header">
+                <span class="c-scan-header__label">読み取り済み</span>
+                <span class="c-scan-header__count">0件</span>
+              </div>
+              <div class="c-scan-list--empty">
+                バーコードを読み取ると<br>ここに表示されます
+              </div>
+            </div>
+
+            <div class="u-spacer"></div>
+            <div class="c-btn-group">
+              <button class="c-btn is-disable">入庫処理する（0件）</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-02 読み取り済み（2件） ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-02｜バーコード読み取り（2件）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header">
+            <a class="l-mobile-header__back">戻る</a>
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店</span>
+              <span class="l-mobile-header__title">入庫処理</span>
+            </div>
+          </div>
+
+          <div class="l-mobile-content">
+            <div class="c-scan-area">
+              <button class="c-scan-btn">
+                <span class="c-scan-btn__icon">▦</span>
+                <span class="c-scan-btn__text">バーコードを<br>読み取る</span>
+              </button>
+            </div>
+
+            <div>
+              <div class="c-scan-header">
+                <span class="c-scan-header__label">読み取り済み</span>
+                <span class="c-scan-header__count">2件</span>
+              </div>
+              <div class="c-scan-list">
+                <div class="c-scan-item">
+                  <span class="c-scan-item__serial">SN-ABC123456789</span>
+                  <button class="c-scan-item__del">✕</button>
+                </div>
+                <div class="c-scan-item">
+                  <span class="c-scan-item__serial">SN-DEF987654321</span>
+                  <button class="c-scan-item__del">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="u-spacer"></div>
+            <div class="c-btn-group">
+              <button class="c-btn">入庫処理する（2件）</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-02 カメラ起動中 ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-02｜カメラ起動中</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen" style="position:relative;">
+
+        <!-- 背景（読み取り画面、暗転） -->
+        <div class="l-mobile" style="opacity:0.35; pointer-events:none;">
+          <div class="l-mobile-header">
+            <a class="l-mobile-header__back">戻る</a>
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店</span>
+              <span class="l-mobile-header__title">入庫処理</span>
+            </div>
+          </div>
+          <div class="l-mobile-content">
+            <div class="c-scan-area">
+              <button class="c-scan-btn" style="opacity:0.6;"><span class="c-scan-btn__icon">▦</span></button>
+            </div>
+            <div>
+              <div class="c-scan-header">
+                <span class="c-scan-header__label">読み取り済み</span>
+                <span class="c-scan-header__count">1件</span>
+              </div>
+              <div class="c-scan-list">
+                <div class="c-scan-item">
+                  <span class="c-scan-item__serial">SN-ABC123456789</span>
+                  <button class="c-scan-item__del">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- カメラハーフシート -->
+        <div class="c-camera-overlay">
+          <div class="c-camera-sheet">
+            <div class="c-camera-sheet__handle"></div>
+            <div class="c-camera-sheet__title">バーコードを読み取ってください</div>
+            <div class="c-camera-preview">
+              <div class="c-camera-preview__viewfinder"></div>
+              <div class="c-camera-preview__hint">枠内にバーコードを合わせてください</div>
+            </div>
+            <button class="c-btn is-cancel">閉じる</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-02 重複読み取りトースト ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-02｜重複読み取り（トースト表示）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen" style="position:relative;">
+
+        <div class="l-mobile" style="opacity:0.35; pointer-events:none;">
+          <div class="l-mobile-header">
+            <a class="l-mobile-header__back">戻る</a>
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店</span>
+              <span class="l-mobile-header__title">入庫処理</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="c-camera-overlay">
+          <div class="c-camera-sheet">
+            <div class="c-camera-sheet__handle"></div>
+            <div class="c-camera-sheet__title">バーコードを読み取ってください</div>
+            <div class="c-camera-preview">
+              <!-- トースト -->
+              <div style="position:absolute; top:12px; left:12px; right:12px; background:rgba(21,25,28,0.88); color:#fff; border-radius:8px; padding:10px 14px; font-size:1.2rem; text-align:center; z-index:5;">
+                ⚠ すでに読み取り済みです
+              </div>
+              <div class="c-camera-preview__viewfinder"></div>
+              <div class="c-camera-preview__hint">枠内にバーコードを合わせてください</div>
+            </div>
+            <button class="c-btn is-cancel">閉じる</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-04 処理結果（全件成功） ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-04｜処理結果（全件成功）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header">
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店 / 入庫処理</span>
+              <span class="l-mobile-header__title">処理結果</span>
+            </div>
+          </div>
+
+          <div class="l-mobile-content">
+            <div class="c-result-hero">
+              <div class="c-result-icon c-result-icon--ok">✓</div>
+              <div class="c-result-hero__title">処理が完了しました</div>
+            </div>
+
+            <div class="c-result-summary">
+              <div class="c-result-summary__row">
+                <span class="c-result-summary__label">成功</span>
+                <span class="c-result-summary__val c-result-summary__val--ok">2件</span>
+              </div>
+            </div>
+
+            <div class="u-spacer"></div>
+            <div class="c-btn-group">
+              <button class="c-btn">続けて処理する</button>
+              <button class="c-btn is-cancel">機能選択に戻る</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-04 処理結果（一部エラー） ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-04｜処理結果（一部エラーあり）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header">
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店 / 入庫処理</span>
+              <span class="l-mobile-header__title">処理結果</span>
+            </div>
+          </div>
+
+          <div class="l-mobile-content">
+            <div class="c-result-hero">
+              <div class="c-result-icon c-result-icon--warn">⚠</div>
+              <div class="c-result-hero__title">一部の処理に失敗しました</div>
+            </div>
+
+            <div class="c-result-summary">
+              <div class="c-result-summary__row">
+                <span class="c-result-summary__label">成功</span>
+                <span class="c-result-summary__val c-result-summary__val--ok">2件</span>
+              </div>
+              <hr class="c-result-summary__sep">
+              <div class="c-result-summary__row">
+                <span class="c-result-summary__label">エラー</span>
+                <span class="c-result-summary__val c-result-summary__val--err">1件</span>
+              </div>
+            </div>
+
+            <div class="c-result-errors">
+              <div class="c-result-errors__title">エラーの端末</div>
+              <div class="c-result-error-item">
+                <span class="c-result-error-item__serial">SN-XYZ112233445</span>
+                <span class="c-result-error-item__msg">端末管理管轄が異なります。再度、端末をご確認ください。</span>
+              </div>
+            </div>
+
+            <div class="u-spacer"></div>
+            <div class="c-btn-group">
+              <button class="c-btn">続けて処理する</button>
+              <button class="c-btn is-cancel">機能選択に戻る</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== E-01 エラー画面 ========== -->
+  <div class="mock-item">
+    <div class="mock-label">E-01｜エラー（支店コード不正）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header__logo">
+            <span class="l-mobile-header__logo-text">UDS</span>
+          </div>
+
+          <div class="l-mobile-error">
+            <div class="c-error-icon">✕</div>
+            <div>
+              <div class="c-error-title">アクセスできません</div>
+            </div>
+            <div class="c-error-desc">
+              このQRコードは無効です。<br>
+              正しいQRコードから<br>
+              アクセスしてください。
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.mock-wrapper -->
+</body>
+</html>
