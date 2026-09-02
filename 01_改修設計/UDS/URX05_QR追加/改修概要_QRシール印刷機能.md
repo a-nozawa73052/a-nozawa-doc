@@ -72,6 +72,9 @@ public function create(array $pages)
 2. UME対象行（後述 `get_ume_eligible_rows()`）に絞り込む
 3. `shipping_requests.id` 昇順でソートする
 4. 対象行ごとにQR画像を生成し、ページ配列を構築する
+   - 一時画像ファイル名は行ごとに一意とする（例: `{shipping_request_id}_{row_id}.png`）
+     ※複数行を並行して処理するため、`{shipping_request_id}.png` 固定のままだと
+     　衝突・削除漏れが発生する
 5. PDFを生成後、一時画像を全件削除する
 6. PDFを保存・ダウンロードする
 
@@ -116,6 +119,11 @@ contracts.contract_cd = shipping_requests.contract_cd
 > **注意:** URXはUMEのmdm2参照ロジック（`contract_mdm2_devices`）を**使わない**。  
 > 既存のUME判定ロジックは変更しないこと。
 
+> **注意:** 既存の `qr_flg`/`qr_id`（presenter/center/kitting/view.php）は「セット内に対象が1件でもあるか」の
+> 真偽判定＋代表1件のID取得ロジックであり、「対象行を配列で全件返す」ロジックとは実装が異なる。
+> `get_ume_eligible_rows()`/`get_urx_eligible_rows()` は判定条件（qrcode_flg判定）のみ流用し、
+> フィルタリング処理自体は新規実装する。
+
 ### 4-3. QRコードURL形式
 
 | 種別 | URL |
@@ -153,6 +161,20 @@ contracts.contract_cd = shipping_requests.contract_cd
   - 処理内容は既存 `output_qr_label()` と同様
   - PDFパス: `/contents/pdf/qrcode/{id}_urx_qrcode.pdf`
 
+#### `src/public_html/fuel/app/modules/manage/classes/common/shipping/request.php`
+
+- `Common_Shipping_Request::get_set_common_part_query()` のSELECT句に `contracts.neos_item_cd` を追加する
+  - 既に `shipping_requests.neos_item_cd` を無名（エイリアスなし）で取得しているため、
+    エイリアスを付けて追加すること（例: `array('contracts.neos_item_cd', 'contract_neos_item_cd')`）
+  - `contracts` テーブルは既にJOIN済みのため、JOIN自体の追加は不要
+
+#### `src/public_html/fuel/app/classes/upload/csv/master/device.php`
+
+- `validate_qrcode_flg()` を '0'・'1'・'2' を許容するよう修正する
+  - 現状は '0'/'1' 以外をエラーとするため、URX機種（qrcode_flg=2）のマスタ情報を
+    通常のCSVマスタアップロード画面から将来更新できなくなる
+  - エラーメッセージ「は0、または、1で入力してください」も「0、1、または、2で」に修正する
+
 ---
 
 ## 5. 影響範囲
@@ -164,12 +186,16 @@ contracts.contract_cd = shipping_requests.contract_cd
 | `views/center/kitting/view.php` | 改修 | ボタン2本化 |
 | `controller/center/kitting.php` | 改修・追加 | UMEアクション改修、URXアクション追加 |
 | `assets/js/script.js` | 追加 | output_urx_qr_label() 追加 |
+| `common/shipping/request.php` | 改修 | get_set_common_part_query()にcontracts.neos_item_cd追加 |
+| `upload/csv/master/device.php` | 改修 | validate_qrcode_flg()を0/1/2許容に修正 |
 
 ---
 
 ## 6. スコープ外
 
-- `device_types` マスタへの `qrcode_flg = 2` データ投入は本改修のスコープ外。別途データ投入を依頼すること
+- `device_types` マスタへの `qrcode_flg = 2` の**初回データ投入**は本改修のスコープ外。別途データ投入を依頼すること
+  （CSVマスタアップロードのバリデーション改修は本改修に含む。初回投入時点でバリデーション改修が
+  　未リリースの場合は、直接DB投入等の代替手段を検討すること）
 - 既存UMEのQRコードURL形式は変更しない
 - 既存PDFテンプレート（`qrcode.pdf`）のレイアウトは変更しない
 
@@ -197,3 +223,5 @@ contracts.contract_cd = shipping_requests.contract_cd
 
 - [ ] serial_cd の記載座標・フォントサイズをPDFテンプレート上で確認し確定する（現在の暫定値: X=155, Y=10, 8pt）
 - [ ] `device_types.qrcode_flg = 2` のマスタデータ投入タイミングをデータ担当者と調整する
+- [ ] `validate_qrcode_flg()` 改修のリリースタイミングと、`qrcode_flg = 2` 初回データ投入のタイミングの前後関係を確認する
+- [ ] `Common_Shipping_Request::get_set_common_part_query()` のSELECT列追加によって、既存の呼び出し元（他画面）に副作用がないか確認する
