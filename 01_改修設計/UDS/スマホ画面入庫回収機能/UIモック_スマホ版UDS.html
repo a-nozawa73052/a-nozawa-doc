@@ -199,6 +199,61 @@
     .c-scan-btn__icon { font-size: 3rem; color: #fff; line-height: 1; }
     .c-scan-btn__text { font-size: 1.1rem; color: rgba(255,255,255,0.9); text-align: center; line-height: 1.3; }
 
+    /* ===== 読み取り方法トグル ===== */
+    .c-method-label { font-size: 1.1rem; color: #7B7B7B; margin-top: 2px; }
+    .c-method-toggle {
+      display: flex;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 6px 0 4px;
+    }
+    .c-method-toggle__btn {
+      flex: 1;
+      padding: 11px 4px;
+      text-align: center;
+      font-size: 1.3rem;
+      color: #7B7B7B;
+      background: #fff;
+    }
+    .c-method-toggle__btn + .c-method-toggle__btn { border-left: 2px solid #e0e0e0; }
+    .c-method-toggle__btn.is-active { background: #377BE8; color: #fff; font-weight: bold; }
+
+    /* ===== Bluetooth接続案内 ===== */
+    .c-bt-guide {
+      background: #EAF3FF;
+      border: 1px solid #cfe3ff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 4px 0 10px;
+    }
+    .c-bt-guide__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #264D8B;
+    }
+    .c-bt-guide__toggle { font-size: 1.1rem; font-weight: normal; color: #377BE8; }
+    .c-bt-guide__steps { margin: 10px 0 0; padding-left: 20px; font-size: 1.25rem; color: #333; line-height: 1.7; }
+    .c-bt-guide__note { margin-top: 8px; font-size: 1.1rem; color: #7B7B7B; }
+
+    /* ===== スキャナー待機表示（タップできる入力欄は表示しない） ===== */
+    .c-bt-wait {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 22px 0;
+      margin: 4px 0 2px;
+      background: #F5F6F8;
+      border: 2px dashed #d8dce3;
+      border-radius: 10px;
+    }
+    .c-bt-wait__icon { font-size: 2.2rem; }
+    .c-bt-wait__text { font-size: 1.3rem; color: #7B7B7B; }
+
     /* ===== 読み取りリスト ===== */
     .c-scan-header {
       display: flex;
@@ -448,6 +503,12 @@
           </div>
 
           <div class="l-mobile-content">
+            <div class="c-method-label">読み取り方法</div>
+            <div class="c-method-toggle">
+              <div class="c-method-toggle__btn is-active">📷 カメラ</div>
+              <div class="c-method-toggle__btn">📡 スキャナー</div>
+            </div>
+
             <div class="c-scan-area">
               <button class="c-scan-btn">
                 <span class="c-scan-btn__icon">▦</span>
@@ -493,6 +554,12 @@
           </div>
 
           <div class="l-mobile-content">
+            <div class="c-method-label">読み取り方法</div>
+            <div class="c-method-toggle">
+              <div class="c-method-toggle__btn is-active">📷 カメラ</div>
+              <div class="c-method-toggle__btn">📡 スキャナー</div>
+            </div>
+
             <div class="c-scan-area">
               <button class="c-scan-btn">
                 <span class="c-scan-btn__icon">▦</span>
@@ -520,6 +587,71 @@
             <div class="u-spacer"></div>
             <div class="c-btn-group">
               <button class="c-btn">入庫処理する（2件）</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== M-02 スキャナー選択時（2026-09追加） ========== -->
+  <div class="mock-item">
+    <div class="mock-label">M-02｜バーコード読み取り（スキャナー選択時）</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch__pill"></div></div>
+      <div class="phone-screen">
+        <div class="l-mobile">
+
+          <div class="l-mobile-header">
+            <a class="l-mobile-header__back">戻る</a>
+            <div class="l-mobile-header__info">
+              <span class="l-mobile-header__branch">渋谷支店</span>
+              <span class="l-mobile-header__title">入庫処理</span>
+            </div>
+          </div>
+
+          <div class="l-mobile-content">
+            <div class="c-method-label">読み取り方法</div>
+            <div class="c-method-toggle">
+              <div class="c-method-toggle__btn">📷 カメラ</div>
+              <div class="c-method-toggle__btn is-active">📡 スキャナー</div>
+            </div>
+
+            <div class="c-bt-guide">
+              <div class="c-bt-guide__header">
+                <span>ℹ Bluetoothスキャナーの接続方法</span>
+                <span class="c-bt-guide__toggle">▲ 閉じる</span>
+              </div>
+              <ol class="c-bt-guide__steps">
+                <li>iPhoneの「設定」→「Bluetooth」を開く</li>
+                <li>スキャナーの[SCAN]ボタンを3秒長押しして電源ON</li>
+                <li>一覧の「BS80+XXXX」を選択してペアリング</li>
+              </ol>
+              <div class="c-bt-guide__note">※ペアリング済みならそのまま下の欄でスキャンできます</div>
+            </div>
+
+            <div class="c-bt-wait">
+              <span class="c-bt-wait__icon">📡</span>
+              <span class="c-bt-wait__text">スキャナーで読み取ってください</span>
+            </div>
+
+            <div>
+              <div class="c-scan-header">
+                <span class="c-scan-header__label">読み取り済み</span>
+                <span class="c-scan-header__count">1件</span>
+              </div>
+              <div class="c-scan-list">
+                <div class="c-scan-item">
+                  <span class="c-scan-item__serial">SN-ABC123456789</span>
+                  <button class="c-scan-item__del">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="u-spacer"></div>
+            <div class="c-btn-group">
+              <button class="c-btn">入庫処理する（1件）</button>
             </div>
           </div>
 

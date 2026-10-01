@@ -143,6 +143,57 @@
     .scan-icon { font-size: 3rem; color: #fff; line-height: 1; }
     .scan-text { font-size: 1.1rem; color: rgba(255,255,255,0.92); text-align: center; line-height: 1.3; }
 
+    /* 読み取り方法トグル */
+    .method-label { font-size: 1.1rem; color: #7B7B7B; margin-top: 4px; }
+    .method-toggle {
+      display: flex; border: 2px solid #e0e0e0; border-radius: 10px;
+      overflow: hidden; margin-top: 6px;
+    }
+    .method-toggle__btn {
+      flex: 1; padding: 11px 4px; border: none; background: #fff;
+      color: #7B7B7B; font-size: 1.3rem; font-family: inherit; cursor: pointer;
+    }
+    .method-toggle__btn + .method-toggle__btn { border-left: 2px solid #e0e0e0; }
+    .method-toggle__btn.is-active { background: #377BE8; color: #fff; font-weight: bold; }
+
+    #method-camera-panel, #method-bt-panel { margin-top: 4px; }
+
+    /* Bluetooth接続案内 */
+    .bt-guide {
+      background: #EAF3FF; border: 1px solid #cfe3ff; border-radius: 10px;
+      padding: 12px 14px; margin: 4px 0 10px;
+    }
+    .bt-guide__header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 1.3rem; font-weight: bold; color: #264D8B; cursor: pointer;
+    }
+    .bt-guide__toggle { font-size: 1.1rem; font-weight: normal; color: #377BE8; }
+    .bt-guide__steps { margin: 10px 0 0; padding-left: 20px; font-size: 1.25rem; color: #333; line-height: 1.7; }
+    .bt-guide__note { margin-top: 8px; font-size: 1.1rem; color: #7B7B7B; }
+    .bt-guide.is-collapsed .bt-guide__steps,
+    .bt-guide.is-collapsed .bt-guide__note { display: none; }
+
+    /* スキャナー待機表示（タップできる入力欄は表示しない） */
+    .bt-wait {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 22px 0; margin: 2px 0 4px;
+      background: #F5F6F8; border: 2px dashed #d8dce3; border-radius: 10px;
+    }
+    .bt-wait__icon { font-size: 2.2rem; animation: bt-pulse 1.6s ease-in-out infinite; }
+    .bt-wait__text { font-size: 1.3rem; color: #7B7B7B; }
+    @keyframes bt-pulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+    /* 実入力欄：スキャナー（HID）からの入力のみを受け取る。ユーザーがタップして
+       手入力できないよう画面上には表示しない（display:noneにするとフォーカス
+       できずスキャナー入力も受け取れなくなるため、視覚的に隠す形にする） */
+    .bt-scan-input-hidden {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
     /* スキャンリスト */
     .scan-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -172,6 +223,7 @@
       z-index: 100;
       display: flex; flex-direction: column; justify-content: flex-end;
     }
+    .hidden { display: none; }
     .overlay.hidden { display: none; }
     .sheet {
       background: #fff;
@@ -322,12 +374,45 @@
       </div>
     </div>
     <div class="l-content">
-      <div class="scan-area">
-        <button class="scan-circle-btn" id="btn-open-camera">
-          <span class="scan-icon">▦</span>
-          <span class="scan-text">バーコードを<br>読み取る</span>
-        </button>
+      <div class="method-label">読み取り方法</div>
+      <div class="method-toggle">
+        <button class="method-toggle__btn is-active" id="btn-method-camera" data-method="camera">📷 カメラ</button>
+        <button class="method-toggle__btn" id="btn-method-bt" data-method="bt">📡 スキャナー</button>
       </div>
+
+      <div id="method-camera-panel">
+        <div class="scan-area">
+          <button class="scan-circle-btn" id="btn-open-camera">
+            <span class="scan-icon">▦</span>
+            <span class="scan-text">バーコードを<br>読み取る</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="method-bt-panel" class="hidden">
+        <div class="bt-guide" id="bt-guide">
+          <div class="bt-guide__header" id="btn-toggle-guide">
+            <span>ℹ Bluetoothスキャナーの接続方法</span>
+            <span class="bt-guide__toggle" id="bt-guide-toggle-icon">▲ 閉じる</span>
+          </div>
+          <ol class="bt-guide__steps">
+            <li>iPhoneの「設定」→「Bluetooth」を開く</li>
+            <li>スキャナーの[SCAN]ボタンを3秒長押しして電源ON</li>
+            <li>一覧の「BS80+XXXX」を選択してペアリング</li>
+          </ol>
+          <div class="bt-guide__note">※ペアリング済みならそのまま下の欄でスキャンできます</div>
+        </div>
+        <div class="bt-wait">
+          <span class="bt-wait__icon">📡</span>
+          <span class="bt-wait__text">スキャナーで読み取ってください</span>
+        </div>
+        <!-- 実際の入力はこの非表示欄で受け取る（タップでの手入力を誘発しないよう画面には表示しない） -->
+        <input class="bt-scan-input-hidden" id="bt-scan-input" type="text" inputmode="none" autocomplete="off" autocorrect="off" spellcheck="false" tabindex="-1" aria-hidden="true">
+
+        <button class="mock-btn" id="btn-mock-bt">🔧 読み取りをシミュレート（デモ用）</button>
+        <div class="mock-hint">※実機の速度チェックの都合上、この画面をキーボードで直接入力しても手入力とみなされ無反応になります（意図した挙動）。読み取り成功のデモにはこのボタンを使ってください</div>
+      </div>
+
       <div>
         <div class="scan-header">
           <span class="scan-header-label">読み取り済み</span>
@@ -341,6 +426,7 @@
         <button class="btn disabled" id="btn-execute">入庫処理する（0件）</button>
       </div>
     </div>
+    <div class="demo-bar">デモ: 上部トグルで「スキャナー」に切り替えると接続案内と待機表示が出ます。タップできる入力欄はわざと非表示にしているため、読み取り成功のデモは「🔧 読み取りをシミュレート」ボタンをお使いください（手入力は速度チェックで自動的に無反応になります）</div>
   </div>
 
   <!-- M-04: 処理結果 -->
@@ -402,6 +488,7 @@ var scanList = [];
 var lastErrors = [];
 var mockSeq = 1;
 var toastTimer = null;
+var scanMethod = 'camera';
 
 // ===== 画面切り替え =====
 function showScreen(id) {
@@ -440,9 +527,14 @@ document.getElementById('btn-continue').onclick = function() { continueProcess()
 document.getElementById('btn-to-select').onclick = function() { goToSelect(); };
 document.getElementById('btn-add').onclick = function() { addFromInput(); };
 document.getElementById('btn-mock').onclick = function() { addMock(); };
+document.getElementById('btn-mock-bt').onclick = function() { addMockBtScan(); };
 document.getElementById('btn-close-modal').onclick = function() { closeModal(); };
 document.getElementById('modal').onclick = function(e) { if (e.target === this) closeModal(); };
 document.getElementById('serial-input').onkeydown = function(e) { if (e.key === 'Enter') addFromInput(); };
+document.getElementById('bt-scan-input').onkeydown = function(e) { onBtScanKeydown(e); };
+document.getElementById('btn-method-camera').onclick = function() { setMethod('camera'); };
+document.getElementById('btn-method-bt').onclick = function() { setMethod('bt'); };
+document.getElementById('btn-toggle-guide').onclick = function() { toggleGuide(); };
 
 // ===== スキャン開始 =====
 function startScan(m) {
@@ -455,6 +547,76 @@ function startScan(m) {
   document.getElementById('scan-title').textContent = label;
   renderList();
   showScreen('s-scan');
+  setMethod('camera'); // 画面を開くたびに「カメラ」から始める
+}
+
+// ===== 読み取り方法の切り替え =====
+function setMethod(method) {
+  scanMethod = method;
+  document.getElementById('btn-method-camera').classList.toggle('is-active', method === 'camera');
+  document.getElementById('btn-method-bt').classList.toggle('is-active', method === 'bt');
+  document.getElementById('method-camera-panel').classList.toggle('hidden', method !== 'camera');
+  document.getElementById('method-bt-panel').classList.toggle('hidden', method !== 'bt');
+  if (method === 'bt') {
+    focusBtScanInput();
+  }
+}
+function toggleGuide() {
+  var guide = document.getElementById('bt-guide');
+  var collapsed = guide.classList.toggle('is-collapsed');
+  document.getElementById('bt-guide-toggle-icon').textContent = collapsed ? '▼ 開く' : '▲ 閉じる';
+}
+
+// ===== Bluetoothスキャナー入力欄 =====
+// 実機ではHIDモードのBluetoothスキャナーがこの入力欄にシリアルコード＋Enterを送信する。
+// 入力欄は画面上に表示しない（手入力を誘発しないため）。
+// 入力元がスキャナーか手入力かはOSレベルで区別できないため、入力速度で判定する：
+// 先頭文字からEnterまでが閾値（300ms）を超えたら手入力とみなし、無反応で破棄する。
+var BT_SCAN_MAX_MS = 300;
+var btFirstKeyTime = null;
+
+function onBtScanKeydown(e) {
+  if (e.key === 'Enter') {
+    addFromBtScan();
+    return;
+  }
+  if (btFirstKeyTime === null) {
+    btFirstKeyTime = Date.now();
+  }
+}
+
+function focusBtScanInput() {
+  var el = document.getElementById('bt-scan-input');
+  var modal = document.getElementById('modal');
+  if (!el || scanMethod !== 'bt') return;
+  if (modal && !modal.classList.contains('hidden')) return; // カメラモーダル表示中はフォーカスしない
+  setTimeout(function() { el.focus(); }, 50);
+}
+
+function addFromBtScan() {
+  var input = document.getElementById('bt-scan-input');
+  var val = input.value.trim().toUpperCase();
+  var elapsed = btFirstKeyTime === null ? null : (Date.now() - btFirstKeyTime);
+  input.value = '';
+  btFirstKeyTime = null;
+  if (!val) return;
+
+  if (elapsed === null || elapsed > BT_SCAN_MAX_MS) {
+    // 手入力と判定 → 何も表示せず破棄（デモ用にコンソールにだけ理由を残す）
+    console.log('[demo] 手入力と判定し破棄しました（' + elapsed + 'ms）:', val);
+    focusBtScanInput();
+    return;
+  }
+
+  addSerial(val);
+  focusBtScanInput();
+}
+
+// デモ用：実機の高速な読み取りを模した「成功スキャン」を直接発火する（速度チェックの対象外）
+function addMockBtScan() {
+  var prefix = mode === 'store' ? 'SN-STK' : 'SN-RTN';
+  addSerial(prefix + pad(mockSeq++, 5));
+  focusBtScanInput();
 }
 
 // ===== リスト描画 =====
@@ -499,6 +661,7 @@ function openModal() {
 }
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
+  focusBtScanInput();
 }
 
 // ===== シリアル追加 =====
@@ -589,6 +752,7 @@ function continueProcess() {
   lastErrors = [];
   renderList();
   showScreen('s-scan');
+  focusBtScanInput();
 }
 
 // ===== 戻る =====

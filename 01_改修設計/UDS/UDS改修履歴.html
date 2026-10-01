@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UDS改修履歴</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* レイアウト: 縦方向のタイムライン。左に年月レール、右にカード。新しい改修ほど上に追記する。 */
+:root{
+  --bg:#f3f5f9;
+  --surface:#ffffff;
+  --surface-border:#dbe1ec;
+  --ink:#182238;
+  --ink-soft:#56607a;
+  --ink-faint:#8891a8;
+  --navy:#1c2c4d;
+  --accent:#2f6feb;
+  --accent-soft:#e8f0fe;
+  --line:#ccd4e4;
+  --done:#1f9d5c;
+  --done-soft:#e1f5e9;
+  --wip:#c07a1a;
+  --wip-soft:#faf0da;
+  --planned:#5c6478;
+  --planned-soft:#eaedf3;
+  --font-head:'Zen Kaku Gothic New',"Hiragino Sans","Noto Sans JP",sans-serif;
+  --font-body:'Zen Kaku Gothic New',"Hiragino Sans","Noto Sans JP",sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  padding-inline:20px;
+  padding-block:40px 64px;
+}
+.page{max-width:1040px;margin-inline:auto}
+
+.masthead{
+  margin-bottom:40px;
+  border-top:4px solid var(--navy);
+  padding-top:20px;
+}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:.12em;
+  color:var(--navy);
+  text-transform:uppercase;
+  margin:0 0 10px;
+}
+h1{
+  font-family:var(--font-head);
+  font-weight:900;
+  font-size:clamp(26px,5vw,34px);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0 0 12px;
+  text-wrap:balance;
+}
+.lede{
+  font-size:15px;
+  line-height:1.8;
+  color:var(--ink-soft);
+  margin:0 0 20px;
+}
+.meta-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 20px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--ink-faint);
+  border-top:1px solid var(--surface-border);
+  padding-top:14px;
+}
+.meta-row strong{color:var(--ink-soft);font-weight:500}
+
+.timeline{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+
+.entry{
+  display:grid;
+  grid-template-columns:88px 20px 1fr;
+  column-gap:4px;
+}
+.entry:last-child .rail-line{display:none}
+
+.rail-date{
+  padding-top:22px;
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink);
+  text-align:right;
+  white-space:nowrap;
+}
+.rail-date span{
+  display:block;
+  font-size:10px;
+  font-weight:400;
+  color:var(--ink-faint);
+  margin-top:2px;
+}
+
+.rail{
+  position:relative;
+  display:flex;
+  justify-content:center;
+}
+.rail-dot{
+  margin-top:26px;
+  width:10px;height:10px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 0 3px var(--bg);
+  z-index:1;
+}
+.rail-line{
+  position:absolute;
+  top:36px;
+  bottom:-28px;
+  width:1px;
+  background:var(--line);
+}
+
+.entry-card{
+  background:var(--surface);
+  border:1px solid var(--surface-border);
+  border-radius:10px;
+  padding:18px 20px 20px;
+  margin-block:6px 28px;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.03em;
+  padding:3px 9px;
+  border-radius:99px;
+}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%}
+.badge-done{background:var(--done-soft);color:var(--done)}
+.badge-done::before{background:var(--done)}
+.badge-wip{background:var(--wip-soft);color:var(--wip)}
+.badge-wip::before{background:var(--wip)}
+.badge-planned{background:var(--planned-soft);color:var(--planned)}
+.badge-planned::before{background:var(--planned)}
+
+.entry-title{
+  font-family:var(--font-head);
+  font-weight:700;
+  font-size:19px;
+  margin:10px 0 10px;
+  line-height:1.4;
+}
+
+.entry-summary{
+  font-size:14.5px;
+  line-height:1.85;
+  color:var(--ink-soft);
+  margin:0 0 14px;
+}
+
+.tag-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-bottom:16px;
+}
+.tag{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--accent);
+  background:var(--accent-soft);
+  border-radius:5px;
+  padding:3px 8px;
+}
+
+details.entry-detail{
+  border-top:1px solid var(--surface-border);
+  padding-top:12px;
+}
+details.entry-detail summary{
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color:var(--accent);
+  list-style:none;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  user-select:none;
+}
+details.entry-detail summary::-webkit-details-marker{display:none}
+details.entry-detail summary::before{
+  content:"▸";
+  font-size:10px;
+  transition:transform .15s ease;
+}
+details.entry-detail[open] summary::before{transform:rotate(90deg)}
+
+.detail-body{padding-top:14px}
+.detail-body h3{
+  font-family:var(--font-head);
+  font-size:13px;
+  font-weight:700;
+  color:var(--ink);
+  margin:16px 0 8px;
+}
+.detail-body h3:first-child{margin-top:0}
+.detail-body p{
+  font-size:13.5px;
+  line-height:1.8;
+  color:var(--ink-soft);
+  margin:0;
+}
+.detail-body ul{
+  margin:0;
+  padding-left:18px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.detail-body li{
+  font-size:13.5px;
+  line-height:1.7;
+  color:var(--ink-soft);
+}
+.detail-body a{color:var(--accent)}
+.link-list{list-style:none;padding-left:0}
+.link-list li{display:flex;align-items:baseline;gap:6px}
+.link-list li::before{content:"↗";color:var(--ink-faint);font-size:11px}
+
+.footnote{
+  margin-top:32px;
+  padding-top:20px;
+  border-top:1px solid var(--surface-border);
+  font-size:12.5px;
+  line-height:1.8;
+  color:var(--ink-faint);
+}
+
+@media (max-width:560px){
+  .entry{grid-template-columns:20px 1fr}
+  .rail-date{display:none}
+  .rail{padding-top:2px}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="masthead">
+    <p class="eyebrow">UDS Change Log</p>
+    <h1>UDS改修履歴</h1>
+    <p class="lede">UDSで行った主な改修を、事業部・関係部署向けに時系列で記録するページです。新しい改修が入るたびに、このページの一番上に追記していきます。</p>
+    <div class="meta-row">
+      <span><strong>記録件数</strong> 1件</span>
+      <span><strong>最終更新</strong> 2026.09.29</span>
+    </div>
+  </div>
+
+  <div class="timeline">
+
+    <!-- 次の改修を追記する場合は、この直後に新しい .entry ブロックをコピーして先頭に追加する（新しいものが上）-->
+
+    <article class="entry">
+      <div class="rail-date">2026.09.28<span>本番反映</span></div>
+      <div class="rail"><div class="rail-dot"></div><div class="rail-line"></div></div>
+      <div class="entry-card">
+        <span class="badge badge-done">リリース済み</span>
+        <h2 class="entry-title">顧客直送・代理店直送対応</h2>
+        <p class="entry-summary">
+          これまでUDSは「顧客への直送」のみに対応しており、代理店への発送は手作業で対応していました。今回、代理店への直送（代理店直送）をシステム対応し、あわせて顧客直送の場合の送り状に受取担当者名を記載できるようにしたことで、店舗などでの受け取り拒否の削減を図りました。
+        </p>
+        <div class="tag-row">
+          <span class="tag">UDS</span>
+          <span class="tag">契約連携</span>
+          <span class="tag">送り状</span>
+          <span class="tag">マスタ管理</span>
+        </div>
+        <details class="entry-detail">
+          <summary>対応内容を見る</summary>
+          <div class="detail-body">
+            <h3>背景</h3>
+            <p>センターから支店ではなく、センターから代理店に向けて発送する契約形態がある一方、従来のUDSは顧客直送のみの対応だったため、代理店への発送は手作業対応が発生していました。また顧客直送の送り状に受取担当者名の記載がなく、店舗側で受け取りを拒否されるケースが一定数発生していました。</p>
+            <h3>対応内容</h3>
+            <ul>
+              <li>契約データから顧客直送・代理店直送を自動判定し、代理店直送の場合は発送先や送り状の記載内容を切り替えるようにした</li>
+              <li>顧客直送の送り状に受取担当者名を出力する項目を追加した</li>
+              <li>直送案件一覧画面へ「直送カテゴリ名」の検索項目を追加</li>
+              <li>「直送カテゴリ」とその対象品目をマスタ管理画面から登録・変更できるようにした</li>
+              <li>NP審査のステータスを完了にする判定を、顧客コード単位ではなく、「顧客コード×契約部署単位」に変更した</li>
+            </ul>
+            <h3>関連資料</h3>
+            <ul class="link-list">
+              <li><a href="https://docs.google.com/document/d/1EYhSHmnqyVxjeOQvcb9uq6F7dUD7ppIIfHxDfrySTQQ/edit?usp=sharing" target="_blank" rel="noopener">改修概要書（詳細仕様）</a></li>
+              <li><a href="https://docs.google.com/spreadsheets/d/1v4oA1TS7FrfYAamoKDjkgD6-dckydhE9U73ZkRFjY3c/edit?gid=1425214750#gid=1425214750" target="_blank" rel="noopener">NP審査ロジック改修（Before / After）</a></li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="footnote">本ページはUDSの改修のうち、事業部・関係部署の把握が必要なものを対象に記録しています。個別の詳細仕様は各改修の関連資料を参照してください。</p>
+
+</div>
+
+</body>
+</html>

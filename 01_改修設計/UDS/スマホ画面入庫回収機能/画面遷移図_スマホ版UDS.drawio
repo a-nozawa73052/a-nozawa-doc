@@ -28,6 +28,18 @@
                 <mxCell id="m03" value="M-03&#xa;バーコード読み取り&#xa;（端末回収登録）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="570" y="596" width="180" height="64" as="geometry"/>
                 </mxCell>
+                <mxCell id="bt02" value="★2026-09追加&#xa;カメラ／Bluetoothスキャナー&#xa;入力欄を常時表示（併用可）" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;fontColor=#4a2a5a;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="590" width="100" height="76" as="geometry"/>
+                </mxCell>
+                <mxCell id="bt03" value="★2026-09追加&#xa;カメラ／Bluetoothスキャナー&#xa;入力欄を常時表示（併用可）" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;fontColor=#4a2a5a;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="590" width="100" height="76" as="geometry"/>
+                </mxCell>
+                <mxCell id="ebt02" style="edgeStyle=none;endArrow=none;dashed=1;strokeColor=#9673a6;" parent="1" source="bt02" target="m02" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ebt03" style="edgeStyle=none;endArrow=none;dashed=1;strokeColor=#9673a6;" parent="1" source="bt03" target="m03" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
                 <mxCell id="m04" value="M-04  処理結果画面" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="305" y="730" width="270" height="50" as="geometry"/>
                 </mxCell>
