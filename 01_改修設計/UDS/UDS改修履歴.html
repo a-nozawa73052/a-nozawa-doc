@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UDS改修履歴</title>
+<title>UDSリリースノート</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
@@ -266,18 +266,54 @@ details.entry-detail[open] summary::before{transform:rotate(90deg)}
 <div class="page">
 
   <div class="masthead">
-    <p class="eyebrow">UDS Change Log</p>
-    <h1>UDS改修履歴</h1>
+    <p class="eyebrow">UDS Release Notes</p>
+    <h1>UDSリリースノート</h1>
     <p class="lede">UDSで行った主な改修を、事業部・関係部署向けに時系列で記録するページです。新しい改修が入るたびに、このページの一番上に追記していきます。</p>
     <div class="meta-row">
-      <span><strong>記録件数</strong> 1件</span>
-      <span><strong>最終更新</strong> 2026.09.29</span>
+      <span><strong>記録件数</strong> 2件</span>
+      <span><strong>最終更新</strong> 2026.10.02</span>
     </div>
   </div>
 
   <div class="timeline">
 
     <!-- 次の改修を追記する場合は、この直後に新しい .entry ブロックをコピーして先頭に追加する（新しいものが上）-->
+
+    <article class="entry">
+      <div class="rail-date">2026.10.06<span>本番反映予定</span></div>
+      <div class="rail"><div class="rail-dot"></div><div class="rail-line"></div></div>
+      <div class="entry-card">
+        <span class="badge badge-planned">リリース予定</span>
+        <h2 class="entry-title">USEN Camera メンテナンスアカウントの自動発行・自動削除</h2>
+        <p class="entry-summary">
+          USEN Cameraの初期設定に使うメンテナンスアカウントを、UDSの出荷・契約の状況にあわせて自動で発行・削除する仕組みを導入します。出荷の準備が整った時点でアカウントと案内メールが自動で届き、契約が受注中でなくなればアカウントが自動で削除されるため、発行の手間と、不要なアカウントの残存を減らします。
+        </p>
+        <div class="tag-row">
+          <span class="tag">UDS</span>
+          <span class="tag">USEN MEMBERS</span>
+          <span class="tag">USEN Camera</span>
+          <span class="tag">バッチ</span>
+        </div>
+        <details class="entry-detail">
+          <summary>対応内容を見る</summary>
+          <div class="detail-body">
+            <h3>背景</h3>
+            <p>USEN Cameraの設置・初期設定にはメンテナンスアカウントが必要です。発行と削除のタイミングを出荷・契約状況に合わせ、発行漏れや不要アカウントの残存を防ぐことを目的としています。</p>
+            <h3>対応内容</h3>
+            <ul>
+              <li>USEN Cameraの新設出荷で引当が完了した顧客を毎時抽出し、メンテナンスアカウントを自動発行するようにした（有効期限90日）</li>
+              <li>支店ごとに登録された宛先へ「メンテナンスアカウント発行のご案内」メールを自動送信するようにした</li>
+              <li>顧客のUSEN Camera契約に受注中のものがなくなった時点で、アカウントを自動削除するようにした</li>
+              <li>発行・削除の結果をCSVで保存し、失敗があれば担当チャットに通知するようにした</li>
+            </ul>
+            <h3>関連資料</h3>
+            <ul class="link-list">
+              <li><a href="https://docs.google.com/document/d/1MXT-R0zH-X0qjY-5rgV2_FORfhyV9DKZvE7OryfFaeY/edit?tab=t.0#heading=h.h3vn8i247id" target="_blank" rel="noopener">改修概要書（詳細仕様）</a></li>
+              <li><a href="https://docs.google.com/spreadsheets/d/1l9v_gRLx30Bb6iiN67P7mZflCe4ABswePEhyDb-ELv0/edit?gid=1460912146#gid=1460912146" target="_blank" rel="noopener">詳細資料（開発向け）</a></li>            </ul>
+          </div>
+        </details>
+      </div>
+    </article>
 
     <article class="entry">
       <div class="rail-date">2026.09.28<span>本番反映</span></div>

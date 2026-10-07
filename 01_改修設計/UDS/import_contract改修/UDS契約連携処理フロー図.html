@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UDS契約連携処理フロー図</title>
+<style>
+:root{
+  --bg:#eef0f3;
+  --surface:#ffffff;
+  --ink:#1b2330;
+  --muted:#5b6472;
+  --accent:#2f5fd1;
+  --accent-soft:#e4eafc;
+  --warn:#a85f16;
+  --warn-soft:#f6e7d5;
+  --line:#d7dbe2;
+  --code-bg:#f3f4f6;
+}
+:root[data-theme="dark"]{
+  --bg:#11151c;
+  --surface:#171c25;
+  --ink:#e6e9ee;
+  --muted:#8b93a1;
+  --accent:#7fa0ef;
+  --accent-soft:#1f2a44;
+  --warn:#dd9c52;
+  --warn-soft:#3a2c1a;
+  --line:#2a313d;
+  --code-bg:#1c2130;
+}
+:root[data-theme="light"]{
+  --bg:#eef0f3;
+  --surface:#ffffff;
+  --ink:#1b2330;
+  --muted:#5b6472;
+  --accent:#2f5fd1;
+  --accent-soft:#e4eafc;
+  --warn:#a85f16;
+  --warn-soft:#f6e7d5;
+  --line:#d7dbe2;
+  --code-bg:#f3f4f6;
+}
+
+*{box-sizing:border-box;}
+body{background:var(--bg);margin:0;}
+main{
+  max-width:960px;
+  margin:0 auto;
+  padding:56px 24px 96px;
+  color:var(--ink);
+  font-family:-apple-system,"Segoe UI","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
+  line-height:1.7;
+}
+h1,h2,h3{
+  font-family:"Segoe UI Semibold","Hiragino Sans",-apple-system,system-ui,sans-serif;
+  font-weight:700;
+  letter-spacing:0.01em;
+  color:var(--ink);
+}
+h1{font-size:1.9rem;margin:0 0 8px;}
+h2{
+  font-size:1.05rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--accent);
+  margin:0 0 4px;
+}
+h3{font-size:1.4rem;margin:0 0 18px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink);}
+.subtitle{color:var(--muted);font-size:1rem;margin:0 0 28px;max-width:640px;}
+.meta{color:var(--muted);font-size:0.85rem;margin:0 0 40px;}
+code,.mono{
+  font-family:ui-monospace,"Cascadia Code","Consolas","SF Mono",monospace;
+  font-size:0.92em;
+  background:var(--code-bg);
+  padding:0.1em 0.35em;
+  border-radius:4px;
+}
+section{
+  border-top:1px solid var(--line);
+  padding:40px 0;
+}
+section:first-of-type{border-top:none;padding-top:0;}
+.lede{color:var(--muted);max-width:720px;margin:0 0 24px;}
+.diagram-wrap{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:20px;
+  overflow-x:auto;
+}
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:20px;
+  padding:16px 20px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  margin-bottom:36px;
+  font-size:0.88rem;
+}
+.legend-item{display:flex;align-items:center;gap:8px;color:var(--muted);}
+.swatch{width:22px;height:3px;border-radius:2px;display:inline-block;}
+.swatch.solid{background:var(--accent);}
+.swatch.dashed{background:repeating-linear-gradient(90deg,var(--warn) 0 6px,transparent 6px 10px);}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.92rem;
+}
+table caption{text-align:left;color:var(--muted);font-size:0.85rem;margin-bottom:10px;}
+th,td{
+  text-align:left;
+  padding:10px 14px;
+  border-bottom:1px solid var(--line);
+  vertical-align:top;
+}
+th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.06em;}
+tr:last-child td{border-bottom:none;}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
+.table-wrap table{min-width:640px;}
+.note-box{
+  background:var(--warn-soft);
+  border:1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+  border-radius:10px;
+  padding:16px 20px;
+  font-size:0.92rem;
+  color:var(--ink);
+}
+.note-box strong{color:var(--warn);}
+.source-list{color:var(--muted);font-size:0.85rem;padding-left:20px;}
+.source-list li{margin-bottom:6px;}
+footer{color:var(--muted);font-size:0.8rem;margin-top:20px;}
+</style>
+</head>
+<body>
+
+<main>
+  <h1>UDS契約連携処理 フロー図</h1>
+  <p class="subtitle">import_contract（契約取り込み）と import_neos_uairplan（契約更新）の現行処理、NeOS・UNIS が ACE に置き換わった場合の想定フロー、および GitLab MR #211 / GitHub PR #3 で実装された新アーキテクチャの詳細フローをまとめたもの。</p>
+  <p class="meta">対象リポジトリ: 各サービスリポジトリ\uds\import_contract, import_neos_uairplan, preprocess-contract-tsv, preprocess-neos-uairplan-tsv / 参照ドキュメント: doc\01_概要, doc\05_改修設計\ace, a-nozawa-doc\01_改修設計\UDS\import_contract改修</p>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch solid"></span>現行仕様・実装として確認済みの連携</div>
+    <div class="legend-item"><span class="swatch dashed"></span>未確定・レビューで提案中の変更</div>
+  </div>
+
+  <section id="contract">
+    <h2>図1</h2>
+    <h3>import_contract — 契約取り込み処理（旧方式）</h3>
+    <p class="lede">NeOSが契約TSVをS3にPUTするたびに起動するイベント駆動型Lambda。契約の新規／更新を判定し、UDSの各テーブルへ反映しつつ、同一ファイルをSGS向けバケットへそのままコピーする。</p>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+%%{init: {'theme':'default'}}%%
+flowchart TD
+    NeOS["NeOS"] -->|"contract_yyyymmddhhiiss.tsv を PUT"| S3in[("S3: udsapi-contract")]
+    S3in -->|"S3イベント通知"| L1["Lambda: import_contract（旧）"]
+    L1 -->|"元ファイルをそのままコピー"| S3sgs[("S3: prd2-sgs-import/contract")]
+    L1 --> Parse["TSV読込・改行分割・列数チェック(53列)"]
+    Parse --> Validate{"必須/文字数/日時形式<br/>バリデーション"}
+    Validate -->|"NG行"| ErrFlag["hasError = true<br/>(該当行はスキップ)"]
+    Validate -->|"OK行"| Lookup["device_types / branch_replacement /<br/>unis_customer_brands を参照"]
+    Lookup --> Exist{"contracts に<br/>contract_cd が存在?"}
+    Exist -->|"新規"| Insert["contracts へ INSERT<br/>shipping_requests へ INSERT<br/>direct_shipments へ INSERT<br/>contract_bgms 等の紐付け"]
+    Exist -->|"既存"| Update["contracts を UPDATE<br/>updateUdsStatus()"]
+    Insert --> CPM(["CPM通知API"])
+    Insert --> UX(["UX SQS"])
+    Update --> UX
+    Insert --> Finally["finally: DB接続クローズ"]
+    Update --> Finally
+    Finally -->|"hasError あり"| S3err[("S3: error/")]
+    Finally -->|"正常終了"| S3done[("S3: done/")]
+
+    classDef default fill:#ffffff,stroke:#5b6472,color:#1b2330;
+    classDef store fill:#e4eafc,stroke:#2f5fd1,color:#1b2330;
+    classDef lambda fill:#2f5fd1,stroke:#2f5fd1,color:#ffffff;
+    classDef ext fill:#ffffff,stroke:#8b93a1,color:#1b2330,stroke-dasharray: 3 3;
+    class S3in,S3sgs,S3err,S3done store;
+    class L1 lambda;
+    class CPM,UX ext;
+</pre>
+    </div>
+  </section>
+
+  <section id="uairplan">
+    <h2>図2</h2>
+    <h3>import_neos_uairplan — 契約更新パイプライン（先行事例）</h3>
+    <p class="lede">UNIS発のTSVを2段のLambdaで処理する更新専用パイプライン。ワークテーブルを介した1行単位トランザクション＋失敗行を残す再試行設計で、import_contract新方式の設計元になった。</p>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+%%{init: {'theme':'default'}}%%
+flowchart TD
+    UNIS["UNIS"] -->|"neos_uairplan_*.tsv を PUT"| S3ready[("S3")]
+    S3ready -->|"S3イベント通知"| L2["Lambda:<br/>preprocess-neos-uairplan-tsv"]
+    L2 -->|"生ファイルを全件コピー"| S3sgs2[("S3: prd2-sgs-import/neos_uairplan")]
+    L2 --> Filter{"uds.contracts に<br/>contract_cd が存在?<br/>(1000行ずつ突合)"}
+    Filter -->|"一致行のみ INSERT"| Work[("uds.work_imported_neos_uairplan")]
+    Work -->|"id ASC, LIMIT 1000<br/>でポーリング"| L3["Lambda: import_neos_uairplan"]
+    L3 --> Exist2{"contracts に<br/>contract_cd が存在?<br/>(1行単位トランザクション)"}
+    Exist2 -->|"なし"| Notify1(["Google Chat通知<br/>(行は削除せず残す)"])
+    Exist2 -->|"あり"| Upd["contracts UPDATE(品目・service_cd)<br/>contract_com_devices / contract_mdm_devices<br/>contract_uphone_locations (Geocoding)<br/>serials / direct_shipments<br/>contract_mdm2_devices"]
+    Upd --> Arteria(["SQS: Arteria連携キュー"])
+    Upd -->|"成功"| Delete["work_imported_neos_uairplan<br/>から DELETE"]
+    Delete -->|"全ラウンド完了後<br/>まとめて実行"| UX2(["UX SQS"])
+    Upd -->|"失敗(rollback)"| Notify2(["Google Chat通知<br/>行は削除せず次回再試行"])
+
+    classDef default fill:#ffffff,stroke:#5b6472,color:#1b2330;
+    classDef store fill:#e4eafc,stroke:#2f5fd1,color:#1b2330;
+    classDef lambda fill:#2f5fd1,stroke:#2f5fd1,color:#ffffff;
+    classDef ext fill:#ffffff,stroke:#8b93a1,color:#1b2330,stroke-dasharray: 3 3;
+    class S3ready,S3sgs2,Work store;
+    class L2,L3 lambda;
+    class Notify1,Notify2,Arteria,UX2 ext;
+</pre>
+    </div>
+  </section>
+
+  <section id="new-architecture">
+    <h2>図3・実装詳細</h2>
+    <h3>contract.tsv の到着から最終処理まで（GitLab MR #211 / GitHub PR #3 実装ベース）</h3>
+    <p class="lede">実際のコード（<code>preprocess-contract-tsv/index.ts</code>、<code>import_contract/index.js</code>）を読んで確認した、現時点の実装の流れ。オレンジの破線部分は、レビューで修正を提案しているが<strong>まだコードには反映されていない</strong>箇所。</p>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+%%{init: {'theme':'default'}}%%
+flowchart TD
+    NeOS["NeOS"] -->|"contract_yyyymmddhhiiss.tsv を PUT"| S3in[("S3: udsapi-contract")]
+
+    subgraph PRE["preprocess-contract-tsv（S3イベント起動）"]
+        direction TB
+        S3in --> SGS["SGSバケットへコピー<br/>(3回リトライ)<br/>→ s3://prd2-sgs-import/contract/"]
+        SGS -->|"3回とも失敗"| ErrSGS(["error/へコピー + Google Chat通知<br/>終了"])
+        SGS -->|"成功"| Stream["TSVをストリームで1000行ずつ読込"]
+        Stream --> HeaderCk{"ヘッダー検証<br/>(53列・neos_item_cd列・必須23列の存在)"}
+        HeaderCk -->|"NG"| ErrHeader(["即時エラー終了<br/>error/へコピー + Google Chat通知"])
+        HeaderCk -->|"OK"| ColCk{"行ごと: 列数一致?"}
+        ColCk -->|"NG"| SkipCol["その行だけスキップ<br/>Google Chat通知(行番号+期待/実際列数)<br/>hasMismatch=true"]
+        ColCk -->|"OK"| NullCk{"NULL必須チェック"}
+        NullCk -.->|"NG(削除提案中)"| SkipNull["その行だけスキップ<br/>Google Chat通知(行番号+カラム名)<br/>hasMismatch=true"]
+        NullCk -->|"OK"| DeviceCk{"1000行ごとに<br/>device_types.neos_item_cd<br/>でバルクSELECT"}
+        DeviceCk -->|"未登録商材"| SkipDevice["infoログのみでスキップ<br/>(エラー扱いにしない)"]
+        DeviceCk -->|"登録済み商材"| BulkInsert["work_imported_contract へ<br/>バルクINSERT(53カラム+source_file_name)"]
+        BulkInsert --> AfterAll["全行処理後"]
+        SkipCol --> AfterAll
+        SkipNull -.-> AfterAll
+        AfterAll -->|"hasMismatchあり"| ErrFile(["元ファイルをerror/へコピー"])
+        AfterAll -->|"hasMismatchなし"| DoneFile(["元ファイルをdone/へコピー"])
+        ErrFile --> DelSrc["入力バケットから元ファイル削除"]
+        DoneFile --> DelSrc
+    end
+
+    EB["EventBridge: 10分ごと"] --> L2["Lambda: import_contract"]
+    BulkInsert -.-> Work[("uds.work_imported_contract")]
+    Work -->|"id ASC LIMIT 1000<br/>でポーリング"| L2
+
+    subgraph IMP["import_contract（EventBridgeポーリング起動）"]
+        direction TB
+        L2 --> Group["contract_cdでグループ化<br/>ラウンドロビンで1行ずつ処理"]
+        Group --> Valid2{"桁数・日時形式<br/>(+NULL必須を防御的に再チェック)"}
+        Valid2 -->|"NG"| SkipGroup["このcontract_cdグループの<br/>残り全行をスキップ(work残置)<br/>Google Chat通知"]
+        Valid2 -->|"OK"| DeviceCk2{"device_types再チェック"}
+        DeviceCk2 -->|"未登録(通常起きない)"| SkipInfo["infoログのみでスキップ<br/>(通知なし)"]
+        DeviceCk2 -->|"登録済み"| Area["UNIS DBからエリア情報取得"]
+        Area --> Tx["1行1トランザクション開始"]
+        Tx --> Exist3{"contracts に<br/>contract_cd存在?"}
+        Exist3 -->|"新規"| InsertNew["contracts INSERT<br/>shipping_requests INSERT(条件付き)<br/>direct_shipments INSERT(対象品目)<br/>BGM処理"]
+        Exist3 -->|"既存"| UpdateExist["contracts UPDATE<br/>updateUdsStatus()<br/>BGM処理"]
+        InsertNew --> U90["U90/U91/U92の場合<br/>UNIS参照・更新"]
+        UpdateExist --> U90
+        U90 --> Commit["work DELETE + commit"]
+        Commit -->|"現状: ここでCPM/UX呼び出し"| ExtNow(["CPM通知API / UX SQS<br/>(コミット前・提案で後ろへ移動検討中)"])
+        Commit -.->|"提案: 退避のみ"| Pending["pendingExternalCallsへ退避"]
+        Tx -->|"失敗(rollback)"| SkipGroup
+    end
+
+    Pending -.->|"全ラウンド完了後<br/>まとめて実行(提案中)"| ExtLater(["CPM通知API / UX SQS<br/>失敗時はGoogle Chat通知のみ"])
+
+    classDef default fill:#ffffff,stroke:#5b6472,color:#1b2330;
+    classDef store fill:#e4eafc,stroke:#2f5fd1,color:#1b2330;
+    classDef lambda fill:#2f5fd1,stroke:#2f5fd1,color:#ffffff;
+    classDef ext fill:#ffffff,stroke:#8b93a1,color:#1b2330,stroke-dasharray: 3 3;
+    classDef proposed fill:#f6e7d5,stroke:#a85f16,color:#1b2330,stroke-dasharray: 4 3;
+    class S3in,Work store;
+    class L2 lambda;
+    class ErrSGS,ErrHeader,SkipCol,SkipDevice,ErrFile,DoneFile,SkipGroup,SkipInfo,ExtNow ext;
+    class NullCk,SkipNull,Pending,ExtLater proposed;
+</pre>
+    </div>
+    <p class="lede" style="margin-top:12px;font-size:0.85rem;">オレンジ点線＝レビューで提案中・未実装の変更（NULL必須チェックのpreprocess側からの削除＝コメント④、CPM/UX外部連携のコミット後まとめ実行＝コメント①・ADR 0009）。それ以外は実際のコードで確認済みの現行実装。</p>
+  </section>
+
+  <section id="ace">
+    <h2>図4</h2>
+    <h3>NeOS・UNIS → ACE 置き換え後の想定フロー</h3>
+    <p class="lede"><code>doc\05_改修設計\ace\ACE連携_UDS側要求事項.md</code> の方針（現行のファイル形式・命名規則・カラム構成を踏襲してもらう）に基づく、現状踏襲の置き換えのみを図示。ACE側の仕様は未確定のため、破線部分は推測を含む。</p>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+%%{init: {'theme':'default'}}%%
+flowchart TD
+    subgraph CUR["現状"]
+      direction LR
+      NeOS0["NeOS"]
+      UNIS0["UNIS"]
+    end
+
+    subgraph FUT["ACE移行後（想定）"]
+      direction LR
+      ACE["ACE"]
+    end
+
+    NeOS0 -->|"contract.tsv"| UDS_C["UDS: preprocess-contract-tsv<br/>→ import_contract"]
+    UNIS0 -->|"neos_uairplan_*.tsv / u1.tsv 等"| UDS_U["UDS: preprocess-neos-uairplan-tsv<br/>→ import_neos_uairplan 他"]
+
+    ACE -.->|"contract.tsv 相当<br/>(同一フォーマット想定)"| UDS_C
+    ACE -.->|"neos_uairplan.tsv 相当"| UDS_U
+    ACE -.->|"?"| Q1{{"未確定: neos_item_pac_cd 廃止<br/>→ 直送センター振分/BGM紐付けへの影響"}}
+    ACE -.->|"?"| Q2{{"未確定: u2データ廃止時期<br/>(移行先はSGS想定)"}}
+    ACE -.->|"?"| Q3{{"未確定: 並用期間のS3パス設計<br/>・二重処理防止"}}
+
+    UDS_C --> SGS_out["SGS（S3ファイル連携は現状維持想定）"]
+    UDS_U --> SGS_out
+
+    classDef default fill:#ffffff,stroke:#5b6472,color:#1b2330;
+    classDef cur fill:#2f5fd1,stroke:#2f5fd1,color:#ffffff;
+    classDef fut fill:#ffffff,stroke:#a85f16,color:#1b2330,stroke-width:2px,stroke-dasharray: 4 3;
+    classDef unknown fill:#f6e7d5,stroke:#a85f16,color:#a85f16,stroke-dasharray: 2 2;
+    class NeOS0,UNIS0,UDS_C,UDS_U,SGS_out cur;
+    class ACE fut;
+    class Q1,Q2,Q3 unknown;
+</pre>
+    </div>
+
+    <div class="note-box" style="margin-top:24px;">
+      <strong>未確定事項（要ACE側・事業部確認）</strong> — UDS側の基本方針は「ACE統合後もSGS・GRS・UMへの影響を最小化する」こと。現時点で確定していないのは主に以下の3点。
+      <ul style="margin:10px 0 0;padding-left:20px;">
+        <li><code>neos_item_pac_cd</code> 廃止に伴う直送センター振分・SSID自動設定ロジックへの影響</li>
+        <li>u2データ廃止のタイミングと、SGSへの移行方法</li>
+        <li>NeOS/UNISとACEの並用期間中のS3パス設計・二重処理防止策</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="sources">
+    <h2>出典</h2>
+    <h3 style="font-size:1.05rem;margin-bottom:12px;">参照したコード・ドキュメント</h3>
+    <ul class="source-list">
+      <li>各サービスリポジトリ\uds\import_contract\index.js（GitLab MR #211、ブランチ feature/import-contract-async-work-table）</li>
+      <li>各サービスリポジトリ\uds\preprocess-contract-tsv\index.ts（GitHub PR #3）</li>
+      <li>各サービスリポジトリ\uds\import_neos_uairplan\index.js, preprocess-neos-uairplan-tsv\index.ts（先行事例）</li>
+      <li>doc\01_概要\システム関係性とデータフロー.md, 各サービス詳細説明.md, 用語集.md</li>
+      <li>doc\05_改修設計\ace\ACE連携_UDS側要求事項.md, neos_item_pac_cd_廃止影響分析.md</li>
+      <li>a-nozawa-doc\01_改修設計\UDS\import_contract改修\改修概要書.md, ADR.md（0001〜0009）</li>
+    </ul>
+    <footer>作成日: 2026-10-02（図3は実装コードの直接確認に基づく最新版） / ACE関連は方針検討段階の情報を含む</footer>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
+</body>
+</html>
