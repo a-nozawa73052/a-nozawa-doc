@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-16
-systems: [ACE, NeOS, UDS]
+systems: [ACE, NeOS, UNIS, UDS]
 tags: [連携ファイル, mdm, mdm2, メニュー変更, 契約CD]
 ---
 
@@ -13,15 +13,17 @@ tags: [連携ファイル, mdm, mdm2, メニュー変更, 契約CD]
 ## コンテキスト
 - UDSは、NeOSから mdm.tsv（Lambda: import_mdm）と mdm2.tsv（Lambda: import_mdm2）の連携を受けている。mdm2.tsvは、1つのファイルにメイン機器とオプションなど複数の明細をまとめて入れる形式である。
 - 現行のNeOSでは、mdm.tsv/mdm2.tsvに含まれる明細はすべて同時に新設された契約のものになっている。
+- ACE移行後は、ACEがこれらの連携ファイルを作ってUDSに送る（ファイルにどう値を載せるかは坪田さんが設計中）。
 - ACEでは、メニュー変更として次の2種類をマスターに設定できる。
   - 取り替え: システム連携コード（＝現行のNeOS契約CD）が変わる。
   - プラン変更（UDSでの呼称: バンド変更）: NeOS契約CDは変わらず、NeOS品目CD（neos_item_cd）が変わる。
+- プラン変更の情報は、現行ではUNISから neos_uairplan.tsv（UNIS → UDS）で届く。ACE移行後は、ACEから contract.tsv（ACE → UDS）で届く。
 - UDSは契約CD（contract_cd）をキーにデータを管理している。そのため、取り替えで契約CDが変わる（例: C001 → C0010）と、変更前後の契約が同じものだと判断できない。
 
 ## 決定
 - mdm.tsv/mdm2.tsvの連携は、すべての明細を同時に新設で申し込んだ場合に限る。
 - 一部の明細だけを取り替える（契約CDが変わる）メニュー変更は、マスターに登録しない。これは運用で制御する。対象はメイン機器でもオプションでも同じ。
-- プラン変更は許可する。contract.tsvの連携だけで対応し、UDSはNeOS品目CDの変化からプラン変更を検知する。mdm2.tsvを再送する必要はない。
+- プラン変更は許可する。ACE移行後は contract.tsv（ACE → UDS）の連携だけで対応し、UDSはNeOS品目CDの変化からプラン変更を検知する。mdm2.tsvを再送する必要はない。
 - 結果として、1つのメイン契約CDに対して、mdm.tsv/mdm2.tsvはそれぞれ1回しか連携されない。
 
 ## 理由
