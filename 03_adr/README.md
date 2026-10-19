@@ -12,7 +12,7 @@
 | [0006](0006-test-code-verification-and-markdown-result-review.md) | UDSのLambda（インポート系）はテストコードで検証し、結果をMarkdown/CSVに出力して実装者以外がレビューする | Accepted | UDS | テスト, テストコード, Lambda, インポート, レビュー |
 | [0007](0007-test-scope-by-environment.md) | ローカルは変更点の単体テストのみとし、統合テストは開発環境（正常系）とステージングで行う | Accepted | UDS | テスト, 単体テスト, 統合テスト, ステージング, 開発環境 |
 | [0008](0008-no-test-code-for-web.md) | UDSのWeb側はテストコードを作成せず、画面での手動確認とする | Accepted | UDS | テスト, Web, 画面, 手動検証 |
-| [0009](0009-lambda-implementation-approach-and-tech-stack.md) | LambdaをTypeScriptで書き直すか、既存コードのコピーと修正で進めるか | Proposed | UDS | Lambda, TypeScript, 実装方針, 意思決定 |
+| [0009](0009-lambda-implementation-approach-and-tech-stack.md) | UDSのLambdaはTypeScriptで実装する | Accepted | UDS | Lambda, TypeScript, 実装方針, 意思決定 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
