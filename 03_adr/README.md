@@ -1,4 +1,6 @@
-# ADR 一覧（ACE連携まわり）
+# ADR 一覧
+
+> このファイルはADR自動作成スキルが各ADRのフロントマターから自動生成しています。手で編集しても次回上書きされます。
 
 | No. | タイトル | ステータス | 対象システム | タグ |
 |---|---|---|---|---|
@@ -7,6 +9,10 @@
 | [0003](0003-stg-split-existing-contracts-by-customer.md) | ステージングでは既存契約を顧客単位でACE検証用に分ける | Accepted | ACE, NeOS, UNIS, UDS | ステージング, テスト, 運用ルール |
 | [0004](0004-stg-neos-unis-operation-during-ace-verification.md) | ステージングでのACE検証中のNeOS/UNIS側の扱い | Proposed | ACE, NeOS, UNIS, UDS | ステージング, テスト, 事業部調整, 切り戻し |
 | [0005](0005-billing-code-reissue-members-relink.md) | 請求先コードが新しく発番された場合のUMEMBERS側の紐づけ運用 | Proposed | ACE, UNIS, UMEMBERS | 請求先, データ移行, 運用ルール |
+| [0006](0006-test-code-verification-and-markdown-result-review.md) | UDSのLambda（インポート系）はテストコードで検証し、結果をMarkdown/CSVに出力して実装者以外がレビューする | Accepted | UDS | テスト, テストコード, Lambda, インポート, レビュー |
+| [0007](0007-test-scope-by-environment.md) | ローカルは変更点の単体テストのみとし、統合テストは開発環境（正常系）とステージングで行う | Accepted | UDS | テスト, 単体テスト, 統合テスト, ステージング, 開発環境 |
+| [0008](0008-no-test-code-for-web.md) | UDSのWeb側はテストコードを作成せず、画面での手動確認とする | Accepted | UDS | テスト, Web, 画面, 手動検証 |
+| [0009](0009-lambda-implementation-approach-and-tech-stack.md) | LambdaをTypeScriptで書き直すか、既存コードのコピーと修正で進めるか | Proposed | UDS | Lambda, TypeScript, 実装方針, 意思決定 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
@@ -15,15 +21,3 @@
 | date | 決定（または議論）した日 |
 | systems | 対象システム |
 | tags | 自由タグ |
-
-## 出典
-- 会議: ACE連携まわり（2026-10-16 12:00 JST）
-- Geminiによるメモと文字起こし: https://docs.google.com/document/d/1sHQ53EJtCansJ1jXd7speqaN4LbIhHJXVEGOEkjrsYc
-- 用語集: [UDS_用語集](https://docs.google.com/document/d/1YGHdWa1Y-6_eCtrsfa9Xl9afwtkM9WSFF18RWJcbMOY)
-
-## 作成時の補正方針
-- 表記はUDS用語集に合わせた（NeOS、UNIS、契約CD（contract_cd）、NeOS品目CD（neos_item_cd）、mdm.tsv/mdm2.tsv など）。
-- 音声認識の誤変換は次のように補正した: 迷彩/明産/面細 → 明細、エース → ACE、ネオス/寝オス → NeOS、ユニス/ニス → UNIS、低下 → 定価、ゼブラコード → ZEBRA Ⅱ（店舗情報管理）の店舗CD、メンバーズ → UMEMBERS（要確認）。
-- 提供サービス明細コード・請求先コードなどACE側の用語は、用語集に載っていないため会議での呼び方のままとした。
-- 会議途中の地震速報など、議題と関係ないやり取りは除外した。
-- 解釈に確信が持てない箇所には「要確認」と記載した。
