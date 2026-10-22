@@ -13,6 +13,8 @@
 | [0007](0007-test-scope-by-environment.md) | ローカルは変更点の単体テストのみとし、統合テストは開発環境（正常系）とステージングで行う | Accepted | UDS | テスト, 単体テスト, 統合テスト, ステージング, 開発環境 |
 | [0008](0008-no-test-code-for-web.md) | UDSのWeb側はテストコードを作成せず、画面での手動確認とする | Accepted | UDS | テスト, Web, 画面, 手動検証 |
 | [0009](0009-lambda-implementation-approach-and-tech-stack.md) | UDSのLambdaは言語をJavaScript（Node.js）のままとする | Accepted | UDS | Lambda, JavaScript, Node.js, 実装方針, 意思決定 |
+| [0013](0013-document-reasons-for-changes.md) | 機能追加や改修の「理由」をドキュメントとして残す | Accepted | UDS, GRS, UMEMBERS | ドキュメント, 運用ルール, 開発プロセス, チェック, 再発防止 |
+| [0014](0014-google-drive-system-based-management.md) | Googleドライブの管理を、部署起点から各システム起点に徐々に移行する | Accepted | UDS, GRS, UMEMBERS | Googleドライブ, 共有ドライブ, 運用ルール, システム起点, 共通ルール |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
