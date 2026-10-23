@@ -16,6 +16,8 @@
 | [0010](0010-np-review-narrow-by-sales-department.md) | NP審査の対象は営業所属部署名で絞り込み、直送カテゴリー名は審査に使わない | Accepted | UDS, UNIS, NeOS | NP審査, 営業所属部署, 直送カテゴリー, 検索条件, 運用ルール |
 | [0011](0011-department-change-and-np-review-status.md) | 営業担当者の部署移動時に、営業所属部署の反映とNP審査ステータスをどう扱うか | Proposed | UDS, UNIS | NP審査, 部署移動, 営業所属部署, UNIS連携, 審査漏れ |
 | [0012](0012-all-fields-csv-export-500-per-page-limit.md) | UDSの全項目CSV出力の1ページ500件の上限を、当面は引き上げず、対応可否を調査する | Proposed | UDS | CSV出力, 件数上限, 全項目出力, システム負荷, 改修要望 |
+| [0013](0013-document-reasons-for-changes.md) | 機能追加や改修の「理由」をドキュメントとして残す | Accepted | UDS, GRS, UMEMBERS | ドキュメント, 運用ルール, 開発プロセス, チェック, 再発防止 |
+| [0014](0014-google-drive-system-based-management.md) | Googleドライブの管理を、部署起点から各システム起点に徐々に移行する | Accepted | UDS, GRS, UMEMBERS | Googleドライブ, 共有ドライブ, 運用ルール, システム起点, 共通ルール |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
