@@ -16,6 +16,10 @@
 | [0010](0010-np-review-narrow-by-sales-department.md) | NP審査の対象は営業所属部署名で絞り込み、直送カテゴリー名は審査に使わない | Accepted | UDS, UNIS, NeOS | NP審査, 営業所属部署, 直送カテゴリー, 検索条件, 運用ルール |
 | [0011](0011-department-change-and-np-review-status.md) | 営業担当者の部署移動時に、営業所属部署の反映とNP審査ステータスをどう扱うか | Proposed | UDS, UNIS | NP審査, 部署移動, 営業所属部署, UNIS連携, 審査漏れ |
 | [0012](0012-all-fields-csv-export-500-per-page-limit.md) | UDSの全項目CSV出力の1ページ500件の上限を、当面は引き上げず、対応可否を調査する | Proposed | UDS | CSV出力, 件数上限, 全項目出力, システム負荷, 改修要望 |
+| [0018](0018-php-post-max-size-plus-1mb.md) | PHPのpost_max_sizeをupload_max_filesizeより1MB大きく設定する | Accepted | UDS | PHP, php.ini, セキュリティ, アップロード, 設定値 |
+| [0019](0019-mobile-staging-url-path-based-no-new-domain.md) | モバイル版は専用ドメインを発行せず、Web版と同じパス形式で提供する | Accepted | UDS | モバイル, URL設計, ドメイン, ステージング |
+| [0020](0020-company-iphone-access-route-to-uds.md) | 社用iPhoneからUDSへのアクセス経路をどうするか | Proposed | UDS | iPhone, アクセス経路, IP制限, ダイレクトコネクト, VPN, インフラ |
+| [0021](0021-php-version-upgrade-schedule.md) | UDSのPHPバージョンアップを開発スケジュール内で行うか | Proposed | UDS | PHP, バージョンアップ, スケジュール, セキュリティ, ACE |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
