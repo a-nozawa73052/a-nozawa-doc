@@ -14,6 +14,9 @@
 | [0008](0008-no-test-code-for-web.md) | UDSのWeb側はテストコードを作成せず、画面での手動確認とする | Accepted | UDS | テスト, Web, 画面, 手動検証 |
 | [0009](0009-lambda-implementation-approach-and-tech-stack.md) | UDSのLambdaは言語をJavaScript（Node.js）のままとする | Accepted | UDS | Lambda, JavaScript, Node.js, 実装方針, 意思決定 |
 | [0010](0010-test-on-dev-env-and-uat-only-on-stg.md) | UDSのACE対応テストは開発環境で網羅し、ステージングはUATのみとする | Accepted | UDS, ACE | テスト, 単体テスト, 結合テスト, 開発環境, ステージング, UAT |
+| [0011](0011-np-review-narrow-by-sales-department.md) | NP審査の対象は営業所属部署名で絞り込み、直送カテゴリー名は審査に使わない | Accepted | UDS, UNIS, NeOS | NP審査, 営業所属部署, 直送カテゴリー, 検索条件, 運用ルール |
+| [0012](0012-department-change-and-np-review-status.md) | 営業担当者の部署移動時に、営業所属部署の反映とNP審査ステータスをどう扱うか | Proposed | UDS, UNIS | NP審査, 部署移動, 営業所属部署, UNIS連携, 審査漏れ |
+| [0013](0013-all-fields-csv-export-500-per-page-limit.md) | UDSの全項目CSV出力の1ページ500件の上限を、当面は引き上げず、対応可否を調査する | Proposed | UDS | CSV出力, 件数上限, 全項目出力, システム負荷, 改修要望 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
