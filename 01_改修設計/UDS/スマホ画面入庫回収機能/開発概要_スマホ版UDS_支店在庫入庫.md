@@ -2,6 +2,11 @@
 
 **作成日:** 2026-06-01
 **更新：** 2026-10-07 入庫処理の対象に「通常新設入庫」を追加（従来の「支店在庫入庫」のみという記載を見直し）
+**更新：** 2026-10-14 実装コードのレビュー結果を反映し、以下を実装内容に合わせて修正（詳細はPRレビューの記録を参照）
+  - アクセストークンの方式・テーブル名・URLパラメータ名を、実装（`mobile_branch_keys`／`branch_key`）に合わせて修正
+  - キャンセル返却予定端末（`18`）は「要案内」ではなく通常のエラーとして扱われる仕様に修正
+  - 回収登録時のコメント登録（`Model_Comment`）は行わない仕様に修正
+  - Bluetooth接続案内は画面内表示ではなく、ユーザーマニュアルへの記載に変更
 
 ---
 
@@ -41,11 +46,11 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
 ```
 ① エンジニアが社用iPhoneで、各支店に配布されたQRコードを読み取る
           ↓
-② UDSのスマホ版ページが表示される
-   例）https://mobile.uds.usen.co.jp/mobile/branch/store?token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   （支店コードを直接使わず、支店ごとの不透明トークンでアクセスする。詳細は「3. 機能仕様」参照）
+② UDSのスマホ版メニュー画面が表示される
+   例）https://mobile.uds.usen.co.jp/mobile/branch/menu?branch_key=xxxxxxxxxx
+   （支店コードを直接使わず、支店ごとの不透明なランダムキーでアクセスする。詳細は「3. 機能仕様」参照）
           ↓
-③ バーコードを読み取る（複数端末がある場合は連続で読み取る）
+③ 「入庫処理」または「端末回収登録」を選び、バーコードを読み取る（複数端末がある場合は連続で読み取る）
    カメラ読み取り、またはBluetoothバーコードスキャナー読み取りのどちらでも可（併用可）
           ↓
 ④ 「入庫処理」または「端末回収登録」ボタンを押下
@@ -87,22 +92,22 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
 |------|----------------|----------------|---------|------|
 | 入庫処理 | `9` 支店在庫出庫 | `11` 支店在庫入庫 | 成功 | 支店在庫マスタ（`head_branch_stock`）の在庫数を+1する |
 | 入庫処理 | `10` 通常新設出庫 | `12` 通常新設入庫 | 成功 | 契約ステータスが「受注」であること、セット商品の場合は同一バッチ内に残り明細が揃っていることが条件（「入庫処理：通常新設出庫」参照） |
-| 入庫処理 | `18` キャンセル返却予定 | 変更なし | 要案内 | `DEVICE_CANCEL_RETURN_STORE_MSG`を表示。入庫処理は行わない |
-| 入庫処理 | 上記以外（`1`〜`8`,`14`〜`17`,`19`〜`26`等） | 変更なし | エラー | `SERIAL_UPDATE_MSG`（対象外ステータス） |
-| 端末回収登録 | `20` 回収依頼 | `22` 回収済 | 成功 | 回収報告氏名は「{支店名}（スマホ）」を自動設定。PPPoEアカウント削除・UDS検証機紐づけ解除を実施 |
+| 入庫処理 | 上記以外（`1`〜`8`,`14`〜`26`等。`18`キャンセル返却予定を含む） | 変更なし | エラー | 端末ステータスが異なる旨のエラーメッセージ（対象外ステータス） |
+| 端末回収登録 | `20` 回収依頼 | `22` 回収済 | 成功 | PPPoEアカウント削除・UDS検証機紐づけ解除を実施 |
 | 端末回収登録 | `21` 差し戻し（再回収依頼） | `22` 回収済 | 成功 | 同上 |
 | 端末回収登録 | `23` 回収不可 | `22` 回収済 | 成功 | 同上（再度の回収登録を許容） |
-| 端末回収登録 | `18` キャンセル返却予定 | 変更なし | 要案内 | `SERIAL_CANCEL_RETURN_MSG`を表示。回収登録は行わない |
-| 端末回収登録 | `19` 顧客出庫 | 変更なし | エラー | `SERIAL_SHIP_CUSTOMER_MSG`（顧客に出庫中のため回収不可） |
-| 端末回収登録 | 上記以外 | 変更なし | エラー | `SERIAL_UPDATE_MSG`（対象外ステータス、または回収依頼が起票されていない） |
-| 入庫・回収共通 | シリアルコードがDBに存在しない | - | エラー | `SERIAL_NOTHING_MSG` |
-| 入庫処理のみ | 端末の管轄支店とQRコードの支店が不一致 | - | エラー | `SERIAL_WRONG_BRANCH_MSG`（回収処理は管轄支店チェックを行わない。既存PC版と同じ仕様） |
+| 端末回収登録 | 上記以外（`18`キャンセル返却予定・`19`顧客出庫を含む） | 変更なし | エラー | 端末ステータスが異なる旨のエラーメッセージ（対象外ステータス、または回収依頼が起票されていない） |
+| 入庫・回収共通 | シリアルコードがDBに存在しない | - | エラー | 「端末が存在しません。」 |
+| 入庫処理のみ | 端末の管轄支店とQRコードの支店が不一致 | - | エラー | 「端末の管轄が異なります。」（回収処理は管轄支店チェックを行わない。既存PC版と同じ仕様） |
+
+**補足（2026-10-14修正）：** キャンセル返却予定端末（`18`）は、当初「要案内」として専用メッセージを表示する方針だったが、実装では他の対象外ステータスと同様の通常エラーとして扱われている。本書はこれに合わせて修正した。また、エラーメッセージは既存PC版の定数（`SERIAL_NOTHING_MSG`等）を再利用せず、実装側で新規に似た文言のメッセージが作成されている。既存定数の再利用については実装側へ別途指摘済み。
 
 ### 仕様ポイント
 
 - 処理・バリデーションは現状と変更なし
 - スマホ版では複数端末の**一括処理**に対応（バーコードを連続で読み取ってからボタン押下）
-- **一括処理は1回あたり最大50件まで**とする。51件目以降はスキャンしても読み取りリストに追加されず、「一度に処理できるのは50件までです。実行するか、不要な端末を削除してください」とトースト表示する。サーバー側（`/mobile/branch/store/execute`）でも`serials[]`が50件を超える場合は`PARAMETER_ERROR_MSG`で弾き、クライアント側の制御を迂回した場合にも対応する
+- **一括処理は1回あたり最大50件まで**とする。51件目以降はスキャンしても読み取りリストに追加されず、画面上に「一度に処理できる件数は50件までです」と表示する
+  - ⚠️**既知の未実装事項（2026-10-14指摘済み）**：クライアント側（画面JS）には50件の上限チェックが実装されているが、サーバー側の一括実行処理には件数チェックが実装されていない。クライアント側の制御を迂回した場合（直接APIを呼び出す等）、51件以上でも無制限に処理されてしまう。実装側に対応を依頼済み
 - 既存の入庫処理・回収済み機能は閉じず、処理の変更もなし
 
 ### モバイル版固有の仕様（ログインなしのための調整・確定事項）
@@ -111,32 +116,30 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
 
 | 項目 | 仕様 |
 |------|------|
-| 支店一致チェック（入庫処理） | 既存はログインユーザーの管轄支店（`Common_User::get('jurisdiction_branch_cd')`）と端末の`device_branch_cd`を比較しているが、モバイル版はQRコードの`token`から解決した支店の`branch_cd`と端末の`device_branch_cd`を比較する |
-| 回収登録の対象端末 | 既存同様、回収依頼中（`20`/`21`）・回収不可（`23`）・キャンセル返却予定（`18`）のいずれかの端末のみ処理対象（回収依頼が起票されていない端末はエラー：`SERIAL_UPDATE_MSG`） |
-| 回収報告氏名 | 入力欄を設けず、`「{支店名}（スマホ）」`を自動設定して`Model_Comment`に記録する |
-| 申し送り事項 | 入力欄を設けず、空欄で登録する |
+| 支店一致チェック（入庫処理） | 既存はログインユーザーの管轄支店（`Common_User::get('jurisdiction_branch_cd')`）と端末の`device_branch_cd`を比較しているが、モバイル版はQRコードの`branch_key`から解決した支店の`branch_cd`と端末の`device_branch_cd`を比較する |
+| 回収登録の対象端末 | 既存同様、回収依頼中（`20`/`21`）・回収不可（`23`）のいずれかの端末のみ処理対象（回収依頼が起票されていない端末、およびキャンセル返却予定`18`を含むそれ以外のステータスはエラー） |
+| 回収報告のコメント登録 | **行わない**（`Model_Comment`への登録処理自体が無い）。既存PC版は回収報告氏名・申し送り事項をコメントとして記録するが、モバイル版ではこの記録を省略する仕様とする（2026-10-14、実装に合わせて確定） |
 | PPPoEアカウント削除／UDS検証機紐づけ解除 | 既存同様に実施する |
-| キャンセル返却予定端末（`18`）の扱い | エラーにはせず、「要案内」区分として結果画面に表示する（ステータス更新は行わない）。返却先名称・住所は表示しない（マスタの返却先項目は現状未使用のため）。メッセージのみ表示 |
-| ログ記録の実施者情報 | `Common_Logger::change_log`等の実施者情報は、ログインユーザーIDの代わりにQRの`token`から解決した`branch_cd`を記録する |
+| ログ記録の実施者情報 | `Common_Logger`等の実施者情報は、ログインユーザーIDの代わりにQRの`branch_key`から解決した`branch_cd`を記録する |
 
-### QRコードURLのアクセストークン化（2026-09追加、09-30設計見直し）
+### QRコードURLのアクセストークン化（2026-09追加、2026-10-14実装内容に合わせて全面改訂）
 
-**背景：** モバイル版はログインを行わないため、URLの`branch_cd`パラメータさえ分かれば誰でもその支店の操作ができてしまう。特に、支店コードは命名規則が推測しやすく、他支店のQRコードを見たことがなくても値を書き換えるだけで別支店にアクセスできてしまう点がリスクだった（開発概要書の確認事項①）。これに対応するため、URLに支店コードを直接載せず、支店ごとに発行する不透明なランダムトークンでアクセスする方式に変更する。
+**背景：** モバイル版はログインを行わないため、URLの`branch_cd`パラメータさえ分かれば誰でもその支店の操作ができてしまう。特に、支店コードは命名規則が推測しやすく、他支店のQRコードを見たことがなくても値を書き換えるだけで別支店にアクセスできてしまう点がリスクだった（開発概要書の確認事項①）。これに対応するため、URLに支店コードを直接載せず、支店ごとに発行する不透明なランダムキーでアクセスする方式とした。
 
-**保持先について（09-30見直し）：** 当初`branch_replacement`テーブル（管轄支店倉庫置換マスタ）に列追加する案としていたが、**同テーブルは`branch_cd`にユニーク制約が無く、1つの`branch_cd`に複数行が存在しうる**ことが判明した（`unis_branch_cd`違いで同じ`branch_cd`に複数行が紐づく、という業務上正当な重複。UNIS側の複数拠点がUDS上は1つの`branch_cd`に集約されるケース）。そのため、このテーブルに直接トークンを持たせると「同じ支店の複数行のうち、どれが正のトークンか」が曖昧になる。この問題を避けるため、**モバイル版専用の新規マスタテーブルを1つ新設**し、そちらでトークンを一意に管理する方式に変更した。
-
-※なお、既存のQR検証ロジック（`branch_cd`で`branch_replacement`を検索していた元の実装）も同じ非一意性の影響を受けており、`get_one()`がどの行を返すか不定という問題を元々抱えていた。今回の新規テーブル化によりモバイル版はこの問題から切り離されるが、`branch_replacement`自体の重複データ整理は本改修のスコープ外とする（必要であれば別途対応）。
+**保持先：** `branch_replacement`テーブル（管轄支店倉庫置換マスタ）は`branch_cd`にユニーク制約が無く、1つの`branch_cd`に複数行が存在しうる（`unis_branch_cd`違いで同じ`branch_cd`に複数行が紐づく、という業務上正当な重複）ため、このテーブルに直接キーを持たせず、**モバイル版専用の新規マスタテーブル`mobile_branch_keys`**でキーを一意に管理する。
 
 | 項目 | 内容 |
 |------|------|
-| トークンの保持先 | 新規テーブル`mobile_branch_access`（仮称）を新設。列：`id`, `branch_cd`（ユニーク）, `access_token`（ユニーク）, `created_at`, `updated_at`, `deleted_at`。**`branch_name`は持たせない**（`branch_replacement`側が正のデータであり、二重管理・更新漏れを避けるため。表示用の支店名は都度`branch_replacement`を`branch_cd`で引く） |
-| トークンの生成方法 | 暗号学的に安全な乱数（例：`random_bytes(16)`を16進数化した32文字＝128bit相当）を発行する |
-| レコードの新規作成・自動同期 | **`branch_replacement`への新規登録経路はPC管理画面「その他マスタ」のCSV一括アップロード（`Controller_Master_Other::action_branch_replacement_upload_csv()`）のみ**であることを確認した。このCSV保存処理の直後に、同期処理を1つ追加する：`branch_replacement`から`branch_cd`単位で集約したリストを取得し、`mobile_branch_access`に**存在しない**`branch_cd`だけ新規トークンを発行してINSERTする（`branch_name`は保持しないため更新処理も不要）。これにより、CSVで新しい`branch_cd`が登録されるたびに、UDS開発側が手を動かさなくても自動的にモバイル版のアクセス権が発行される |
-| 管理画面（UI）について | 上記の自動同期により、**通常運用でUIによる個別登録は不要**になった。トークンの手動再発行（後述）のみ、UDS開発側がSQLで直接対応する |
-| QRコードURL | `https://mobile.uds.usen.co.jp/mobile/branch/store?token=<トークン>`（`branch_cd`は含まない） |
-| サーバー側の検索ロジック | `action_index()`（初期画面表示）・`action_execute()`（一括実行API）の両方で、まず`mobile_branch_access`を`access_token`で検索して`branch_cd`を取得し、続けてその`branch_cd`で`branch_replacement`を検索して`branch_name`（表示用）を取得する2段階の解決を行う。`branch_replacement`側にその`branch_cd`が見つからない場合（支店廃止等）はエラー扱いとする。**`action_execute()`もクライアントから受け取った`branch_cd`をそのまま信用せず、`token`から毎回サーバー側で支店を再解決する**（`branch_cd`を直接POSTされて認可チェックを迂回されないようにするため） |
-| トークンの再発行（漏洩時等） | 自動同期は「新規`branch_cd`の追加」のみを行い、既存トークンの失効は対象外のため、漏洩時の再発行はUDS開発側が手動でDBを操作して対応する。無効化のタイミングは以下のいずれかをケースに応じて選択する：①即座に旧レコードを削除する（対応は早いがQR再配布までその支店は利用不可になる）②新トークンのレコードを追加したうえで旧レコードをしばらく残し、QR再配布・周知が完了してから旧レコードを削除する（移行期間を設ける） |
-| 影響範囲 | QRコードはまだ配布前のため、配布開始前にこの変更を反映すれば、配布済みQRコードの回収・再配布は発生しない |
+| キーの保持先 | 新規テーブル`mobile_branch_keys`。列：`id`, `branch_cd`, `branch_key`, `created_at`, `updated_at`, `deleted_at`。`branch_name`は持たせない（`branch_replacement`側が正のデータであり、二重管理・更新漏れを避けるため。表示用の支店名は都度`branch_replacement`を`branch_cd`で引く） |
+| キーの生成方法 | 英数字10桁のランダム文字列（`Common_Util::random_string(10)`）。`branch_key`にDB側でユニーク制約があり、生成時に重複（MySQLエラー1062）が発生した場合は最大3回まで再生成する |
+| レコードの自動同期（追加のみ） | `branch_replacement`への登録・更新の経路はPC管理画面「その他マスタ」のCSV一括アップロード（`Upload_Csv_Master_Branch_Replacement`）のみ。このCSV保存処理（`save_line()`）で1行（＝1つの`unis_branch_cd`）を登録・更新するたびに、対象`branch_cd`について`mobile_branch_keys`に有効なレコードが無ければ新規発行する。**既に有効なレコードがあれば何もしない（重複発行はしない）** |
+| 削除（廃止支店の無効化）について | **自動では行われない。**`branch_replacement`からある`branch_cd`の全行が論理削除されても、対応する`mobile_branch_keys`のレコードは無効化されずそのまま有効であり続ける。無効化が必要な場合はUDS開発側がSQLで手動対応する |
+| `branch_cd`再利用時の挙動（2026-10-15、意図した仕様と確認） | 削除の自動同期を持たないのは意図した設計である。マスタの更新運用上、`branch_replacement`のレコードを一旦削除し、同じ`branch_cd`で内容を登録し直すケース（同一支店の情報訂正等）があり得るため、削除を検知して自動的にキーを無効化する仕組みにすると、こうした通常のマスタ訂正のたびに誤って有効なQRコードを失効させてしまうリスクの方が大きいと判断した。この結果として、一度廃止した`branch_cd`が将来**別の**支店として再利用された場合、廃止前に配布済みの古いQRコード（古い`branch_key`）がそのまま新しい支店に対して有効になってしまう可能性は残るが、これは許容したトレードオフである。支店を完全に廃止し、かつ`branch_cd`の再利用が見込まれる場合は、「5. 運用設計」のQRコード配布フローの通り、UDS開発側が手動でキーを無効化する運用でカバーする |
+| 管理画面（UI）について | 通常運用はCSVアップロードに伴う自動発行のみで完結し、個別のUI登録・削除は無い。無効化・再発行はUDS開発側がSQLで直接対応する |
+| QRコードURL | `https://mobile.uds.usen.co.jp/mobile/branch/menu?branch_key=<キー>`（`branch_cd`は含まない） |
+| サーバー側の検索ロジック | 各画面・API（メニュー表示／バーコード読み取り画面／個別バリデーションAPI／一括実行API）で、まず`mobile_branch_keys`を`branch_key`で検索して`branch_cd`を取得し、続けてその`branch_cd`で`branch_replacement`を検索して支店情報を取得する2段階の解決を行う。`branch_replacement`側にその`branch_cd`が見つからない場合（支店廃止等）はエラー扱いとする。一括実行APIもクライアントから受け取った`branch_cd`をそのまま信用せず、`branch_key`から毎回サーバー側で支店を再解決する（認可チェックの迂回を防止） |
+| キーの再発行（漏洩時等） | 自動では無効化されないため、漏洩時の再発行・旧キーの失効はUDS開発側が手動でDBを操作して対応する |
+| 影響範囲 | QRコードはまだ配布前のため、配布開始前にこの内容を関係者に周知すれば、配布済みQRコードの回収・再配布は発生しない |
 
 ### 入庫処理：通常新設出庫（追加対応）
 
@@ -148,7 +151,23 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
 | 契約ステータスチェック | 契約が「受注」ステータスでない場合は`CONTRACT_UPDATE_MSG`エラーとする |
 | セット商品（同一顧客・同一依頼日・同一セットCDの複数明細）の扱い | セット内の物理バーコードが必要な明細（ダミーシリアル以外）が、**同じ一括実行バッチ内に全てスキャンされていること**を要求する。不足がある場合は新規メッセージ`SET_INCOMPLETE_MSG`（不足している型番を含む）でエラーとする。PC版は複数回のスキャンで進捗をサーバー側に引き継ぎながら確認する方式だが、モバイル版は「まとめてスキャンしてから一括実行」という設計のため、事前に全部スキャンしておく方式に置き換えている（完了条件＝セット内の全明細が揃うことは同じ） |
 | ダミーシリアル（`uds_non_target_flg`＝シリアル管理対象外）の扱い | 物理バーコードが存在しないため、バーコードのスキャンなしで自動的に完了扱いとする（PC版と同じ） |
-| キャンセル返却予定端末（`18`）の扱い | 入庫処理でも回収処理と同様、エラーにせず「要案内」として新規メッセージ`DEVICE_CANCEL_RETURN_STORE_MSG`を表示する（ステータス更新は行わない） |
+| キャンセル返却予定端末（`18`）の扱い | 他の対象外ステータスと同様の通常エラーとして扱う（「3. 機能仕様」の対象端末ステータス一覧を参照） |
+
+**⚠️未実装事項（2026-10-14発見）：** 上記「セット商品の扱い」は実装されていない。実装コード（`Service_Branch_Validator::validate_normal_store_request()`）では、セット内の他明細の揃い確認を一切行わず、スキャンした端末を1件ずつ完全に独立して処理している。PC版（`Controller_Branch_Device_Store::action_search_barcode()`）はセットの全明細が揃うまで実際の保存処理に進めない仕組みになっているのに対し、モバイル版はこの制約が無いため、セットの一部だけをスキャンして実行すると、その一部だけが「成功」として処理され、残りの端末はステータス`10`（通常新設出庫）のまま警告なく取り残される。受領漏れの現場での発見が困難になるリスクがある。
+
+### セット商品チェック（2026-10-15 UIフロー確定：案B＝実行時一括チェック）
+
+スキャン中にリアルタイムで不足を知らせる案（案A）、非ブロッキングの案内バッジ＋実行時最終チェックのハイブリッド案（案C）も検討した上で、**実装コストが低く既存の設計方針と整合する案B（実行時に一括チェックのみ行う）を採用**した。実行前確認ダイアログを出さない（UX設計書の既存方針）とも矛盾しない。
+
+| 項目 | 内容 |
+|------|------|
+| チェックのタイミング | 一括実行時（`.../process`）のみ。スキャン中の画面・個別バリデーションAPI（`.../validate`）は変更しない |
+| セットの特定方法 | 処理対象端末（`device_status_cd=10`）ごとに、PC版と同じ条件（同一`unis_customer_cd`・同一`request_date`（日付部分のみ一致）・同一`set_cd`。`set_cd`は`device_types`テーブル経由で解決）でセットを構成する他の出荷依頼明細を特定する。`set_cd`が無い明細はセット扱いせず単品として処理する（PC版`Common_Shipping_Request::get_set_common_part_query()`と同じロジック） |
+| 判定ロジック | セットに属する明細のうち、ダミーシリアル（`uds_non_target_flg`=対象外）以外の明細について、その`serial_cd`が今回の一括実行リクエスト（`serial_cds[]`）に含まれているかを確認する。全て含まれていれば通常通り処理続行（契約ステータス等、既存の他のチェックはそのまま適用）。1つでも不足していれば、その端末を`errors[]`に`SET_INCOMPLETE_MSG`（不足している型番を含む）として追加し、ステータス更新は行わない |
+| 画面側の変更 | 無し。既存の結果画面のエラー表示にそのまま乗る |
+| PC版との差分（留意事項） | 不足判定は「バッチに含まれているか」のみで行い、含まれている兄弟明細が別の理由（管轄不一致・ステータス不正等）で個別に失敗するかは問わない。モバイル版は各明細を個別トランザクションで処理する設計のため、PC版のような「セット全体がall-or-nothingで保存される」仕組みにはしない（セットの一部は成功し、別の明細だけ失敗するケースがあり得る） |
+
+**出荷依頼の存在チェックについて（2026-10-14調査）：** 当初案にあった「対象出荷依頼の特定」（`serial_cd`+`contract_cd`+`request_branch_cd`+`request_type_cd`での出荷依頼明細の特定）は実装されておらず、契約が「受注」ステータスであることのみがチェックされている。調査の結果、`device_status_cd=10`になる経路はPC側コード上1箇所（出庫処理）に一本化されており、その際に端末の`device_branch_cd`と出荷依頼の`request_branch_cd`が同期される設計になっているため、現状の実装（端末自体の`device_branch_cd`とQRの支店を比較するチェックは別途残っている）で実害のある不具合は確認できなかった。ただし多重防御の一層が失われている点は留意事項として残す。
 
 **既存コードの不具合について：** 調査の過程で、PC版の`action_store_save()`にて契約ステータスが「受注」でない場合（`CONTRACT_UPDATE_MSG`）、エラーメッセージ設定後に`return`が無く処理が続行してしまう（＝エラー表示されても端末情報が更新されてしまう）不具合の疑いを発見した。モバイル版では正しく処理を中断する実装とした（PC版側の修正は本改修のスコープ外、別途報告済み）。
 
@@ -156,7 +175,7 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
 
 社用iPhoneのカメラでは、印字の小さいバーコードを読み取れない可能性があることが実機検証で判明したため、カメラ読み取りに加えてBluetoothバーコードスキャナーによる読み取りにも対応する。
 
-**UI方針（2026-09見直し）：** 当初は「カメラボタン」と「Bluetooth入力欄」を画面に常時両方表示する案としていたが、分かりにくいとのフィードバックを受け、**画面上部のセグメントボタン（「📷 カメラ」「📡 スキャナー」）で読み取り方法を明示的に切り替える**方式に変更した。「スキャナー」選択時は、Bluetooth接続手順（ペアリング案内）を画面内に表示する。詳細はUX設計書のM-02/M-03ワイヤーフレームを参照。
+**UI方針（2026-09見直し、2026-10-14再修正）：** 当初は「カメラボタン」と「Bluetooth入力欄」を画面に常時両方表示する案としていたが、分かりにくいとのフィードバックを受け、**画面上部のセグメントボタン（「📷 カメラ」「📡 スキャナー」）で読み取り方法を明示的に切り替える**方式に変更した。Bluetoothペアリング手順の案内は、画面内には表示せず、**ユーザーマニュアルに記載する**（画面はシンプルに読み取り待機の表示のみとする）。詳細はUX設計書のM-02/M-03ワイヤーフレームを参照。
 
 | 項目 | 内容 |
 |------|------|
@@ -165,7 +184,7 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
 | 接続方式 | Bluetooth HID（キーボードエミュレーション）モード。本製品の初期設定（デフォルト）がHIDモードのため、機器側の追加設定は不要 |
 | アプリ側の実装方針 | Web Bluetooth API等は使用しない（iOS Safariは非対応のため利用不可）。HIDモードでは、スキャナーが読み取った文字列をOSレベルでキーボード入力として送信するため、「スキャナー」選択中は常にフォーカスされた入力欄を用意するだけでよい。読み取り完了時にEnterキーが付加される仕様（初期値）を利用し、Enter押下をトリガーに読み取りリストへ追加する |
 | 手入力の防止（重要） | 画面上にタップ可能な入力欄を表示しない（手入力の誘因を作らないため）。実際の入力を受け取る欄は非表示にして裏側で常時フォーカスしておく。**入力元がスキャナーか手入力かを完全に判別する方法は存在しない**ため、速度チェックで代替する：先頭文字の入力からEnterまでの合計時間が300msを超えた場合は手入力とみなし、エラー表示せず黙って破棄する（バーコードスキャナーは数十msで送信するため人間の入力速度と明確に区別できる） |
-| 画面内の接続案内 | 「スキャナー」選択時、画面内にBluetoothペアリング手順（設定アプリでの接続方法）を表示する。アプリ側からペアリング済みかどうかは検知できないため、あくまで案内であり、確認後は折りたたんで閉じられるようにする |
+| 画面内の接続案内 | 画面内には表示しない（2026-10-14修正）。Bluetoothペアリング手順はユーザーマニュアルに記載し、事前に（初回セットアップ時に）ペアリングを済ませておく運用とする |
 | 事前準備（運用） | 社用iPhoneの「設定」→「Bluetooth」画面でスキャナーと事前ペアリングする（初回のみ、SCANボタン3秒長押しで機器の電源投入→ペアリング一覧から`BS80+XXXX`を選択）。iPhoneのキーボード言語を「英語（米国）」に設定する必要がある（メーカー仕様） |
 | 留意事項 | 初期設定の送信モードは「同期送信」のため、Bluetooth圏外（スキャナーとiPhoneの接続が切れた状態）で読み取るとデータが失われる。支店内での利用を想定しており通常は問題ないが、運用上の注意点としてマニュアルに明記する |
 
@@ -231,16 +250,17 @@ UFのエンジニア全員に配布されている社用iPhoneを活用する。
       ↓
 越智さん → UDS開発側に連絡
       ↓
-（新設支店の場合）UDS開発側で「その他マスタ」CSVアップロードにbranch_replacementを登録
+UDS開発側で「その他マスタ」CSVアップロードにbranch_replacementを登録／削除
       ↓
-mobile_branch_accessへのトークン発行は自動同期される（手動DB操作は不要）
+（新設の場合）mobile_branch_keysへのキー発行は自動（CSVアップロードに連動）
+（廃止の場合）mobile_branch_keysの無効化は自動化されていないため、UDS開発側が手動でSQL対応する
       ↓
-UDS開発側で、発行されたトークンからQRコード画像を生成・配布
+（新設の場合のみ）UDS開発側で、発行されたキーからQRコード画像を生成・配布
       ↓
 Googleドライブに格納・スプレッドシートで一元管理
 ```
 
-※「支店の増減」のうち支店の新設は、通常`branch_replacement`へのCSV登録を伴うため、その登録さえ行えばモバイル版のトークンは自動的に用意される。QRコード画像の生成（トークンをURLに埋め込んでQR化する作業）自体は引き続き手動対応となる。
+※支店の新設時は、`branch_replacement`へのCSV登録を行えばモバイル版のキー発行は自動的に追従する（詳細は「3. 機能仕様」の「レコードの自動同期（追加のみ）」参照）。**支店の廃止時は、キーの無効化が自動化されていないため、UDS開発側への連絡・手動対応が別途必要**（対応漏れがあると、廃止した支店の古いQRコードが使われ続けてしまう。将来`branch_cd`が別の支店で再利用された場合は特に注意）。QRコード画像の生成（キーをURLに埋め込んでQR化する作業）自体は、新設時のみ引き続き手動対応となる。
 
 ### スプレッドシート管理項目
 
@@ -249,10 +269,10 @@ Googleドライブに格納・スプレッドシートで一元管理
 | QRコードURL（GoogleドライブのファイルURL） |
 | 支店名 |
 | 支店コード |
-| アクセストークン（下4桁など、識別用に一部のみ記載。トークン全体は外部共有しない） |
+| アクセスキー（下4桁など、識別用に一部のみ記載。キー全体は外部共有しない） |
 | 追加日 |
 
-※QRコードのURL自体にトークンが含まれるため、スプレッドシートやGoogleドライブへのアクセス権限も、支店コード管理と同等に限定すること。
+※QRコードのURL自体にキーが含まれるため、スプレッドシートやGoogleドライブへのアクセス権限も、支店コード管理と同等に限定すること。
 
 ### Bluetoothバーコードスキャナーの配布・運用（追加）
 
@@ -288,31 +308,31 @@ Googleドライブに格納・スプレッドシートで一元管理
 sequenceDiagram
     actor User as エンジニア
     participant Browser as スマホブラウザ
-    participant Camera as カメラ(@zxing/browser)
+    participant Camera as カメラ(zxing系ライブラリ)
     participant BT as Bluetoothスキャナー(BC-BS801D-V2-CW)
     participant Backend as バックエンド(FuelPHP)
     participant DB as DB(MySQL)
 
     rect rgb(235, 242, 255)
-        Note over User,DB: アクセス・支店認証（URLは不透明トークン方式）
+        Note over User,DB: アクセス・支店認証（URLは不透明なbranch_key方式）
         User->>User: QRコードを読み取る
-        User->>Browser: URLにアクセス /mobile/branch/store?token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        Browser->>Backend: GET /mobile/branch/store?token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        Backend->>DB: SELECT branch_cd FROM mobile_branch_access WHERE access_token=:token
-        alt トークンが存在しない（無効・失効済み）
+        User->>Browser: URLにアクセス /mobile/branch/menu?branch_key=xxxxxxxxxx
+        Browser->>Backend: GET /mobile/branch/menu?branch_key=xxxxxxxxxx
+        Backend->>DB: SELECT branch_cd FROM mobile_branch_keys WHERE branch_key=:branch_key AND deleted_at IS NULL
+        alt branch_keyが存在しない（無効・失効済み）
             DB-->>Backend: 0件
-            Backend-->>Browser: E-01 エラー画面
+            Backend-->>Browser: /mobile/branch/error へリダイレクト
             Browser-->>User: このQRコードは無効です
-        else トークンが有効
+        else branch_keyが有効
             DB-->>Backend: branch_cd
-            Backend->>DB: SELECT branch_name FROM branch_replacement WHERE branch_cd=:branch_cd
+            Backend->>DB: SELECT * FROM branch_replacement WHERE branch_cd=:branch_cd AND deleted_at IS NULL
             alt branch_replacementに該当支店が無い（支店廃止等）
                 DB-->>Backend: 0件
-                Backend-->>Browser: E-01 エラー画面
+                Backend-->>Browser: /mobile/branch/error へリダイレクト
                 Browser-->>User: このQRコードは無効です
             else 支店情報あり
-                DB-->>Backend: 支店名
-                Backend-->>Browser: M-01 機能選択画面（以降はbranch_cdを使用）
+                DB-->>Backend: 支店情報
+                Backend-->>Browser: M-01 機能選択画面（以降もbranch_keyをパラメータとして使い続ける）
                 Browser-->>User: 支店名 + 機能選択ボタン
             end
         end
@@ -321,34 +341,34 @@ sequenceDiagram
     rect rgb(240, 255, 240)
         Note over User,Browser: 機能選択
         User->>Browser: 入庫処理 or 端末回収登録 をタップ
-        Browser-->>User: M-02/M-03 バーコード読み取り画面
+        Browser->>Backend: GET /mobile/branch/scan/store/scan?branch_key=xxxxxxxxxx （回収の場合はscan/return/scan）
+        Backend-->>Browser: M-02/M-03 バーコード読み取り画面
     end
 
     rect rgb(255, 250, 230)
-        Note over User,BT: バーコード読み取り（繰り返し・上部セグメントボタンでカメラ/Bluetoothスキャナーを切り替え）
+        Note over User,BT: バーコード読み取り（繰り返し・上部トグルボタンでカメラ/バーコードスキャナーを切り替え）
         loop 複数台分のバーコードを読み取る
             alt 「カメラ」選択時
-                User->>Browser: バーコードを読み取る ボタンをタップ
+                User->>Browser: カメラで読み取る ボタンをタップ
                 Browser->>Camera: カメラ起動
                 Camera-->>Browser: カメラプレビュー表示
                 Browser-->>User: ハーフモーダル表示
                 User->>Camera: バーコードにかざす
                 Camera-->>Browser: Code128デコード / シリアルコード取得
-            else 「スキャナー」選択時（小型バーコード等）
-                Browser-->>User: Bluetooth接続案内ブロック＋常設入力欄を表示
+            else 「バーコード」選択時（小型バーコード等、Bluetoothスキャナー使用）
+                Browser-->>User: 読み取り待機表示（画面内にBluetooth接続案内は表示しない。手順はユーザーマニュアル参照）
                 Note over User,BT: 事前にiPhoneとBluetoothペアリング済み（HIDモード）
                 User->>BT: バーコードにスキャナーをかざす
-                BT-->>Browser: 常設テキスト入力欄にシリアルコード＋Enterを送信（OSキーボード入力として認識）
+                BT-->>Browser: OSキーボード入力としてシリアルコード＋Enterを送信
             end
-            alt すでに読み取り済み
-                Browser-->>User: トースト「すでに読み取り済みです」
-            else 新規シリアルコード
+            Browser->>Backend: POST .../validate?branch_key=xxxxxxxxxx&format=json {serial_cd}
+            Backend-->>Browser: {exists, message}
+            alt 既に読み取り済み、または上限50件超過
+                Browser-->>User: 重複・上限超過のメッセージ表示
+            else 存在しない・対象外ステータス等
+                Browser-->>User: 読み取りエラーのモーダル表示
+            else 検証OK
                 Browser->>Browser: リストに追加
-                Browser-->>User: バイブレーション + リスト更新
-            end
-            opt バツボタンで削除
-                User->>Browser: バツボタンをタップ
-                Browser->>Browser: リストから1件削除
                 Browser-->>User: リスト更新
             end
         end
@@ -358,49 +378,44 @@ sequenceDiagram
     rect rgb(255, 240, 240)
         Note over User,DB: 一括処理実行
         User->>Browser: 実行ボタンをタップ（N件）
-        Browser->>Backend: POST /mobile/branch/store/execute {token, type, serials[]}
-        Backend->>DB: SELECT branch_cd FROM mobile_branch_access WHERE access_token=:token（branch_cdをクライアントの申告値ではなく毎回再解決）
-        Backend->>DB: BEGIN TRANSACTION
-        loop serials[]を1件ずつ処理
+        Browser->>Backend: POST .../process?branch_key=xxxxxxxxxx&format=json {serial_cds[]}
+        Backend->>DB: SELECT branch_cd FROM mobile_branch_keys WHERE branch_key=:branch_key（branch_cdをクライアントの申告値ではなく毎回再解決）
+        loop serial_cds[]を1件ずつ、個別トランザクションで処理
+            Backend->>DB: BEGIN TRANSACTION
             Backend->>DB: SELECT serial WHERE serial_cd=:cd
             alt シリアルが存在しない
                 DB-->>Backend: 0件
-                Backend->>Backend: errors[]にSERIAL_NOTHING_MSGを追加
-            else 管轄支店が異なる（branch_cdとdevice_branch_cdを比較）
+                Backend->>Backend: errors[]に追加
+            else 管轄支店が異なる（branch_cdとdevice_branch_cdを比較／入庫処理のみ）
                 DB-->>Backend: branch_cd不一致
-                Backend->>Backend: errors[]にSERIAL_WRONG_BRANCH_MSGを追加
-            else キャンセル返却予定（回収登録のみ・device_status_cd=18）
-                DB-->>Backend: device_status_cd=18
-                Backend->>Backend: notices[]に案内メッセージを追加（ステータス更新なし）
-            else ステータスが対象外
+                Backend->>Backend: errors[]に追加
+            else ステータスが対象外（18番キャンセル返却予定・19番顧客出庫を含む）
                 DB-->>Backend: device_status_cd不正
-                Backend->>Backend: errors[]にSERIAL_UPDATE_MSGを追加
+                Backend->>Backend: errors[]に追加
             else バリデーション通過
                 DB-->>Backend: シリアルデータ
                 Backend->>DB: UPDATE serials SET device_status_cd=:new_status, status_renewal_date=NOW()
                 opt 回収登録の場合
-                    Backend->>DB: INSERT INTO comments（氏名「{支店名}（スマホ）」・申し送り事項は空欄）
                     Backend->>Backend: PPPoEアカウント削除・UDS検証機紐づけ解除
                 end
-                Backend->>DB: INSERT INTO change_logs（実施者情報はQRのbranch_cd）
+                Backend->>Backend: ログ出力（実施者情報はQRのbranch_cd）
             end
+            Backend->>DB: COMMIT（当該端末のみ。失敗時は当該端末のみROLLBACK）
         end
-        Backend->>DB: COMMIT
-        DB-->>Backend: 完了
-        Backend-->>Browser: {success_count, error_count, notice_count, errors[], notices[]}
+        Backend-->>Browser: {success_count, error_count, errors[], total_count}
     end
 
     rect rgb(240, 255, 250)
         Note over User,Browser: 処理結果表示・次の操作
         alt 全件成功
             Browser-->>User: M-04 処理完了 / 成功:N件
-        else エラー・要案内あり
-            Browser-->>User: M-04 一部失敗 / 成功:N件 / エラー:M件 + エラー端末一覧 / 要案内:K件（キャンセル返却予定）
+        else 一部エラーあり
+            Browser-->>User: M-04 一部失敗 / 成功:N件 / エラー:M件 + エラー端末一覧
         end
         alt 続けて処理する
             User->>Browser: 続けて処理する をタップ
-            Browser->>Browser: errors[]をリストに復元（JS処理のみ・サーバー通信なし）
-            Browser-->>User: M-02/M-03（エラー端末が復元済み）
+            Browser->>Browser: リストを空にしてM-02/M-03を再表示（エラー端末の自動復元は行わない）
+            Browser-->>User: M-02/M-03（リストは空の状態）
         else 機能選択に戻る
             User->>Browser: 機能選択に戻る をタップ
             Browser->>Browser: リストをリセット
@@ -408,3 +423,7 @@ sequenceDiagram
         end
     end
 ```
+
+**補足（2026-10-14、実装確認に伴う修正）：**
+- 本図は実装（サービス層・コントローラー構成）に合わせて全面的に書き直した。当初案の「スキャン→一括確定」という2段階フローは同じだが、個別バリデーションAPI（`.../validate`）が都度呼ばれる構成になっている点、一括実行が1トランザクションではなく端末ごとの個別トランザクションである点、`notices[]`という区分は存在しない点が実装との差分だった
+- 「続けて処理する」時にエラー端末をリストへ自動復元する機能は実装されていない。再試行する場合はエラーになった端末を含めて再度スキャンし直す必要がある
