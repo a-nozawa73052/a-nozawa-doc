@@ -383,3 +383,48 @@ GitLab MR #211 のPRコメントに「`MessageDeduplicationId` をタイムス�
 - 関連ドキュメント: `改修概要書.md`（同フォルダ、本決定に合わせて処理フロー図・リスク表を更新済み）
 - フロー図: [`UDS契約連携処理フロー図.html`](./UDS契約連携処理フロー図.html)（同フォルダ。図3「実装詳細」に、本決定で提案しているコミット後まとめ実行への変更箇所をオレンジ点線で図示）
 - 置き換え対象: ADR 0003, ADR 0005
+
+---
+
+## 0010. shipping_unis2_warehouse_cd カラム名を本番ファイルの実ヘッダ名 shipping_warehouse_cd に合わせて訂正する
+
+- ステータス: 承認
+- 日付: 2026-10-20
+- 対象システム・機能: UDS / `work_imported_contract` テーブル、`import_contract` Lambda（`COLUMN_LIST[44]`）
+- 決定者: a-nozawa
+
+### コンテキスト
+
+STG環境で `contract.tsv` をアップロードした際、`preprocess-contract-tsv` の `bulkInsertRows` が `Unknown column 'shipping_warehouse_cd' in 'field list'` エラーで失敗した（エラーファイル: `s3://stg-udsapi-contract/error/contract_20261020144701.tsv`）。
+
+原因を調査した結果、`work_imported_contract` テーブルおよび `import_contract/index.js` の `COLUMN_LIST[44]`（検討事項#5で決定した名称）で使用しているカラム名 `shipping_unis2_warehouse_cd` が、実際に本番で NeOS/UNIS から出力される `contract.tsv` ファイルのヘッダ名 `shipping_warehouse_cd` と一致していないことが判明した。当初はアップロードした1ファイルのヘッダtypoと見られたが、本番の実ファイルヘッダがすでに `shipping_warehouse_cd` で確定していることを確認したため、単発のtypoではなく、移行時の設計・実装時に生じた命名の不一致（本番導入後は毎回同じエラーで全件失敗するリリースブロッカー）であると判断した。
+
+なお `import_contract/index.js` を調査した結果、`shipping_unis2_warehouse_cd` の値は `contracts` 本体への INSERT/UPDATE では使用されておらず（`insert_columns_query`/`insert_values_query`/`update_columns_query` で明示的に除外済み）、`work_imported_contract` からの読み出し時の名前引き（`rowToTsvData` の `row[COLUMN_LIST[i]['name']]`）にのみ影響することを確認済み。
+
+### 検討した代替案
+
+#### 案A: TSVファイル側（NeOS/UNIS の出力仕様）のヘッダ名を `shipping_unis2_warehouse_cd` に合わせる
+- 内容: ソース側のファイル出力仕様を変更させる。
+- メリット: UDS側のDB・コード変更が不要。
+- デメリット: 自分たちの管理外のシステム（NeOS/UNIS）に出力仕様の変更を要求することになり、現実的でない。他システムが同じファイルを参照している可能性があり影響範囲も不明。
+
+#### 案B: UDS側（`work_imported_contract` のカラム名、`COLUMN_LIST[44].name`）を本番ファイルの実ヘッダ名 `shipping_warehouse_cd` に合わせる
+- 内容: `work_imported_contract.shipping_unis2_warehouse_cd` カラムをリネームし、`import_contract/index.js` の `COLUMN_LIST[44].name` も同名に修正する。
+- メリット: 外部システム（NeOS/UNIS）に変更を要求せず、UDS側の修正のみで解消できる。本番ファイルの実態と一致する。
+- デメリット: DBスキーマ変更・コード修正・再デプロイ、および関連するUATテストデータ・ドキュメントの修正が必要。
+
+### 決定
+
+**案B（UDS側のカラム名を `shipping_warehouse_cd` に訂正）を採用**。本番ファイルのヘッダ名はすでに `shipping_warehouse_cd` で確定している外部仕様であり、UDS側で合わせる以外に現実的な選択肢はない。
+
+### 影響・トレードオフ
+
+- 性能・データ量急増時への影響: なし。
+- 他システムへの影響: `preprocess-contract-tsv` はアップロードされたTSVのヘッダ名をそのまま動的にSQLカラム名として使う実装のため、このリポジトリ側の修正は不要。`import_contract` の `contracts` 本体への書き込みにはこのカラムの値を使用していないため、最終テーブルへの影響はない。
+- 運用・保守への影響: UATで使用中のテストファイル（`contract_all_5000.tsv`）のヘッダも本番仕様に合わせて修正する。`work_imported_contract` のDDLドキュメント（検討事項#5の記載箇所）も訂正する。
+- 今後変更する場合の制約: 同種の「ヘッダ名とDBカラム名の不一致」の再発を防ぐため、`preprocess-contract-tsv` 側でアップロードされたヘッダ名を既知の53列と突き合わせる厳密なバリデーションを追加することが望ましい（別途検討中、本ADR時点では未実施）。
+
+### 関連
+
+- 関連Issue/PR: GitLab `import_contract` MR #214（カラムリネーム・コード修正対応中）
+- 関連ドキュメント: `改修概要書.md`（同フォルダ）、ADR 0001（非同期アーキテクチャ採用）
