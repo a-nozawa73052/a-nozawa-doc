@@ -19,6 +19,9 @@
 | [0013](0013-test-on-dev-env-and-uat-only-on-stg.md) | UDSのACE対応テストは開発環境で網羅し、ステージングはUATのみとする | Accepted | UDS, ACE | テスト, 単体テスト, 結合テスト, 開発環境, ステージング, UAT |
 | [0014](0014-remove-billing-month-from-all-fields-csv.md) | ACE移行で連携されなくなる「明細課金月」を、直送案件の全項目CSVから削除する | Accepted | ACE, NeOS, UNIS, UDS | 明細課金月, 全項目CSV, ACE移行, 項目削除, 監査報告 |
 | [0015](0015-identify-is-alliance-contracts-after-ace.md) | ACE移行後に、NP審査の対象となるISとアライアンス案件を何で判別するか | Proposed | ACE, NeOS, UNIS, UDS | NP審査, 請求先コード, 一括請求, IS案件, アライアンス案件, ACE移行 |
+| [0016](0016-failure-replacement-new-purchase-flow.md) | メーカー交換（新規シリアル）になった故障端末の購入契約を、NeOS・UDS・GRSでどう扱うか | Proposed | UDS, NeOS, UNIS Ⅱ, GRS, IDM | 故障交換, 新規購入, 引き当て, サービスコード, キッティング, GRS |
+| [0029](0029-add-contract-party-code-and-name-to-shipping-csv.md) | ACE移行後の出荷データ（出荷CSV）に、契約先コードと契約先名称を付与する | Accepted | ACE, UDS | 出荷データ, 出荷CSV, 契約先コード, 契約先名称, 一括案件, 見込み |
+| [0030](0030-sales-pre-report-rule-for-bulk-projects.md) | 一括案件は、営業が契約先名称・契約先コードを添えて事前申告するルールを設ける | Accepted | ACE, UDS | 一括案件, 事前申告, 営業ルール, 契約先コード, 見込み精度 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
