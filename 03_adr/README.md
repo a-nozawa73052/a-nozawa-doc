@@ -20,7 +20,7 @@
 | [0014](0014-remove-billing-month-from-all-fields-csv.md) | ACE移行で連携されなくなる「明細課金月」を、直送案件の全項目CSVから削除する | Accepted | ACE, NeOS, UNIS, UDS | 明細課金月, 全項目CSV, ACE移行, 項目削除, 監査報告 |
 | [0015](0015-identify-is-alliance-contracts-after-ace.md) | ACE移行後に、NP審査の対象となるISとアライアンス案件を何で判別するか | Proposed | ACE, NeOS, UNIS, UDS | NP審査, 請求先コード, 一括請求, IS案件, アライアンス案件, ACE移行 |
 | [0016](0016-failure-replacement-new-purchase-flow.md) | メーカー交換（新規シリアル）になった故障端末の購入契約を、NeOS・UDS・GRSでどう扱うか | Proposed | UDS, NeOS, UNIS Ⅱ, GRS, IDM | 故障交換, 新規購入, 引き当て, サービスコード, キッティング, GRS |
-| [0017](0017-ace-contract-mode-add-umembers-consent.md) | ACEの契約モードにUMEMBERSを追加し、顧客がUMEMBERS上で申込書を確認・同意できるようにするか | Proposed | ACE, UMEMBERS, NeOS, UNIS | 契約モード, UMEMBERS, 申込書, 同意, クラウドサイン, 承認フロー |
+| [0017](0017-ace-contract-mode-add-umembers-consent.md) | ACEの成約モードにUMEMBERSを追加し、顧客がUMEMBERS上で申込書を確認・同意できるようにするか | Proposed | ACE, UMEMBERS, NeOS, UNIS | 成約モード, UMEMBERS, 申込書, 同意, クラウドサイン, 承認フロー |
 | [0018](0018-contract-confirmation-docs-issue-timing-and-unit.md) | 契約内容確認書と作業完了報告書は施工完了時に交付し、書類ごとの発行単位を揃える | Accepted | ACE, UMEMBERS, UDS | 契約内容確認書, 作業完了報告書, 申込書, 施工完了, 通信事業法, 書類発行 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
