@@ -19,6 +19,10 @@
 | [0013](0013-test-on-dev-env-and-uat-only-on-stg.md) | UDSのACE対応テストは開発環境で網羅し、ステージングはUATのみとする | Accepted | UDS, ACE | テスト, 単体テスト, 結合テスト, 開発環境, ステージング, UAT |
 | [0014](0014-remove-billing-month-from-all-fields-csv.md) | ACE移行で連携されなくなる「明細課金月」を、直送案件の全項目CSVから削除する | Accepted | ACE, NeOS, UNIS, UDS | 明細課金月, 全項目CSV, ACE移行, 項目削除, 監査報告 |
 | [0015](0015-identify-is-alliance-contracts-after-ace.md) | ACE移行後に、NP審査の対象となるISとアライアンス案件を何で判別するか | Proposed | ACE, NeOS, UNIS, UDS | NP審査, 請求先コード, 一括請求, IS案件, アライアンス案件, ACE移行 |
+| [0016](0016-failure-replacement-new-purchase-flow.md) | メーカー交換（新規シリアル）になった故障端末の購入契約を、NeOS・UDS・GRSでどう扱うか | Proposed | UDS, NeOS, UNIS Ⅱ, GRS, IDM | 故障交換, 新規購入, 引き当て, サービスコード, キッティング, GRS |
+| [0019](0019-defer-toc-shipping-change-and-set-item-split.md) | 残量検知（ロボット巡回）のTOC出荷対応のUDS改修とセットマスター作成は保留し、方針確定後に改めて依頼する | Accepted | UDS, NeOS, UNIS | 残量検知, ロボット巡回, TOC, 出荷先, セット品目, 改修保留 |
+| [0020](0020-irregular-shipping-form-entered-by-product-side.md) | 既存顧客向けのロボット残量検知のイレギュラー発送依頼は、営業ではなくプロダクト側がフォームに入力する | Accepted | UDS | イレギュラー発送, 発送依頼フォーム, 残量検知, ロボット巡回, 運用ルール |
+| [0021](0021-uau03-default-shipping-destination.md) | 残量検知ロボット巡回のユニット（UAU 03）の出荷先デフォルトをどうするか | Proposed | UDS, NeOS | 出荷先, デフォルト, TOC, セット品目, 残量検知, ロボット巡回 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
