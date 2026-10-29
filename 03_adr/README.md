@@ -19,6 +19,14 @@
 | [0013](0013-test-on-dev-env-and-uat-only-on-stg.md) | UDSのACE対応テストは開発環境で網羅し、ステージングはUATのみとする | Accepted | UDS, ACE | テスト, 単体テスト, 結合テスト, 開発環境, ステージング, UAT |
 | [0014](0014-remove-billing-month-from-all-fields-csv.md) | ACE移行で連携されなくなる「明細課金月」を、直送案件の全項目CSVから削除する | Accepted | ACE, NeOS, UNIS, UDS | 明細課金月, 全項目CSV, ACE移行, 項目削除, 監査報告 |
 | [0015](0015-identify-is-alliance-contracts-after-ace.md) | ACE移行後に、NP審査の対象となるISとアライアンス案件を何で判別するか | Proposed | ACE, NeOS, UNIS, UDS | NP審査, 請求先コード, 一括請求, IS案件, アライアンス案件, ACE移行 |
+| [0016](0016-failure-replacement-new-purchase-flow.md) | メーカー交換（新規シリアル）になった故障端末の購入契約を、NeOS・UDS・GRSでどう扱うか | Proposed | UDS, NeOS, UNIS Ⅱ, GRS, IDM | 故障交換, 新規購入, 引き当て, サービスコード, キッティング, GRS |
+| [0022](0022-contract-owner-umid-link-required-for-all.md) | 申込では契約担当者にUMIDを紐付け、原則として全員から取得する | Accepted | ACE, UMEMBERS, NeOS | UMID, 契約担当者, アクティベーション, 包括契約, 営業ルール |
+| [0023](0023-email-required-in-principle-exceptions-case-by-case.md) | メールアドレスは原則必須とし、外す必要がある例外は発生した時に検討する | Accepted | ACE, UMEMBERS | メールアドレス, 必須化, 例外対応, インサイドセールス, SMS |
+| [0024](0024-ace-applicant-contact-requires-umid-activation.md) | ACEの申込担当者（先方担当者）にUMIDの紐付けと認証を必須とし、未了なら本番データが動く操作に進めない | Accepted | ACE, UMEMBERS | 申込担当者, 先方担当者, UMID, アクティベーション, 申込UI |
+| [0025](0025-ace-umid-link-key-email-or-login-id.md) | ACEとUMIDの認証連携で、メールアドレスとログインID（ユーザーID）のどちらをキーにするか | Proposed | ACE, UMEMBERS | UMID, 認証連携, ログインID, メールアドレス, ユーザーID |
+| [0026](0026-sub-email-only-accounts-promotion-and-merge.md) | 認証用メールアドレスがなく、サブメールアドレスだけのUMEMBERSアカウントをどう扱うか | Proposed | ACE, UMEMBERS, UNIS | サブメールアドレス, 認証用メールアドレス, アカウント統合, データ移行, UMID |
+| [0027](0027-email-validity-check-no-skip-required-auth.md) | メールアドレスの有効性チェックを経ずに進められるスキップをなくし、認証を必須とするか | Proposed | ACE, UMEMBERS | メールアドレス, 有効性チェック, 認証, アカウント作成メール, スキップ廃止 |
+| [0028](0028-billing-contact-access-granted-in-umembers-after-application.md) | 請求担当者など別の担当者への閲覧権限は、申込時ではなく申込後にUMEMBERSでお客様自身が付与する | Accepted | ACE, UMEMBERS | 請求担当者, アクセス権限, UMEMBERS, 申込担当者, 案件分割 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
