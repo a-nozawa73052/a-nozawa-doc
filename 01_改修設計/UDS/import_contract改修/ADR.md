@@ -45,6 +45,10 @@
 - 関連ドキュメント: `改修概要書.md`（同フォルダ）
 - 参考実装: `a-nozawa-doc/01_改修設計/UDS/import_neos_uairplan改修/`
 
+### 補足（2026-10-28追記）
+
+本ADR作成当初はTimeoutリスク（課題1点目）を主な動機として記載していたが、実際に発生していた最大の問題は`uds-api`（特に`customerupd`）での504エラーの頻発であったことが判明した。`customerupd`は`contracts`テーブルの`updated_at >= lastdate`差分を1回のレスポンスで全件返すAPIであり、Lambda/API Gatewayの同期レスポンス上限（6MB）を超えると504エラーになる。`import_contract`・`import_neos_uairplan`が短時間に`contracts`を大量更新するとこの上限に抵触していたため、本決定（work テーブル経由で10分あたり最大1000件に更新量を制限する方式）は、Timeoutリスクの排除だけでなく、`customerupd`の504エラー解消という意味でも妥当な決定だったことが裏付けられた。詳細は`改修概要書.md`の「1. 改修背景・目的」参照。
+
 ---
 
 ## 0002. preprocess 側で device_types マスタ存在チェックを行い、存在する行のみ work テーブルへ INSERT

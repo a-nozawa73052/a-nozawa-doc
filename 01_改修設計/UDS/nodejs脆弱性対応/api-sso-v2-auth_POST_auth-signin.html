@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="SSO API v2 Authentication Service の POST /auth/signin（signIn）の単体テスト項目書。件数、データ構造、テストマトリックス、データ準備、テスト項目、結果をまとめる。">
+<title>単体テスト項目書 | POST /auth/signin</title>
+<style>
+:root{--ink:#192c3b;--muted:#536675;--line:#dbe3e9;--paper:#fff;--bg:#f3f6f8;--navy:#122b3b;--teal:#087d76;--red:#a73232;--redbg:#fff1f0;--amber:#926000;--amberbg:#fff6dc;--blue:#245f96;--gray:#6b7a86;--graybg:#eef1f3}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:15px;line-height:1.85}a{color:var(--blue);text-underline-offset:3px}a:hover{color:var(--teal)}button{font:inherit}header{background:var(--navy);color:#fff;padding:54px max(24px,calc((100vw - 1180px)/2)) 42px}.eyebrow{font-size:12px;letter-spacing:.17em;color:#9ed7d0;font-weight:700}h1{font-size:clamp(28px,4vw,43px);line-height:1.4;letter-spacing:.01em;margin:12px 0 16px}h1 .method{display:inline-block;font-size:.55em;vertical-align:.25em;background:#9ed7d0;color:var(--navy);border-radius:5px;padding:0 10px;margin-right:12px;letter-spacing:.04em}header p{max-width:880px;color:#d5e0e8;margin:0}.meta{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:12px;margin-top:26px;color:#afc4d1}.toolbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}.navinner{max-width:1228px;margin:auto;padding:12px 24px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.navinner a{font-size:13px;font-weight:700;text-decoration:none;color:var(--ink)}.print{margin-left:auto;border:1px solid var(--line);border-radius:6px;padding:4px 14px;background:#fff;cursor:pointer;color:var(--muted)}main{max-width:1228px;padding:28px 24px 64px;margin:auto}.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.stat{background:#fff;border:1px solid var(--line);border-top:3px solid var(--teal);padding:18px 20px;border-radius:8px}.stat.alert{border-top-color:var(--red)}.stat.warn{border-top-color:#cf9d27}.stat.neutral{border-top-color:var(--gray)}.stat b{font-size:31px;line-height:1.2;display:block;font-variant-numeric:tabular-nums}.stat span{font-size:12px;color:var(--muted)}section{margin-top:38px}h2{font-size:24px;line-height:1.5;margin:0 0 8px}h2 small{font-size:12px;font-weight:500;color:var(--muted);margin-left:10px}h3{font-size:18px;line-height:1.6;margin:0 0 14px}h4{font-size:14px;margin:12px 0 4px}.intro{color:var(--muted);margin:0 0 18px}.panel,.issue{background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:24px;margin-top:16px}.notice{border-left:4px solid var(--teal);background:#e9f5f2;padding:16px 20px;border-radius:0 7px 7px 0;margin:20px 0}.notice p{margin:3px 0}.notice.warn{background:var(--amberbg);border-color:#cf9d27}.notice.danger{background:var(--redbg);border-color:var(--red)}.badge{display:inline-block;vertical-align:middle;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:700;line-height:1.8;margin-right:7px;white-space:nowrap}.ok{background:#e6f3ef;color:#17654f}.ng{background:var(--redbg);color:var(--red)}.hold{background:var(--amberbg);color:var(--amber)}.todo{background:var(--graybg);color:var(--gray)}.high{background:var(--redbg);color:var(--red)}.mid{background:var(--amberbg);color:var(--amber)}.low{background:#f0edfa;color:#66518c}.t-normal{background:#edf4fc;color:var(--blue)}.t-boundary{background:#f0edfa;color:#66518c}.t-error{background:var(--redbg);color:var(--red)}p{margin:8px 0 12px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:12px 30px}.columns p{margin-top:0}code{font-family:Consolas,"BIZ UDゴシック",monospace;font-size:.91em;background:#f1f4f6;padding:1px 4px;border-radius:3px;overflow-wrap:anywhere}pre code{background:none;padding:0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7;background:#122b3b;color:#e4f0f3;border-radius:7px;padding:16px 20px;margin:12px 0}.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:16px}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px;line-height:1.8}th{text-align:left;background:#edf2f5;color:#405768;font-size:12px;padding:12px 14px}td{padding:15px 14px;vertical-align:top;border-top:1px solid var(--line);overflow-wrap:anywhere}td b{display:block;margin-bottom:5px}td p{margin:4px 0 7px}td code{font-size:11px}tbody tr:nth-child(even){background:#fafcfd}.num{text-align:right;font-variant-numeric:tabular-nums}th.num{text-align:right}.muted{color:var(--muted);font-size:13px}.ph{background:#fff6dc;color:var(--amber);border-radius:3px;padding:0 3px}header .ph{background:rgba(255,246,220,.16);color:#ffe3a1}ol,ul{padding-left:23px}li{margin:5px 0}.checklist{list-style:none;padding-left:0}.checklist li{padding-left:28px;position:relative}.checklist li::before{content:"□";position:absolute;left:4px;color:var(--teal);font-weight:700}.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--graybg);margin-top:6px}.bar i{display:block;height:100%}.bar .p{background:var(--teal)}.bar .f{background:var(--red)}.bar .h{background:#cf9d27}.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted);margin-top:10px}.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.counts th:nth-child(1){width:22%}.counts th:nth-child(2){width:63%}.counts th:nth-child(3){width:15%}.counts tbody tr:first-child td{font-weight:700}
+.datadef th:nth-child(1){width:16%}.datadef th:nth-child(2){width:16%}.datadef th:nth-child(3){width:10%}.datadef th:nth-child(4){width:7%}.datadef th:nth-child(5){width:17%}.datadef th:nth-child(6){width:34%}
+.matrix{margin-top:14px}.matrix h3{margin-bottom:2px}.matrix .lead{color:var(--muted);font-size:13px;margin:0 0 4px}.matrix table{table-layout:auto}.matrix th{vertical-align:bottom;white-space:nowrap}.matrix th.grp{text-align:center;background:#dfe9ee;color:var(--ink);font-size:11px;letter-spacing:.12em;padding:6px 14px}.matrix th.cond{text-align:center;background:#e9f1f4}.matrix th.res,.matrix td.res{border-left:2px solid #b9cbd4}.matrix th.grp.res{border-left:2px solid #b9cbd4}.matrix td{vertical-align:middle}.matrix td.c{text-align:center;white-space:nowrap;border-left:1px solid var(--line)}.matrix td.case{width:24%}.matrix td.case small{display:block;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em}.matrix td.case b{display:inline;margin:0}.matrix .sub,.matrix td.res .sub{display:block;font-size:11px;color:var(--muted);margin-top:3px}.matrix td.res{white-space:nowrap}.matrix td:last-child{color:var(--muted);white-space:nowrap}.matrix i,.legend2 i{font-style:normal;font-weight:800;font-size:16px;margin-right:4px}.y{color:#17654f}.n{color:var(--red)}.na{color:#9aa7b1}.status{display:inline-block;font-weight:800;font-size:13px;line-height:1.7;padding:0 10px;border-radius:4px;font-variant-numeric:tabular-nums}.s2{background:#e6f3ef;color:#17654f}.s4{background:var(--redbg);color:var(--red)}.s0{background:#edf4fc;color:var(--blue)}.matrix tbody tr:hover td{background:#f1f7f6}.flow{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-wrap:wrap;gap:8px}.flow li{flex:1 1 130px;margin:0;background:#f6f8fa;border:1px solid var(--line);border-radius:7px;padding:10px 12px;position:relative;text-align:center}.flow li b{display:block;font-size:13px}.flow li .status{font-size:11px;margin-top:4px}.flow li.goal{background:#e9f5f2;border-color:#a9d3cc}.legend2{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:12px;color:var(--muted);margin-top:14px}.timeline{display:grid;grid-template-columns:1fr 1fr 1.3fr 1fr 1fr;margin:14px 0 4px;border-radius:7px;overflow:hidden;border:1px solid var(--line)}.timeline div{padding:10px 8px;text-align:center;font-size:12px}.timeline b{display:block}.timeline small{display:block;color:var(--muted);font-weight:700}.timeline .status{font-size:11px}.timeline .out{background:#fbf3f2}.timeline .in{background:#e9f5f2}.timeline .mid{color:var(--muted);display:flex;align-items:center;justify-content:center}
+.prep th:nth-child(1){width:8%}.prep th:nth-child(2){width:20%}.prep th:nth-child(3){width:56%}.prep th:nth-child(4){width:16%}.prep td{vertical-align:middle}.prep tr.sec td,.matrix tr.sec td{background:#edf2f5!important;font-weight:700;font-size:12px;padding:8px 14px;text-align:left}.did{display:inline-block;font-family:Consolas,"BIZ UDゴシック",monospace;font-weight:700;font-size:12px;line-height:1.6;padding:0 7px;border-radius:4px;border:1.5px solid transparent;margin-right:4px}.did.q{background:#edf4fc;color:var(--blue)}.did.cg{background:#e6f3ef;color:#17654f}.did.mb{background:#f0edfa;color:#66518c}.did.sg{background:var(--amberbg);color:var(--amber)}.did.az{background:#fdeef3;color:#9b3d63}.did.tm,.did.ev{background:var(--graybg);color:#4c5b66}.did.hl{border-color:currentColor}
+.items th:nth-child(1){width:6%}.items th:nth-child(2){width:8%}.items th:nth-child(3){width:26%}.items th:nth-child(4){width:46%}.items th:nth-child(5){width:14%}
+.defects th:nth-child(1){width:9%}.defects th:nth-child(2){width:11%}.defects th:nth-child(3){width:8%}.defects th:nth-child(4){width:36%}.defects th:nth-child(5){width:24%}.defects th:nth-child(6){width:12%}.compact th:first-child{width:24%}.approval th{width:25%}.approval td{height:84px}footer{border-top:1px solid var(--line);padding-top:20px;margin-top:35px;color:var(--muted);font-size:12px}.toplink{float:right}
+@media(max-width:800px){header{padding:32px 20px}.navinner{gap:10px 17px;padding:10px 20px}.navinner a{font-size:12px}.print{display:none}main{padding:22px 16px 45px}.summary{grid-template-columns:repeat(2,1fr)}.stat{padding:15px}.stat b{font-size:24px}.columns{grid-template-columns:1fr}.panel,.issue{padding:18px}h2{font-size:21px}h2 small{display:block;margin:3px 0}table{min-width:850px}.compact,.approval,.counts,.prep{min-width:600px}.matrix table{min-width:760px}.timeline{grid-template-columns:repeat(5,minmax(0,1fr))}.timeline div{padding:8px 4px;font-size:11px}.toolbar{position:static}.toplink{float:none;display:block}html{scroll-padding-top:18px}}
+@media print{@page{size:A4 landscape;margin:13mm}body{background:#fff;font-size:10px;line-height:1.65}header{background:#fff!important;color:var(--ink);padding:0 0 15px;border-bottom:2px solid var(--navy)}header p,.meta,.eyebrow{color:var(--muted)}header .ph{background:#fff6dc;color:var(--amber)}h1{font-size:25px}.toolbar{display:none}main{padding:18px 0;max-width:none}.summary{gap:10px}.stat{padding:10px}.stat b{font-size:20px}section{margin-top:23px}.panel,.issue{padding:15px;margin-top:11px}.matrix{break-inside:avoid}.flow li,.timeline div,.status{print-color-adjust:exact;-webkit-print-color-adjust:exact}h2{font-size:19px;break-after:avoid}h3{font-size:14px}.intro{font-size:11px}table{font-size:10px;min-width:0!important}thead{display:table-header-group}tr{break-inside:avoid}td,th{padding:9px 10px}.tablewrap{overflow:visible}pre{background:#f2f5f7;color:var(--ink);font-size:10px}td code{font-size:9px}.toplink{display:none}a{color:inherit}.notice{padding:10px 14px}.bar{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body id="top">
+<header>
+  <div class="eyebrow">UNIT TEST SPEC / SSO API v2 AUTHENTICATION SERVICE</div>
+  <h1><span class="method">POST</span>/auth/signin<br>ユーザー認証（signIn） 単体テスト項目書</h1>
+  <p>ユーザー名・パスワードで認証し、JWTトークンペア（IDトークン・リフレッシュトークン）を発行するAPIです。<br>Cognito認証、Members Databaseでのユーザー存在確認、本登録の完了確認、SGSダッシュボードによるサービス可用性確認の順に判定します。</p>
+  <div class="meta"><span>operationId：signIn</span><span>Lambda関数：<span class="ph">{stage}-sso-api2-auth-signin</span></span><span>API仕様書：yaml/api-sso-v2-auth.yaml（v2.0.0）</span><span>作成日：<span class="ph">YYYY年MM月DD日</span></span><span>作成者：<span class="ph">【氏名】</span></span><span>版数：v1.0</span><span>対象ブランチ / コミット：<span class="ph">feature/xxx @ xxxxxxx</span></span></div>
+</header>
+<nav class="toolbar" aria-label="資料内の移動"><div class="navinner">
+  <a href="#counts">単体テスト</a><a href="#structure">データ構造</a><a href="#definition">データ定義</a><a href="#matrix">テストマトリックス</a><a href="#prep">データ準備</a><a href="#items">テスト項目</a><a href="#defects">不具合</a><a href="#issues">残課題</a><a href="#approval">承認</a><button type="button" class="print" id="printButton">印刷 / PDF</button>
+</div></nav>
+<main>
+<div class="summary" aria-label="実施結果の集計">
+  <div class="stat"><b id="statTotal">0</b><span>テスト項目 全項目</span></div>
+  <div class="stat"><b id="statPass">0</b><span>OK（合格）</span></div>
+  <div class="stat alert"><b id="statFail">0</b><span>NG（不合格）</span></div>
+  <div class="stat warn"><b id="statRest">0</b><span>保留 / 未実施</span></div>
+  <div class="stat neutral"><b id="statRate">—</b><span>合格率（OK ÷ 全項目）</span></div>
+</div>
+<div class="panel">
+  <h4>進捗</h4>
+  <div class="bar" id="progressBar" aria-hidden="true"><i class="p"></i><i class="f"></i><i class="h"></i></div>
+  <div class="legend"><span style="--c:var(--teal)">OK</span><span style="--c:var(--red)">NG</span><span style="--c:#cf9d27">保留</span><span style="--c:var(--graybg)">未実施</span></div>
+  <div class="notice warn"><p><strong>総合判定：<span class="ph">未判定（テスト未実施）</span></strong></p><p>仕様書で判断できない点を「残課題」の R01〜R04 に挙げています。テストの実施前に確認してください。</p></div>
+</div>
+
+<section id="counts">
+  <h2>単体テスト <small>区分ごとの項目数</small></h2>
+  <p class="intro">数は「テスト項目」の区分から自動で数えます。</p>
+  <div class="tablewrap"><table class="counts"><thead><tr><th>区分</th><th>説明</th><th class="num">数</th></tr></thead><tbody>
+    <tr><td>全項目</td><td>POST /auth/signin の単体テスト項目の合計。</td><td class="num" id="cntAll">0</td></tr>
+    <tr><td><span class="badge t-normal">正常</span>正常系</td><td>正しい認証情報と有効なサービスコードで 200 が返り、トークンペアと日時が仕様どおりの形式で返ること。Z99・UZZ が期間判定の対象外になること。ログに機密情報が出ないこと。</td><td class="num" id="cntNormal">0</td></tr>
+    <tr><td><span class="badge t-boundary">境界</span>境界線（バリデーション）</td><td><code>userName</code>・<code>password</code>・<code>serviceCodes</code> の必須・型・最小文字数（1文字）のチェックで 400 が返ること。サービスの有効期間の開始日・終了日の前後で、判定が切り替わること。</td><td class="num" id="cntBoundary">0</td></tr>
+    <tr><td><span class="badge t-error">異常</span>異常系</td><td>Cognito認証の失敗、ユーザー不存在、本登録が未完了、サービスが利用不可のときに 401 が返ること。Cognito・DBのエラーや設定不備のときに 500 が返ること。</td><td class="num" id="cntError">0</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="structure">
+  <h2>データ構造 <small>リクエスト・レスポンス・参照先</small></h2>
+  <div class="columns">
+    <div class="panel">
+      <h3>リクエスト</h3>
+      <pre><code>POST /v2/auth/signin
+Content-Type: application/json
+
+{
+  "userName": "test@example.com",
+  "password": "SecurePassword123",
+  "serviceCodes": "G30"
+}</code></pre>
+      <p class="muted">認証前のAPIのため、<code>x-umid</code> と <code>Authorization</code> ヘッダーは不要です。<code>serviceCodes</code> はカンマ区切りで複数指定できます（例：<code>"G30,ABC,DEF"</code>）。</p>
+    </div>
+    <div class="panel">
+      <h3>レスポンス（200）</h3>
+      <pre><code>{
+  "date": "2022-05-02T18:23:11+09:00",
+  "expired": "2022-05-02T19:23:11+09:00",
+  "umid": "01G22126P8C2XFMZP0C6EQ45RF",
+  "unisCustomerCode": "",
+  "idToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIi..."
+}</code></pre>
+    </div>
+  </div>
+  <div class="columns">
+    <div class="panel">
+      <h3>レスポンス（400）</h3>
+      <pre><code>{
+  "message": "Event object failed validation",
+  "validationErrors": {
+    "package": "@middy/validator",
+    "data": [{
+      "instancePath": "/body",
+      "schemaPath": "#/properties/body/required",
+      "keyword": "required",
+      "params": { "missingProperty": "userName" },
+      "message": "must have required property 'userName'"
+    }]
+  }
+}</code></pre>
+    </div>
+    <div class="panel">
+      <h3>レスポンス（401 / 500）</h3>
+      <pre><code>// 401 認証・認可失敗
+{
+  "code": "AUTH_ERROR",
+  "message": "Authentication failed",
+  "timestamp": "2025-05-29T19:30:00+09:00"
+}
+
+// 500 サーバーエラー（設定エラーは code が CONFIGURATION_ERROR）
+{
+  "code": "INTERNAL_SERVER_ERROR",
+  "message": "Internal server error",
+  "timestamp": "2025-05-29T19:30:00+09:00"
+}</code></pre>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>処理の順序と参照先</h3>
+    <div class="tablewrap"><table class="compact"><thead><tr><th>順序 / 参照先</th><th>操作</th><th>判定条件</th></tr></thead><tbody>
+      <tr><td>1. AWS Cognito User Pool</td><td>ユーザー名・パスワード認証（<span class="ph">InitiateAuth / AdminInitiateAuth</span>）</td><td>認証に成功し、IDトークン・リフレッシュトークンを取得できる。</td></tr>
+      <tr><td>2. Members Database<br><span class="ph">{stage}-xxx-members</span></td><td>UMIDで検索</td><td>UMIDに一致するユーザーが存在する。</td></tr>
+      <tr><td>3. Members Database（同上）</td><td>登録ステータスの参照</td><td><code>registerStatus.code.final</code> が本登録完了を示す。</td></tr>
+      <tr><td>4. SGS Database &gt; Dashboard Service<br><span class="ph">{stage}-xxx-sgs</span></td><td>サービスCDとUMIDでサービスグループ情報を参照</td><td>リクエスト日が <code>serviceActivationDate</code>〜<code>serviceDeactivationDate</code> に含まれるレコードが1件以上ある。</td></tr>
+      <tr><td>4'. MEMBERS（認可）<br><span class="ph">{stage}-xxx-table</span></td><td>Z99（Cart）・UZZ（USENMEMBERS）のときだけ参照</td><td>データが存在する（期間は判定しない）。</td></tr>
+    </tbody></table></div>
+    <p class="muted">Lambda関数名・テーブル名・Cognito APIは、実装に合わせて書き換えてください。</p>
+  </div>
+</section>
+
+<section id="definition">
+  <h2>データ定義 <small>項目ごとの型と制約</small></h2>
+  <h3>リクエスト（SignInRequest）</h3>
+  <div class="tablewrap"><table class="datadef"><thead><tr><th>項目名</th><th>物理名</th><th>型</th><th>必須</th><th>桁数・形式</th><th>説明・制約</th></tr></thead><tbody>
+    <tr><td>ユーザー名</td><td><code>userName</code></td><td>string</td><td>◯</td><td>1文字以上</td><td>Cognitoのユーザー名（例ではメールアドレス）。欠落・空文字は 400。</td></tr>
+    <tr><td>パスワード</td><td><code>password</code></td><td>string</td><td>◯</td><td>1文字以上</td><td>欠落・空文字は 400。ログに出力しない。</td></tr>
+    <tr><td>サービスコード</td><td><code>serviceCodes</code></td><td>string</td><td>◯</td><td>1文字以上、カンマ区切り</td><td>欠落・空文字は 400。Z99・UZZ は期間判定の対象外。</td></tr>
+  </tbody></table></div>
+  <h3 style="margin-top:24px">レスポンス（SignInResponse）</h3>
+  <div class="tablewrap"><table class="datadef"><thead><tr><th>項目名</th><th>物理名</th><th>型</th><th>必須</th><th>桁数・形式</th><th>説明・制約</th></tr></thead><tbody>
+    <tr><td>現在日時</td><td><code>date</code></td><td>string</td><td>◯</td><td>date-time（RFC3339・+09:00）</td><td>日本時間で返す。</td></tr>
+    <tr><td>有効期限</td><td><code>expired</code></td><td>string</td><td>◯</td><td>date-time（RFC3339・+09:00）</td><td>IDトークンの有効期限。</td></tr>
+    <tr><td>ユーザーID</td><td><code>umid</code></td><td>string</td><td>◯</td><td>format: uuid（例は26文字）</td><td>形式の定義と例が一致しない（R04）。</td></tr>
+    <tr><td>UNIS顧客コード</td><td><code>unisCustomerCode</code></td><td>string</td><td>—</td><td>空文字</td><td>常に空文字を返す。</td></tr>
+    <tr><td>IDトークン</td><td><code>idToken</code></td><td>string</td><td>◯</td><td>JWT</td><td>Cognitoが発行したIDトークン。ログに出力しない。</td></tr>
+    <tr><td>リフレッシュトークン</td><td><code>refreshToken</code></td><td>string</td><td>◯</td><td>—</td><td>Cognitoが発行したリフレッシュトークン。ログに出力しない。</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="matrix">
+  <h2>テストマトリックス早見表 <small>条件の組み合わせと期待する結果</small></h2>
+  <p class="intro"><strong>1行が1つのケースです。</strong>左の「条件」の組み合わせのとき、右の「結果」になることを確認します。</p>
+
+  <div class="panel">
+    <h4 style="margin-top:0">処理の流れ（上から順に判定し、満たさない時点で終了）</h4>
+    <ol class="flow">
+      <li><b>入力チェック</b><span class="status s4">NG → 400</span></li>
+      <li><b>Cognito認証</b><span class="status s4">NG → 401</span></li>
+      <li><b>UMIDの存在</b><span class="status s4">NG → 401</span></li>
+      <li><b>本登録の完了</b><span class="status s4">NG → 401</span></li>
+      <li><b>サービスの可用性</b><span class="status s4">NG → 401</span></li>
+      <li class="goal"><b>認証成功</b><span class="status s2">200</span></li>
+    </ol>
+    <div class="legend2"><span><i class="y">◯</i>条件を満たす</span><span><i class="n">×</i>条件を満たさない</span><span><i class="na">−</i>判定しない（手前の条件で処理が終わるため）</span></div>
+  </div>
+
+  <div class="panel matrix" id="m01">
+    <h3>観点1：認証とユーザーの状態</h3>
+    <p class="lead">Cognito認証から本登録の確認までの組み合わせ。</p>
+    <div class="tablewrap"><table><thead>
+      <tr><th rowspan="2">ケース</th><th colspan="3" class="grp">条件</th><th colspan="3" class="grp res">結果</th></tr>
+      <tr><th class="cond">Cognito認証</th><th class="cond">Members DBに<br>UMIDがある</th><th class="cond">本登録が完了<br>（<code>final</code>）</th><th class="res">ステータス</th><th>期待値</th><th>テスト項目No.</th></tr>
+    </thead><tbody>
+      <tr><td class="case"><small>1-A</small><span class="badge t-normal">正常</span><b>すべて満たす</b></td><td class="c"><i class="y">◯</i>成功</td><td class="c"><i class="y">◯</i>あり</td><td class="c"><i class="y">◯</i>完了</td><td class="res"><span class="status s0">観点2へ</span></td><td>サービスの可用性の確認へ進む</td><td>1</td></tr>
+      <tr><td class="case"><small>1-B</small><span class="badge t-error">異常</span><b>UMIDがない</b></td><td class="c"><i class="y">◯</i>成功</td><td class="c"><i class="n">×</i>なし</td><td class="c"><i class="na">−</i></td><td class="res"><span class="status s4">401</span></td><td><code>AUTH_ERROR</code> が返る。トークンは返らない</td><td>27</td></tr>
+      <tr><td class="case"><small>1-C</small><span class="badge t-error">異常</span><b>本登録が未完了</b></td><td class="c"><i class="y">◯</i>成功</td><td class="c"><i class="y">◯</i>あり</td><td class="c"><i class="n">×</i>未完了</td><td class="res"><span class="status s4">401</span></td><td><code>AUTH_ERROR</code> が返る</td><td>28</td></tr>
+      <tr><td class="case"><small>1-D</small><span class="badge t-error">異常</span><b>認証に失敗</b><span class="sub">パスワード誤り・ユーザーなし</span></td><td class="c"><i class="n">×</i>失敗</td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="res"><span class="status s4">401</span></td><td><code>AUTH_ERROR</code> が返る。Members DB を参照しない</td><td>25, 26</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="panel matrix" id="m02">
+    <h3>観点2：サービスの可用性</h3>
+    <p class="lead">観点1-A（すべて満たす）の後の判定。Z99・UZZ だけは、SGSの期間ではなく MEMBERS（認可）のデータの有無で判定します。</p>
+    <div class="tablewrap"><table><thead>
+      <tr><th rowspan="2">ケース</th><th colspan="3" class="grp">条件</th><th colspan="3" class="grp res">結果</th></tr>
+      <tr><th class="cond">サービスコード</th><th class="cond">SGSに有効期間内の<br>レコードがある</th><th class="cond">MEMBERS（認可）に<br>データがある</th><th class="res">ステータス</th><th>期待値</th><th>テスト項目No.</th></tr>
+    </thead><tbody>
+      <tr><td class="case"><small>2-A</small><span class="badge t-normal">正常</span><b>通常サービス・期間内</b></td><td class="c">G30 など</td><td class="c"><i class="y">◯</i>あり</td><td class="c"><i class="na">−</i></td><td class="res"><span class="status s2">200</span></td><td>トークンペアが返る</td><td>1, 3</td></tr>
+      <tr><td class="case"><small>2-B</small><span class="badge t-error">異常</span><b>通常サービス・期間外</b></td><td class="c">G30 など</td><td class="c"><i class="n">×</i>なし</td><td class="c"><i class="na">−</i></td><td class="res"><span class="status s4">401</span><span class="sub">400の可能性あり（R01）</span></td><td>トークンは返らない</td><td>29</td></tr>
+      <tr><td class="case"><small>2-C</small><span class="badge t-normal">正常</span><b>Z99・UZZ・認可あり</b></td><td class="c">Z99 / UZZ</td><td class="c"><i class="na">−</i></td><td class="c"><i class="y">◯</i>あり</td><td class="res"><span class="status s2">200</span></td><td>SGSの期間を判定せずに成功する</td><td>4, 5</td></tr>
+      <tr><td class="case"><small>2-D</small><span class="badge t-error">異常</span><b>Z99・UZZ・認可なし</b></td><td class="c">Z99 / UZZ</td><td class="c"><i class="na">−</i></td><td class="c"><i class="n">×</i>なし</td><td class="res"><span class="status s4">401</span><span class="sub">400の可能性あり（R01）</span></td><td>トークンは返らない</td><td>30</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="panel matrix" id="m03">
+    <h3>観点3：サービスの有効期間の境界</h3>
+    <p class="lead">リクエスト日が <code>serviceActivationDate</code>（開始日）〜<code>serviceDeactivationDate</code>（終了日）に含まれるかの境界。</p>
+    <div class="timeline" aria-hidden="true">
+      <div class="out"><b>開始日の前日</b><span class="status s4">401</span><small>3-A</small></div>
+      <div class="in"><b>開始日の当日</b><span class="status s2">200</span><small>3-B</small></div>
+      <div class="in mid"><b>…有効期間…</b></div>
+      <div class="in"><b>終了日の当日</b><span class="status s2">200</span><small>3-C</small></div>
+      <div class="out"><b>終了日の翌日</b><span class="status s4">401</span><small>3-D</small></div>
+    </div>
+    <div class="tablewrap"><table><thead>
+      <tr><th rowspan="2">ケース</th><th colspan="2" class="grp">条件</th><th colspan="3" class="grp res">結果</th></tr>
+      <tr><th class="cond">リクエスト日（システム日時）</th><th class="cond">有効期間内</th><th class="res">ステータス</th><th>期待値</th><th>テスト項目No.</th></tr>
+    </thead><tbody>
+      <tr><td class="case"><small>3-A</small><span class="badge t-boundary">境界</span><b>開始日の前日</b></td><td class="c">開始日 − 1日</td><td class="c"><i class="n">×</i></td><td class="res"><span class="status s4">401</span></td><td>サービス利用不可として失敗する</td><td>20</td></tr>
+      <tr><td class="case"><small>3-B</small><span class="badge t-boundary">境界</span><b>開始日の当日</b></td><td class="c">開始日</td><td class="c"><i class="y">◯</i></td><td class="res"><span class="status s2">200</span></td><td>トークンペアが返る</td><td>21</td></tr>
+      <tr><td class="case"><small>3-C</small><span class="badge t-boundary">境界</span><b>終了日の当日</b></td><td class="c">終了日</td><td class="c"><i class="y">◯</i></td><td class="res"><span class="status s2">200</span></td><td>トークンペアが返る</td><td>22</td></tr>
+      <tr><td class="case"><small>3-D</small><span class="badge t-boundary">境界</span><b>終了日の翌日</b></td><td class="c">終了日 + 1日</td><td class="c"><i class="n">×</i></td><td class="res"><span class="status s4">401</span></td><td>サービス利用不可として失敗する</td><td>23</td></tr>
+      <tr><td class="case"><small>3-E</small><span class="badge t-boundary">境界</span><b>日本時間で日付が変わった直後</b></td><td class="c">開始日前日 15:00（UTC）<br>＝開始日 0:00（日本時間）</td><td class="c"><i class="y">◯</i></td><td class="res"><span class="status s2">200</span></td><td>日本時間の日付で判定される</td><td>24</td></tr>
+    </tbody></table></div>
+    <p class="muted">当日を期間に含む・日本時間で比較する、と仮定しています（R03）。</p>
+  </div>
+
+  <div class="panel matrix" id="m04">
+    <h3>観点4：入力チェック（バリデーション）</h3>
+    <p class="lead">◯ は「1文字以上の文字列」、× は「欠落・空文字・文字列以外」。</p>
+    <div class="tablewrap"><table><thead>
+      <tr><th rowspan="2">ケース</th><th colspan="3" class="grp">条件</th><th colspan="3" class="grp res">結果</th></tr>
+      <tr><th class="cond"><code>userName</code></th><th class="cond"><code>password</code></th><th class="cond"><code>serviceCodes</code></th><th class="res">ステータス</th><th>期待値</th><th>テスト項目No.</th></tr>
+    </thead><tbody>
+      <tr><td class="case"><small>4-A</small><span class="badge t-boundary">境界</span><b>すべて正しい（1文字）</b></td><td class="c"><i class="y">◯</i></td><td class="c"><i class="y">◯</i></td><td class="c"><i class="y">◯</i></td><td class="res"><span class="status s0">通過</span></td><td>バリデーションを通過し、Cognito認証が呼ばれる</td><td>10, 13, 16</td></tr>
+      <tr><td class="case"><small>4-B</small><span class="badge t-boundary">境界</span><b><code>userName</code> が不正</b></td><td class="c"><i class="n">×</i></td><td class="c"><i class="y">◯</i></td><td class="c"><i class="y">◯</i></td><td class="res"><span class="status s4">400</span></td><td>エラー詳細に <code>userName</code> が出る。Cognito は呼ばれない</td><td>8, 9, 17</td></tr>
+      <tr><td class="case"><small>4-C</small><span class="badge t-boundary">境界</span><b><code>password</code> が不正</b></td><td class="c"><i class="y">◯</i></td><td class="c"><i class="n">×</i></td><td class="c"><i class="y">◯</i></td><td class="res"><span class="status s4">400</span></td><td>エラー詳細に <code>password</code> が出る。Cognito は呼ばれない</td><td>11, 12</td></tr>
+      <tr><td class="case"><small>4-D</small><span class="badge t-boundary">境界</span><b><code>serviceCodes</code> が不正</b></td><td class="c"><i class="y">◯</i></td><td class="c"><i class="y">◯</i></td><td class="c"><i class="n">×</i></td><td class="res"><span class="status s4">400</span></td><td>エラー詳細に <code>serviceCodes</code> が出る。Cognito は呼ばれない</td><td>14, 15</td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<section id="prep">
+  <h2>データ準備 <small>マトリックスの各ケースに必要なデータ・モック</small></h2>
+  <p class="intro">①で、マトリックスのケースごとに、どのデータを組み合わせるかを ID で示します。各 ID の具体的な値は②にあります。</p>
+
+  <div class="panel matrix" id="prep-combo">
+    <h3>① ケースごとのデータの組み合わせ</h3>
+    <p class="lead">1行が1ケースです。各列に、そのケースで用意するデータの ID を書いています。</p>
+    <div class="tablewrap"><table><thead>
+      <tr><th rowspan="2">ケース</th><th colspan="7" class="grp">用意するデータ（ID は ②を参照）</th><th rowspan="2" class="res">テスト項目No.</th></tr>
+      <tr><th class="cond">リクエスト</th><th class="cond">Cognito</th><th class="cond">Members DB</th><th class="cond">SGS</th><th class="cond">MEMBERS<br>（認可）</th><th class="cond">システム日時</th><th class="cond">環境変数</th></tr>
+    </thead><tbody>
+      <tr class="sec"><td colspan="9">観点1：認証とユーザーの状態</td></tr>
+      <tr><td class="case"><small>1-A</small><b>すべて満たす</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">1, 2, 6, 7</td></tr>
+      <tr><td class="case"><small>1-B</small><b>UMIDがない</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M3</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">27</td></tr>
+      <tr><td class="case"><small>1-C</small><b>本登録が未完了</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M2</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">28</td></tr>
+      <tr><td class="case"><small>1-D</small><b>認証に失敗</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C2</span> / <span class="did cg">C3</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">25, 26</td></tr>
+      <tr class="sec"><td colspan="9">観点2：サービスの可用性</td></tr>
+      <tr><td class="case"><small>2-A</small><b>通常サービス・期間内</b></td><td class="c"><span class="did q">Q1</span> / <span class="did q">Q2</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span> / <span class="did sg">S4</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">1, 3</td></tr>
+      <tr><td class="case"><small>2-B</small><b>通常サービス・期間外</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S2</span> / <span class="did sg">S3</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">29</td></tr>
+      <tr><td class="case"><small>2-C</small><b>Z99・UZZ・認可あり</b></td><td class="c"><span class="did q">Q3</span> / <span class="did q">Q4</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S3</span><span class="sub">期間を見ないことの確認用</span></td><td class="c"><span class="did az">A1</span></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">4, 5</td></tr>
+      <tr><td class="case"><small>2-D</small><b>Z99・UZZ・認可なし</b></td><td class="c"><span class="did q">Q3</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S3</span></td><td class="c"><span class="did az">A2</span></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">30</td></tr>
+      <tr class="sec"><td colspan="9">観点3：サービスの有効期間の境界（S1 の期間 2026-04-01〜2027-03-31 に対して日時だけを変える）</td></tr>
+      <tr><td class="case"><small>3-A</small><b>開始日の前日</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm hl">T2</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">20</td></tr>
+      <tr><td class="case"><small>3-B</small><b>開始日の当日</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm hl">T3</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">21</td></tr>
+      <tr><td class="case"><small>3-C</small><b>終了日の当日</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm hl">T4</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">22</td></tr>
+      <tr><td class="case"><small>3-D</small><b>終了日の翌日</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm hl">T5</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">23</td></tr>
+      <tr><td class="case"><small>3-E</small><b>日本時間で日付が変わった直後</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm hl">T6</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">24</td></tr>
+      <tr class="sec"><td colspan="9">観点4：入力チェック（バリデーション）</td></tr>
+      <tr><td class="case"><small>4-A</small><b>すべて正しい（1文字）</b></td><td class="c"><span class="did q hl">Q5</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">10, 13, 16</td></tr>
+      <tr><td class="case"><small>4-B</small><b><code>userName</code> が不正</b></td><td class="c"><span class="did q hl">Q6</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">8, 9, 17</td></tr>
+      <tr><td class="case"><small>4-C</small><b><code>password</code> が不正</b></td><td class="c"><span class="did q hl">Q7</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">11, 12</td></tr>
+      <tr><td class="case"><small>4-D</small><b><code>serviceCodes</code> が不正</b></td><td class="c"><span class="did q hl">Q8</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">14, 15</td></tr>
+      <tr class="sec"><td colspan="9">マトリックス外：本文の形式・サーバーエラー</td></tr>
+      <tr><td class="case"><small>X-1</small><b>本文が空・不正なJSON</b></td><td class="c"><span class="did q hl">Q9</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">18</td></tr>
+      <tr><td class="case"><small>X-2</small><b>定義にない項目を含む</b></td><td class="c"><span class="did q hl">Q10</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg">S1</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">19</td></tr>
+      <tr><td class="case"><small>X-3</small><b>Cognitoのサービスエラー</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg hl">C4</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">31</td></tr>
+      <tr><td class="case"><small>X-4</small><b>Members DBの取得エラー</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb hl">M4</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">32</td></tr>
+      <tr><td class="case"><small>X-5</small><b>SGSの取得エラー</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><span class="did cg">C1</span></td><td class="c"><span class="did mb">M1</span></td><td class="c"><span class="did sg hl">S5</span></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev">E1</span></td><td class="res">32</td></tr>
+      <tr><td class="case"><small>X-6</small><b>必要な環境変数が未設定</b></td><td class="c"><span class="did q">Q1</span></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><i class="na">−</i></td><td class="c"><span class="did tm">T1</span></td><td class="c"><span class="did ev hl">E2</span></td><td class="res">33</td></tr>
+    </tbody></table></div>
+    <div class="legend2"><span><span class="did q hl">Q5</span>枠付きの ID はそのケースで変えるデータ</span><span><i class="na">−</i>呼ばれない（モックは置き、呼ばれないことを確認する）</span></div>
+  </div>
+
+  <div class="panel" id="prep-list">
+    <h3>② データ一覧</h3>
+    <div class="tablewrap"><table class="prep"><thead><tr><th>ID</th><th>状態</th><th>具体的な値・用意の仕方</th><th>使うケース</th></tr></thead><tbody>
+      <tr class="sec"><td colspan="4"><span class="did q">Q</span>リクエスト本文</td></tr>
+      <tr><td><span class="did q">Q1</span></td><td>基本</td><td><code>{"userName":"test@example.com","password":"SecurePassword123","serviceCodes":"G30"}</code></td><td>ほぼすべて</td></tr>
+      <tr><td><span class="did q">Q2</span></td><td>複数のサービスコード</td><td>Q1 の <code>serviceCodes</code> を <code>"G30,ABC,DEF"</code> にする</td><td>2-A</td></tr>
+      <tr><td><span class="did q">Q3</span></td><td>Z99（Cart）</td><td>Q1 の <code>serviceCodes</code> を <code>"Z99"</code> にする</td><td>2-C, 2-D</td></tr>
+      <tr><td><span class="did q">Q4</span></td><td>UZZ（USENMEMBERS）</td><td>Q1 の <code>serviceCodes</code> を <code>"UZZ"</code> にする</td><td>2-C</td></tr>
+      <tr><td><span class="did q">Q5</span></td><td>各項目が1文字</td><td>1項目ずつ変える：<code>userName:"a"</code> ／ <code>password:"a"</code> ／ <code>serviceCodes:"G"</code>（3パターン）</td><td>4-A</td></tr>
+      <tr><td><span class="did q">Q6</span></td><td><code>userName</code> が不正</td><td>欠落 ／ <code>""</code> ／ <code>12345</code>（数値）の3パターン</td><td>4-B</td></tr>
+      <tr><td><span class="did q">Q7</span></td><td><code>password</code> が不正</td><td>欠落 ／ <code>""</code> の2パターン</td><td>4-C</td></tr>
+      <tr><td><span class="did q">Q8</span></td><td><code>serviceCodes</code> が不正</td><td>欠落 ／ <code>""</code> ／ <code>["G30"]</code>（配列）の3パターン</td><td>4-D</td></tr>
+      <tr><td><span class="did q">Q9</span></td><td>本文の形式が不正</td><td>本文なし ／ <code>{</code>（不正なJSON）の2パターン</td><td>X-1</td></tr>
+      <tr><td><span class="did q">Q10</span></td><td>定義にない項目</td><td>Q1 に <code>"extra":"x"</code> を追加</td><td>X-2</td></tr>
+
+      <tr class="sec"><td colspan="4"><span class="did cg">C</span>Cognito（<span class="ph">aws-sdk-client-mock</span> でモック）</td></tr>
+      <tr><td><span class="did cg">C1</span></td><td>認証成功</td><td><code>IdToken</code>（<code>sub</code> から UMID を取得できる、<code>exp</code> = 発行時刻 + 3600秒）と <code>RefreshToken</code> を返す</td><td>ほぼすべて</td></tr>
+      <tr><td><span class="did cg">C2</span></td><td>パスワード誤り</td><td><code>NotAuthorizedException</code> を投げる</td><td>1-D</td></tr>
+      <tr><td><span class="did cg">C3</span></td><td>ユーザーなし</td><td><code>UserNotFoundException</code> を投げる</td><td>1-D</td></tr>
+      <tr><td><span class="did cg">C4</span></td><td>サービスエラー</td><td><code>InternalErrorException</code> を投げる</td><td>X-3</td></tr>
+
+      <tr class="sec"><td colspan="4"><span class="did mb">M</span>Members Database（<span class="ph">{stage}-xxx-members</span>）</td></tr>
+      <tr><td><span class="did mb">M1</span></td><td>本登録済みのユーザー</td><td><code>umid: "01G22126P8C2XFMZP0C6EQ45RF"</code>、<code>registerStatus.code.final: </code><span class="ph">【本登録完了の値】</span></td><td>ほぼすべて</td></tr>
+      <tr><td><span class="did mb">M2</span></td><td>本登録が未完了のユーザー</td><td>M1 と同じ UMID で、<code>registerStatus.code.final: </code><span class="ph">【未完了の値】</span></td><td>1-C</td></tr>
+      <tr><td><span class="did mb">M3</span></td><td>ユーザーなし</td><td>検索結果が0件</td><td>1-B</td></tr>
+      <tr><td><span class="did mb">M4</span></td><td>取得エラー</td><td>DBクライアントが例外を投げる</td><td>X-4</td></tr>
+
+      <tr class="sec"><td colspan="4"><span class="did sg">S</span>SGS Database &gt; Dashboard Service（<span class="ph">{stage}-xxx-sgs</span>）</td></tr>
+      <tr><td><span class="did sg">S1</span></td><td>G30・期間内</td><td>UMID = M1、<code>serviceCd: "G30"</code>、<code>serviceActivationDate: "2026-04-01"</code>、<code>serviceDeactivationDate: "2027-03-31"</code></td><td>1-A, 2-A, 3-*, 4-A</td></tr>
+      <tr><td><span class="did sg">S2</span></td><td>G30・期間外</td><td>S1 と同じで、期間を <code>"2025-04-01"</code>〜<code>"2026-03-31"</code> にする（T1 の時点で終了済み）</td><td>2-B</td></tr>
+      <tr><td><span class="did sg">S3</span></td><td>レコードなし</td><td>検索結果が0件</td><td>2-B, 2-C, 2-D</td></tr>
+      <tr><td><span class="did sg">S4</span></td><td>複数サービス・すべて期間内</td><td>G30・ABC・DEF の3件を、S1 と同じ期間で用意する</td><td>2-A</td></tr>
+      <tr><td><span class="did sg">S5</span></td><td>取得エラー</td><td>DBクライアントが例外を投げる</td><td>X-5</td></tr>
+
+      <tr class="sec"><td colspan="4"><span class="did az">A</span>MEMBERS（認可）（<span class="ph">{stage}-xxx-table</span>）</td></tr>
+      <tr><td><span class="did az">A1</span></td><td>認可データあり</td><td>UMID = M1 で、Z99・UZZ のデータをそれぞれ1件用意する</td><td>2-C</td></tr>
+      <tr><td><span class="did az">A2</span></td><td>認可データなし</td><td>検索結果が0件</td><td>2-D</td></tr>
+
+      <tr class="sec"><td colspan="4"><span class="did tm">T</span>システム日時（<code>jest.useFakeTimers()</code> と <code>jest.setSystemTime()</code> で固定）</td></tr>
+      <tr><td><span class="did tm">T1</span></td><td>通常</td><td><code>2026-10-27T10:00:00+09:00</code>（S1 は期間内、S2 は期間外）</td><td>3-* 以外</td></tr>
+      <tr><td><span class="did tm">T2</span></td><td>開始日の前日</td><td><code>2026-03-31T12:00:00+09:00</code></td><td>3-A</td></tr>
+      <tr><td><span class="did tm">T3</span></td><td>開始日の当日</td><td><code>2026-04-01T12:00:00+09:00</code></td><td>3-B</td></tr>
+      <tr><td><span class="did tm">T4</span></td><td>終了日の当日</td><td><code>2027-03-31T12:00:00+09:00</code></td><td>3-C</td></tr>
+      <tr><td><span class="did tm">T5</span></td><td>終了日の翌日</td><td><code>2027-04-01T12:00:00+09:00</code></td><td>3-D</td></tr>
+      <tr><td><span class="did tm">T6</span></td><td>日本時間で日付が変わった直後</td><td><code>2026-03-31T15:00:00Z</code>（＝ <code>2026-04-01T00:00:00+09:00</code>）</td><td>3-E</td></tr>
+
+      <tr class="sec"><td colspan="4"><span class="did ev">E</span>環境変数</td></tr>
+      <tr><td><span class="did ev">E1</span></td><td>すべて設定</td><td><span class="ph">User Pool ID・Client ID・テーブル名</span> をテスト用の値で設定する</td><td>X-6 以外</td></tr>
+      <tr><td><span class="did ev">E2</span></td><td>設定不足</td><td>E1 から <span class="ph">User Pool ID</span> を削除する</td><td>X-6</td></tr>
+    </tbody></table></div>
+    <p class="muted">テーブルの項目名（<code>serviceCd</code> など）と <code>registerStatus.code.final</code> の値は、実装とスキーマ定義に合わせて書き換えてください。ロガーは全ケースでモックし、出力内容を検査できるようにします（テスト項目 No.7）。</p>
+  </div>
+</section>
+
+<section id="items">
+  <h2>テスト項目</h2>
+  <p class="intro">区分とテスト結果のバッジから、上部の集計と「単体テスト」の数を自動で計算します。リクエストは特に記載がなければ <code>{"userName":"test@example.com","password":"SecurePassword123","serviceCodes":"G30"}</code> です。</p>
+  <div class="tablewrap"><table class="items" id="itemTable"><thead><tr><th>No.</th><th>区分</th><th>説明</th><th>テスト実施内容</th><th>テスト結果</th></tr></thead><tbody>
+    <tr><td>1</td><td><span class="badge t-normal">正常</span></td><td>単一のサービスコードで認証に成功する（観点1-A・観点2-A）</td><td>Cognito成功、UMIDあり、本登録完了、G30の有効期間内レコードありの状態で実行する。200 が返り、<code>date</code>・<code>expired</code>・<code>umid</code>・<code>idToken</code>・<code>refreshToken</code> が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>2</td><td><span class="badge t-normal">正常</span></td><td>レスポンス項目の値と形式</td><td>No.1 のレスポンスで、<code>date</code>・<code>expired</code> が <code>+09:00</code> 付きの RFC3339 形式、<code>expired</code> がIDトークンの有効期限と一致、<code>unisCustomerCode</code> が空文字、<code>umid</code> がMembers DBの値と一致することを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>3</td><td><span class="badge t-normal">正常</span></td><td>複数のサービスコードで認証に成功する（観点2-A）</td><td><code>serviceCodes: "G30,ABC,DEF"</code> で、すべてのサービスに有効期間内レコードがある状態で実行する。200 が返ることを確認する。一部だけ有効な場合の結果は R02 の確認後に項目を追加する。</td><td><span class="badge hold">保留</span></td></tr>
+    <tr><td>4</td><td><span class="badge t-normal">正常</span></td><td>Z99（Cart）は期間を判定しない（観点2-C）</td><td><code>serviceCodes: "Z99"</code>、SGSに有効期間内レコードなし、MEMBERS（認可）にデータありの状態で実行する。200 が返り、SGSを参照しない（または参照結果を使わない）ことを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>5</td><td><span class="badge t-normal">正常</span></td><td>UZZ（USENMEMBERS）は期間を判定しない（観点2-C）</td><td><code>serviceCodes: "UZZ"</code> で No.4 と同じ条件で実行し、200 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>6</td><td><span class="badge t-normal">正常</span></td><td>CORSヘッダー</td><td>200・401 のレスポンスに <code>Access-Control-Allow-Origin</code> ヘッダーが付くことを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>7</td><td><span class="badge t-normal">正常</span></td><td>ログに機密情報を出力しない</td><td>No.1・No.25 の実行時のログ出力を検査し、<code>password</code>・<code>idToken</code>・<code>refreshToken</code> の値が含まれないことを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>8</td><td><span class="badge t-boundary">境界</span></td><td><code>userName</code> が欠落（観点4-B）</td><td><code>userName</code> を除いたリクエストで実行する。400 が返り、<code>validationErrors.data[0].params.missingProperty</code> が <code>userName</code> であること、Cognitoが呼ばれないことを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>9</td><td><span class="badge t-boundary">境界</span></td><td><code>userName</code> が空文字（0文字）</td><td><code>userName: ""</code> で実行し、400 が返り、<code>keyword</code> が <code>minLength</code> であることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>10</td><td><span class="badge t-boundary">境界</span></td><td><code>userName</code> が1文字（観点4-A）</td><td><code>userName: "a"</code> で実行し、バリデーションを通過してCognito認証が呼ばれることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>11</td><td><span class="badge t-boundary">境界</span></td><td><code>password</code> が欠落（観点4-C）</td><td><code>password</code> を除いたリクエストで実行し、400 が返り、<code>missingProperty</code> が <code>password</code> であることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>12</td><td><span class="badge t-boundary">境界</span></td><td><code>password</code> が空文字（0文字）</td><td><code>password: ""</code> で実行し、400 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>13</td><td><span class="badge t-boundary">境界</span></td><td><code>password</code> が1文字</td><td><code>password: "a"</code> で実行し、バリデーションを通過してCognito認証が呼ばれることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>14</td><td><span class="badge t-boundary">境界</span></td><td><code>serviceCodes</code> が欠落（観点4-D）</td><td><code>serviceCodes</code> を除いたリクエストで実行し、400 が返り、<code>missingProperty</code> が <code>serviceCodes</code> であることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>15</td><td><span class="badge t-boundary">境界</span></td><td><code>serviceCodes</code> が空文字（0文字）</td><td><code>serviceCodes: ""</code> で実行し、400 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>16</td><td><span class="badge t-boundary">境界</span></td><td><code>serviceCodes</code> が1文字</td><td><code>serviceCodes: "G"</code> で実行し、バリデーションを通過することを確認する（その後はサービスなしとして 401）。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>17</td><td><span class="badge t-boundary">境界</span></td><td>型が文字列でない</td><td><code>userName: 12345</code>、<code>serviceCodes: ["G30"]</code> などで実行し、400 が返り、<code>keyword</code> が <code>type</code> であることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>18</td><td><span class="badge t-boundary">境界</span></td><td>本文が空・JSONとして不正</td><td>本文なし、<code>{</code> のような不正なJSONで実行し、400 が返ることを確認する（500 にならないこと）。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>19</td><td><span class="badge t-boundary">境界</span></td><td>定義にない項目を含む</td><td><code>{"userName":"…","password":"…","serviceCodes":"G30","extra":"x"}</code> で実行し、結果（無視して 200 か、400 か）がスキーマの <code>additionalProperties</code> の設定と一致することを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>20</td><td><span class="badge t-boundary">境界</span></td><td>サービス開始日の前日（観点3-A）</td><td>システム日時を <code>serviceActivationDate</code> の前日に固定して実行し、401 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>21</td><td><span class="badge t-boundary">境界</span></td><td>サービス開始日の当日（観点3-B）</td><td>システム日時を <code>serviceActivationDate</code> の当日に固定して実行し、200 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>22</td><td><span class="badge t-boundary">境界</span></td><td>サービス終了日の当日（観点3-C）</td><td>システム日時を <code>serviceDeactivationDate</code> の当日に固定して実行し、200 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>23</td><td><span class="badge t-boundary">境界</span></td><td>サービス終了日の翌日（観点3-D）</td><td>システム日時を <code>serviceDeactivationDate</code> の翌日に固定して実行し、401 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>24</td><td><span class="badge t-boundary">境界</span></td><td>日本時間の日付の切り替わり</td><td>システム日時を UTC で開始日前日の 15:00（日本時間で開始日の 0:00）に固定して実行し、開始日当日として 200 が返ることを確認する（R03）。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>25</td><td><span class="badge t-error">異常</span></td><td>パスワードの誤り（観点1-D）</td><td>Cognitoが <code>NotAuthorizedException</code> を返す状態で実行する。401 が返り、<code>code: "AUTH_ERROR"</code>・<code>message: "Authentication failed"</code>・<code>timestamp</code> が返ること、Members DBを参照しないことを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>26</td><td><span class="badge t-error">異常</span></td><td>Cognitoにユーザーが存在しない（観点1-D）</td><td>Cognitoが <code>UserNotFoundException</code> を返す状態で実行し、No.25 と同じ 401 のレスポンスが返ること（ユーザーの有無を区別できないこと）を確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>27</td><td><span class="badge t-error">異常</span></td><td>Members DBにUMIDが存在しない（観点1-B）</td><td>Cognitoは成功し、Members DBの検索結果が0件の状態で実行する。401 が返り、トークンが返らないことを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>28</td><td><span class="badge t-error">異常</span></td><td>本登録が完了していない（観点1-C）</td><td><code>registerStatus.code.final</code> が本登録完了でないユーザーで実行し、401 が返ることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>29</td><td><span class="badge t-error">異常</span></td><td>SGSにサービスグループ情報がない（観点2-B）</td><td>G30のサービスグループ情報が0件の状態で実行し、401 が返ることを確認する（R01）。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>30</td><td><span class="badge t-error">異常</span></td><td>Z99でMEMBERS（認可）にデータがない（観点2-D）</td><td><code>serviceCodes: "Z99"</code>、MEMBERS（認可）にデータなしの状態で実行し、401 が返ることを確認する（R01）。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>31</td><td><span class="badge t-error">異常</span></td><td>Cognitoのサービスエラー</td><td>Cognitoが <code>InternalErrorException</code> などを返す状態で実行し、500 が返り、<code>code: "INTERNAL_SERVER_ERROR"</code> であることを確認する。リトライの設定がある場合は呼び出し回数も確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>32</td><td><span class="badge t-error">異常</span></td><td>Members DB・SGSの取得エラー</td><td>DBクライアントが例外を投げる状態で実行し、500 が返ることを確認する。リトライの設定がある場合は呼び出し回数も確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+    <tr><td>33</td><td><span class="badge t-error">異常</span></td><td>必要な環境変数が未設定</td><td>User Pool ID などの環境変数を未設定にして実行し、500 が返り、<code>code: "CONFIGURATION_ERROR"</code> であることを確認する。</td><td><span class="badge todo">未実施</span></td></tr>
+  </tbody></table></div>
+  <p class="muted">テスト結果のバッジ：<span class="badge ok">OK</span><span class="badge ng">NG</span><span class="badge hold">保留</span><span class="badge todo">未実施</span>　実施日と実施者は、バッジの下に記入してください。</p>
+</section>
+
+<section id="defects">
+  <h2>不具合一覧</h2>
+  <div class="tablewrap"><table class="defects"><thead><tr><th>ID</th><th>テスト項目No.</th><th>重要度</th><th>内容</th><th>原因・対応</th><th>状態</th></tr></thead><tbody>
+    <tr><td colspan="6" class="muted">なし（テスト未実施）</td></tr>
+  </tbody></table></div>
+  <p class="muted">重要度：<span class="badge high">高</span>仕様違反・データ不整合　<span class="badge mid">中</span>一部条件での誤動作　<span class="badge low">低</span>文言・ログなど軽微。状態：修正済 / 対応中 / 仕様確認中 / 対応しない。</p>
+</section>
+
+<section id="issues">
+  <h2>残課題・申し送り <small>仕様書で判断できない点</small></h2>
+  <article class="issue" id="r01"><div style="display:flex;gap:12px;align-items:flex-start"><span class="muted" style="font-weight:800;padding-top:3px">R01</span><h3 style="flex:1"><span class="badge hold">仕様確認</span>サービスが利用できないときのステータスコード</h3></div>
+    <div class="columns"><div><h4>内容</h4><p>共通の 400（<code>BadRequest</code>）の説明に「ユーザーがサービス利用不可」とあります。一方で、signIn の 401 は「認証・認可失敗」です。サービスが利用できないとき（No.29・30）に 400 と 401 のどちらを返すかが決まりません。</p></div><div><h4>対応方針</h4><p>本書は 401 と仮定しています。<span class="ph">【確認先・期限】</span></p></div></div>
+  </article>
+  <article class="issue" id="r02"><div style="display:flex;gap:12px;align-items:flex-start"><span class="muted" style="font-weight:800;padding-top:3px">R02</span><h3 style="flex:1"><span class="badge hold">仕様確認</span>複数のサービスコードを指定したときの判定</h3></div>
+    <div class="columns"><div><h4>内容</h4><p><code>"G30,ABC,DEF"</code> のように指定したとき、すべてのサービスが有効なら成功なのか、1つでも有効なら成功なのかが書かれていません。空要素（<code>"G30,,ABC"</code>）や前後の空白の扱いも不明です。</p></div><div><h4>対応方針</h4><p>確認後、No.3 を確定し、一部だけ有効・空要素の項目を追加します。<span class="ph">【確認先・期限】</span></p></div></div>
+  </article>
+  <article class="issue" id="r03"><div style="display:flex;gap:12px;align-items:flex-start"><span class="muted" style="font-weight:800;padding-top:3px">R03</span><h3 style="flex:1"><span class="badge hold">仕様確認</span>有効期間の境界と日付の基準</h3></div>
+    <div class="columns"><div><h4>内容</h4><p>開始日・終了日の当日を期間に含むか、日付を日本時間で比較するかが書かれていません。<code>serviceDeactivationDate</code> が未設定（無期限）のときの扱いも不明です。</p></div><div><h4>対応方針</h4><p>本書は「当日を含む・日本時間」と仮定しています（No.20〜24）。無期限の扱いが決まったら項目を追加します。<span class="ph">【確認先・期限】</span></p></div></div>
+  </article>
+  <article class="issue" id="r04"><div style="display:flex;gap:12px;align-items:flex-start"><span class="muted" style="font-weight:800;padding-top:3px">R04</span><h3 style="flex:1"><span class="badge low">仕様書の修正</span><code>umid</code> の形式の定義と例が一致しない</h3></div>
+    <div class="columns"><div><h4>内容</h4><p><code>SignInResponse.umid</code> は <code>format: uuid</code> ですが、例の <code>01G22126P8C2XFMZP0C6EQ45RF</code> は26文字の ULID です。ほかのAPIのヘッダーでは <code>^[0-9A-Z]{26}$</code> と定義されています。</p></div><div><h4>対応方針</h4><p>仕様書の <code>format</code> を修正するよう依頼します。テストでは、Members DBの値と一致することだけを確認します（No.2）。</p></div></div>
+  </article>
+  <div class="panel">
+    <h4>完了判定</h4>
+    <ul class="checklist">
+      <li>R01〜R03 の仕様を確認し、テスト項目に反映した。</li>
+      <li>すべてのテスト項目を実施した（未実施・保留 0件）。</li>
+      <li>NG の項目はすべて修正し、再テストで OK になった。</li>
+      <li>カバレッジが目標値（<span class="ph">xx%</span>）を満たした。</li>
+      <li>ESLint・Prettier のエラーがない。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="approval">
+  <h2>承認</h2>
+  <div class="tablewrap"><table class="approval"><thead><tr><th>作成</th><th>レビュー</th><th>承認</th><th>備考</th></tr></thead><tbody>
+    <tr><td><span class="ph">氏名 / 日付</span></td><td><span class="ph">氏名 / 日付</span></td><td><span class="ph">氏名 / 日付</span></td><td></td></tr>
+  </tbody></table></div>
+</section>
+
+<footer><a class="toplink" href="#top">先頭へ戻る ↑</a><span>POST /auth/signin 単体テスト項目書 · 関連資料：yaml/api-sso-v2-auth.yaml</span></footer>
+</main>
+<script>
+document.getElementById('printButton').addEventListener('click',function(){window.print()});
+(function(){
+  var c={'t-normal':0,'t-boundary':0,'t-error':0,ok:0,ng:0,hold:0,todo:0},total=0;
+  var has=function(el,keys){if(!el)return;keys.forEach(function(k){if(el.classList.contains(k))c[k]++})};
+  document.querySelectorAll('#itemTable tbody tr').forEach(function(tr){
+    total++;
+    has(tr.children[1].querySelector('.badge'),['t-normal','t-boundary','t-error']);
+    has(tr.children[4].querySelector('.badge'),['ok','ng','hold','todo']);
+  });
+  var set=function(id,v){document.getElementById(id).textContent=v};
+  set('cntAll',total);set('cntNormal',c['t-normal']);set('cntBoundary',c['t-boundary']);set('cntError',c['t-error']);
+  set('statTotal',total);set('statPass',c.ok);set('statFail',c.ng);set('statRest',c.hold+c.todo);
+  set('statRate',total?Math.round(c.ok/total*1000)/10+'%':'—');
+  var bars=document.querySelectorAll('#progressBar i');
+  [c.ok,c.ng,c.hold].forEach(function(v,i){bars[i].style.width=total?v/total*100+'%':'0'});
+})();
+</script>
+</body>
+</html>
