@@ -25,7 +25,13 @@
 | [0019](0019-defer-toc-shipping-change-and-set-item-split.md) | 残量検知（ロボット巡回）のTOC出荷対応のUDS改修とセットマスター作成は保留し、方針確定後に改めて依頼する | Accepted | UDS, NeOS, UNIS | 残量検知, ロボット巡回, TOC, 出荷先, セット品目, 改修保留 |
 | [0020](0020-irregular-shipping-form-entered-by-product-side.md) | 既存顧客向けのロボット残量検知のイレギュラー発送依頼は、営業ではなくプロダクト側がフォームに入力する | Accepted | UDS | イレギュラー発送, 発送依頼フォーム, 残量検知, ロボット巡回, 運用ルール |
 | [0021](0021-uau03-default-shipping-destination.md) | 残量検知ロボット巡回のユニット（UAU 03）の出荷先デフォルトをどうするか | Proposed | UDS, NeOS | 出荷先, デフォルト, TOC, セット品目, 残量検知, ロボット巡回 |
-
+| [0022](0022-contract-owner-umid-link-required-for-all.md) | 申込では契約担当者にUMIDを紐付け、原則として全員から取得する | Accepted | ACE, UMEMBERS, NeOS | UMID, 契約担当者, アクティベーション, 包括契約, 営業ルール |
+| [0023](0023-email-required-in-principle-exceptions-case-by-case.md) | メールアドレスは原則必須とし、外す必要がある例外は発生した時に検討する | Accepted | ACE, UMEMBERS | メールアドレス, 必須化, 例外対応, インサイドセールス, SMS |
+| [0024](0024-ace-applicant-contact-requires-umid-activation.md) | ACEの申込担当者（先方担当者）にUMIDの紐付けと認証を必須とし、未了なら本番データが動く操作に進めない | Accepted | ACE, UMEMBERS | 申込担当者, 先方担当者, UMID, アクティベーション, 申込UI |
+| [0025](0025-ace-umid-link-key-email-or-login-id.md) | ACEとUMIDの認証連携で、メールアドレスとログインID（ユーザーID）のどちらをキーにするか | Proposed | ACE, UMEMBERS | UMID, 認証連携, ログインID, メールアドレス, ユーザーID |
+| [0026](0026-sub-email-only-accounts-promotion-and-merge.md) | 認証用メールアドレスがなく、サブメールアドレスだけのUMEMBERSアカウントをどう扱うか | Proposed | ACE, UMEMBERS, UNIS | サブメールアドレス, 認証用メールアドレス, アカウント統合, データ移行, UMID |
+| [0027](0027-email-validity-check-no-skip-required-auth.md) | メールアドレスの有効性チェックを経ずに進められるスキップをなくし、認証を必須とするか | Proposed | ACE, UMEMBERS | メールアドレス, 有効性チェック, 認証, アカウント作成メール, スキップ廃止 |
+| [0028](0028-billing-contact-access-granted-in-umembers-after-application.md) | 請求担当者など別の担当者への閲覧権限は、申込時ではなく申込後にUMEMBERSでお客様自身が付与する | Accepted | ACE, UMEMBERS | 請求担当者, アクセス権限, UMEMBERS, 申込担当者, 案件分割 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
