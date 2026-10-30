@@ -34,6 +34,9 @@
 | [0028](0028-billing-contact-access-granted-in-umembers-after-application.md) | 請求担当者など別の担当者への閲覧権限は、申込時ではなく申込後にUMEMBERSでお客様自身が付与する | Accepted | ACE, UMEMBERS | 請求担当者, アクセス権限, UMEMBERS, 申込担当者, 案件分割 |
 | [0029](0029-add-contract-party-code-and-name-to-shipping-csv.md) | ACE移行後の出荷データ（出荷CSV）に、契約先コードと契約先名称を付与する | Accepted | ACE, UDS | 出荷データ, 出荷CSV, 契約先コード, 契約先名称, 一括案件, 見込み |
 | [0030](0030-sales-pre-report-rule-for-bulk-projects.md) | 一括案件は、営業が契約先名称・契約先コードを添えて事前申告するルールを設ける | Accepted | ACE, UDS | 一括案件, 事前申告, 営業ルール, 契約先コード, 見込み精度 |
+| [0031](0031-no-billing-month-integration-from-ace-to-uds.md) | 明細課金月はACEからUDSへ連携せず、確認はACE側で行う（運用調整はOM部経由） | Accepted | ACE, UDS | 明細課金月, ACE連携, 連携除外, 提供サービス料金, 運用対応 |
+| [0032](0032-uds-fix-undersized-column-lengths-for-ace.md) | ACE連携のデータ項目のうち、UDS側のカラム長が小さい4箇所をUDS側で修正する | Accepted | ACE, UDS | カラム長, DBスキーマ, ACE連携, 物理名, 論理名 |
+| [0033](0033-ace-version-up-delay-and-scope-of-product-system-dev.md) | プロダクトシステム開発側のバージョンアップ遅延と対応範囲をどう判断するか | Proposed | ACE, UDS, UMEMBERS | ACE対応, バージョンアップ, スケジュール遅延, 脆弱性対応, 上層部判断 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
