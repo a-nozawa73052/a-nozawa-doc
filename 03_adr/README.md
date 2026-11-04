@@ -42,7 +42,7 @@
 | [0036](0036-past-data-migration-range-for-umembers.md) | UMEMBERSで閲覧できる書類の過去データをどこまで移行・保持するか | Proposed | ACE, UMEMBERS, UNIS | 過去データ, データ移行, 閲覧範囲, 担当者指定, 契約先 |
 | [0037](0037-billing-code-guessing-exposure-risk.md) | 請求先コードを入力すると権限のない店舗の情報が見えてしまうリスクをどう扱うか | Proposed | ACE, UMEMBERS, UNIS | 請求先コード, 権限, 情報漏えいリスク, 請求先サブ, 事業者 |
 | [0038](0038-quote-time-umid-acquisition-and-disclosure-method.md) | 見積作成時・最終承認時のUMID取得とUMEMBERS認証をどう扱うか | Proposed | ACE, UMEMBERS | 見積, UMID, 開示方法, 最終承認, 営業活動 |
-| [0039](0039-initial-release-skip-umid-acquisition-integration.md) | 初期リリースでは成約モードでUMEMBERSを選択できるようにし、見積作成時のUMID取得は見送る | Accepted | ACE, UMEMBERS | 初期リリース, スコープ, 取得連携, 成約モード, 承認フロー |
+| [0039](0039-initial-release-skip-umid-acquisition-integration.md) | 初期リリースでは成約モードでUMEMBERSを選択できるようにし、見積作成時のUMID取得と見積の開示方法へのUMEMBERS追加は見送る | Accepted | ACE, UMEMBERS | 初期リリース, スコープ, 取得連携, 成約モード, 承認フロー, 見積開示方法 |
 | [0040](0040-customer-approval-validity-and-expiry-handling.md) | 顧客の承認（クラウドサイン等）の有効期間と、期限切れ・キャンセル時の扱い | Proposed | ACE, UMEMBERS | 顧客承認, クラウドサイン, 有効期間, 期限切れ, 包括契約 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
