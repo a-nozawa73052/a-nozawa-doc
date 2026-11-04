@@ -37,7 +37,7 @@
 | [0031](0031-no-billing-month-integration-from-ace-to-uds.md) | 明細課金月はACEからUDSへ連携せず、確認はACE側で行う（運用調整はOM部経由） | Accepted | ACE, UDS | 明細課金月, ACE連携, 連携除外, 提供サービス料金, 運用対応 |
 | [0032](0032-uds-fix-undersized-column-lengths-for-ace.md) | ACE連携のデータ項目のうち、UDS側のカラム長が小さい4箇所をUDS側で修正する | Accepted | ACE, UDS | カラム長, DBスキーマ, ACE連携, 物理名, 論理名 |
 | [0033](0033-ace-version-up-delay-and-scope-of-product-system-dev.md) | プロダクトシステム開発側のバージョンアップ遅延と対応範囲をどう判断するか | Proposed | ACE, UDS, UMEMBERS | ACE対応, バージョンアップ, スケジュール遅延, 脆弱性対応, 上層部判断 |
-| [0034](0034-umembers-store-display-name-only.md) | UMEMBERSの画面では店舗コードを直接出さず、店舗名を基本に表示する | Accepted | ACE, UMEMBERS | 店舗表示, 店舗コード, 表示項目, 電話番号, UMEMBERS画面 |
+| [0034](0034-umembers-store-display-name-only.md) | UMEMBERSの画面ではサービス提供先コードを直接出さず、店舗名を基本に表示する | Accepted | ACE, UMEMBERS | 店舗表示, サービス提供先コード, 店舗CD, 表示項目, 電話番号, UMEMBERS画面 |
 | [0035](0035-document-view-scope-by-contract-party.md) | 作業完了報告書などの閲覧範囲は契約先単位で管理し、店舗は絞り込みで選べるようにする | Accepted | ACE, UMEMBERS | 閲覧範囲, 契約先, 店舗, 権限管理, 作業完了報告書 |
 | [0036](0036-past-data-migration-range-for-umembers.md) | UMEMBERSで閲覧できる書類の過去データをどこまで移行・保持するか | Proposed | ACE, UMEMBERS, UNIS | 過去データ, データ移行, 閲覧範囲, 担当者指定, 契約先 |
 | [0037](0037-billing-code-guessing-exposure-risk.md) | 請求先コードを入力すると権限のない店舗の情報が見えてしまうリスクをどう扱うか | Proposed | ACE, UMEMBERS, UNIS | 請求先コード, 権限, 情報漏えいリスク, 請求先サブ, 事業者 |
