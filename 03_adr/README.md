@@ -44,6 +44,9 @@
 | [0038](0038-quote-time-umid-acquisition-and-disclosure-method.md) | 見積作成時・最終承認時のUMID取得とUMEMBERS認証をどう扱うか | Proposed | ACE, UMEMBERS | 見積, UMID, 開示方法, 最終承認, 営業活動 |
 | [0039](0039-initial-release-skip-umid-acquisition-integration.md) | 初期リリースでは成約モードでUMEMBERSを選択できるようにし、見積作成時のUMID取得と見積の開示方法へのUMEMBERS追加は見送る | Accepted | ACE, UMEMBERS | 初期リリース, スコープ, 取得連携, 成約モード, 承認フロー, 見積開示方法 |
 | [0040](0040-customer-approval-validity-and-expiry-handling.md) | 顧客の承認（クラウドサイン等）の有効期間と、期限切れ・キャンセル時の扱い | Proposed | ACE, UMEMBERS | 顧客承認, クラウドサイン, 有効期間, 期限切れ, 包括契約 |
+| [0041](0041-reflect-plan-item-change-before-allocation.md) | 引き当て前のプラン変更・品目変更を、出荷依頼に反映できるようにUDSを改修する | Accepted | UDS, NeOS | 引き当て前, プラン変更, 品目変更, 出荷依頼, 明細変更 |
+| [0042](0042-announce-use-detail-change-until-shipping-confirmed.md) | 数量が変わる場合、顧客出庫の確定までは、キャンセル＋新規契約ではなく明細変更で行うよう営業に周知する | Accepted | NeOS, UDS | 営業周知, 明細変更, 顧客出庫, キャンセル, 運用ルール |
+| [0043](0043-handling-quantity-plan-change-after-allocation.md) | 引き当て後に、明細変更で個数やプランが変わったときのUDSでの扱い | Proposed | UDS, NeOS | 引き当て後, 数量変更, アラート, ステータス引き戻し, 返品, カメラ |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
