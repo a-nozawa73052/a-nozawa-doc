@@ -1,0 +1,2864 @@
+{
+ "source": "01_共通.md / 00_索引.md",
+ "groups": [
+  {
+   "id": "common",
+   "title": "共通画面（ログイン・ダイアログ・エラー）",
+   "lead": "ログイン・ログアウト・自動ログイン、ロール別のログイン後遷移、403/404、共通ダイアログ（バーコード・エラー・完了・アップロード・SIM紐づけ通知）、端末日時更新Ajaxを確認する。",
+   "concepts": [
+    {
+     "id": "com-01-login-form",
+     "title": "COM-01 ログイン：画面表示・入力操作",
+     "screens": [
+      "COM-01"
+     ],
+     "purpose": "ログイン画面の初期表示と、ボタン活性・パスワード表示切替などのクライアント側の動きを確認する。",
+     "precondition": "ROLE-GUEST。Cookie mgal なし。PCブラウザ。",
+     "conditionColumns": [
+      "入力状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "未入力",
+        "/manage/login を開く"
+       ],
+       "expected": [
+        "ロゴ・ID・PW・自動ログイン欄を表示",
+        "ログインボタン非活性"
+       ],
+       "prep": "COM-COOKIE-NONE",
+       "op": "/manage/login を開く",
+       "detail": "placeholder「メールアドレスを入力」「パスワードを入力」。ログインボタンは is-disable。「ログイン情報を保存する」は未チェック。フッターロゴ表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "IDのみ入力ではボタン非活性",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "IDのみ入力",
+        "入力"
+       ],
+       "expected": [
+        "ログインボタン非活性のまま",
+        "―"
+       ],
+       "prep": "",
+       "op": "ユーザー名だけ入力する",
+       "detail": "両方入力済みのときだけ活性化（メッセージなし）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ID・PW両方入力でボタン活性",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ID・PW入力",
+        "入力"
+       ],
+       "expected": [
+        "ログインボタン活性",
+        "―"
+       ],
+       "prep": "",
+       "op": "ユーザー名とパスワードを入力する",
+       "detail": "is-disable が外れる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "パスワード表示切替",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "PW入力済",
+        "目アイコンをクリック（2回）"
+       ],
+       "expected": [
+        "1回目: 平文表示／2回目: 伏字",
+        "―"
+       ],
+       "prep": "",
+       "op": "目アイコンを2回クリックする",
+       "detail": ".js-password の data-stats open/close で input type を text/password に切替",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "Enterキーでの送信（要確認）",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ID・PW入力",
+        "PW欄でEnter"
+       ],
+       "expected": [
+        "（要確認）",
+        "（要確認）"
+       ],
+       "prep": "ROLE-ADM",
+       "op": "パスワード欄で Enter を押す",
+       "detail": "フォームに js-enter-submit クラスがあるが対応JSハンドラが見当たらない。送信されるか実機で記録する",
+       "known": "01要確認-4",
+       "should": "移行後の仕様として Enter 送信の可否を決めて合わせる"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-02-login-auth",
+     "title": "COM-02 ログイン処理：入力チェック・認証",
+     "screens": [
+      "COM-01",
+      "COM-02"
+     ],
+     "purpose": "ログイン処理の必須チェックと認証失敗時のメッセージ原文、再表示時の入力値保持を確認する。",
+     "precondition": "ROLE-GUEST。準備ユーザー COM-USER-* を登録済み。",
+     "conditionColumns": [
+      "ログインID",
+      "パスワード"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・セッション"
+     ],
+     "cases": [
+      {
+       "kind": "バリデーション",
+       "name": "ログインID未入力",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "空",
+        "正しいPW"
+       ],
+       "expected": [
+        "「ログインIDを入力してください」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "ボタンが非活性のため、開発者ツール等で username を空にして /manage/login/login へPOST",
+       "detail": "サーバー側 required。login/index を入力値付きで再描画",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "パスワード未入力",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-ADM のID",
+        "空"
+       ],
+       "expected": [
+        "「パスワードを入力してください」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "password を空にしてPOST",
+       "detail": "サーバー側 required",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "パスワード誤り",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-ADM のID",
+        "誤ったPW"
+       ],
+       "expected": [
+        "「ログインID、または、パスワードが違います」（両項目）",
+        "last_login 更新なし"
+       ],
+       "prep": "",
+       "op": "誤ったパスワードでログイン",
+       "detail": "両項目に is-error とメッセージ。入力値（パスワード含む）が value に再セットされる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "無効ユーザー（status≠1）",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "COM-USER-DISABLED",
+        "正しいPW"
+       ],
+       "expected": [
+        "「ログインID、または、パスワードが違います」",
+        "更新なし"
+       ],
+       "prep": "COM-USER-DISABLED",
+       "op": "ログイン",
+       "detail": "認証条件 status=1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "削除済みユーザー",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "COM-USER-DELETED",
+        "正しいPW"
+       ],
+       "expected": [
+        "「ログインID、または、パスワードが違います」",
+        "更新なし"
+       ],
+       "prep": "COM-USER-DELETED",
+       "op": "ログイン",
+       "detail": "認証条件 deleted_at IS NULL",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "パスワードは平文比較",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-ADM のID",
+        "users.password と同じ平文"
+       ],
+       "expected": [
+        "ログイン成功",
+        "login_hash 更新"
+       ],
+       "prep": "ROLE-ADM の users.password が平文で保存されていることを確認",
+       "op": "平文PWでログイン",
+       "detail": "hash_password() が入力値をそのまま返すため平文比較。セッションに username / login_hash / login_info を保存し、セッションIDをローテーション",
+       "known": "Z-2",
+       "should": "パスワードはハッシュ化して保存・照合する（移行時の方針に合わせる）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-02-redirect",
+     "title": "COM-02 ログイン処理：ユーザー区分別のログイン後遷移",
+     "screens": [
+      "COM-02"
+     ],
+     "purpose": "ユーザー区分ごとにログイン後の遷移先とヘッダーの選択状態を確認する（00_索引 1章の表どおり）。",
+     "precondition": "各ロールのユーザーで自動ログインOFFでログインする。",
+     "conditionColumns": [
+      "user_div",
+      "補足"
+     ],
+     "expectColumns": [
+      "遷移先URL",
+      "表示画面"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "admin のログイン後",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "1（administrator）",
+        "―"
+       ],
+       "expected": [
+        "/manage/master/device",
+        "MST-01 U∞デバイス種別登録"
+       ],
+       "prep": "ROLE-ADM",
+       "op": "ログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center のログイン後",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2（center）",
+        "所属センター＝南港"
+       ],
+       "expected": [
+        "/manage/center/request?cecd[]=<所属センターCD>",
+        "CEN-01 依頼リスト（南港で検索済）"
+       ],
+       "prep": "ROLE-CEN",
+       "op": "ログイン",
+       "detail": "cecd[] は users.jurisdiction_branch_cd",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "branch のログイン後",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "3（branch）",
+        "―"
+       ],
+       "expected": [
+        "/manage/branch/request",
+        "BRA-01 依頼リスト"
+       ],
+       "prep": "ROLE-BRA",
+       "op": "ログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external のログイン後",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "4（external）",
+        "―"
+       ],
+       "expected": [
+        "/manage/external/request",
+        "EXT-01 依頼リスト"
+       ],
+       "prep": "ROLE-EXT",
+       "op": "ログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp のログイン後",
+       "role": "ROLE-CP",
+       "conditions": [
+        "5（cp）",
+        "―"
+       ],
+       "expected": [
+        "/manage/cp/mirroring/device",
+        "MIR-01 CP検証機リスト"
+       ],
+       "prep": "ROLE-CP",
+       "op": "ログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu のログイン後",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "6（jimu）",
+        "―"
+       ],
+       "expected": [
+        "/manage/jimu/shipment/list",
+        "JIM-01 直送案件 検索"
+       ],
+       "prep": "ROLE-JIM",
+       "op": "ログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu_itaku のログイン後",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "7（hoshu_itaku）",
+        "―"
+       ],
+       "expected": [
+        "/manage/hoshu/device/list",
+        "HSU-11 端末管理リスト"
+       ],
+       "prep": "ROLE-HSU",
+       "op": "ログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "user_div が1〜7以外",
+       "role": "COM-USER-INVALID",
+       "conditions": [
+        "8（定義外）",
+        "―"
+       ],
+       "expected": [
+        "（要確認）",
+        "（要確認）"
+       ],
+       "prep": "COM-USER-INVALID",
+       "op": "ログイン",
+       "detail": "redirect_to() の戻り値が null。挙動は要確認。現行の結果を記録する",
+       "known": "01要確認-8",
+       "should": "定義外の区分はログイン不可とするなど、扱いを決める"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-01-autologin",
+     "title": "COM-01/02 自動ログインCookie（mgal）",
+     "screens": [
+      "COM-01",
+      "COM-02"
+     ],
+     "purpose": "「ログイン情報を保存する」による自動ログインCookieの発行・ローテーション・期限・削除を確認する。",
+     "precondition": "ROLE-ADM（または ROLE-CEN）。ブラウザの Cookie を確認できる状態。",
+     "conditionColumns": [
+      "Cookie・DBの状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示・遷移",
+      "DB・Cookie"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "自動ログインONでログイン",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "mgalなし",
+        "チェックONでログイン"
+       ],
+       "expected": [
+        "/manage/master/device",
+        "mgal 発行（30日）、auto_login_key 50文字"
+       ],
+       "prep": "",
+       "op": "「ログイン情報を保存する」をONにしてログイン",
+       "detail": "users.auto_login_key・auto_login_updatetime を更新",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "自動ログインOFFでログイン",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "mgalあり（前回ON）",
+        "チェックOFFでログイン"
+       ],
+       "expected": [
+        "/manage/master/device",
+        "mgal 削除、auto_login_key/updatetime=NULL"
+       ],
+       "prep": "直前のケースの状態",
+       "op": "チェックOFFでログイン",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "有効なmgalで自動ログイン",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-COOKIE-VALID",
+        "/manage/login を開く"
+       ],
+       "expected": [
+        "フォームを出さず CEN-01 へ",
+        "auto_login_key を再発行し mgal 再セット"
+       ],
+       "prep": "COM-COOKIE-VALID",
+       "op": "セッションを破棄（ブラウザ再起動等）して /manage/login を開く",
+       "detail": "トークンローテーション。旧キーは無効になる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "期限切れmgal（30日超）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "COM-COOKIE-EXPIRED",
+        "/manage/login を開く"
+       ],
+       "expected": [
+        "ログインフォーム表示",
+        "mgal 削除"
+       ],
+       "prep": "COM-COOKIE-EXPIRED",
+       "op": "/manage/login を開く",
+       "detail": "auto_login_updatetime > 現在−30日 を満たさない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "DBに無いmgal（ローテーション前の旧値）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "旧キーをCookieに戻す",
+        "/manage/login を開く"
+       ],
+       "expected": [
+        "ログインフォーム表示",
+        "mgal 削除"
+       ],
+       "prep": "自動ログインを1回行う前の mgal 値を控えておく",
+       "op": "Cookie mgal を旧値に書き換えて開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-03-logout",
+     "title": "COM-03 ログアウト",
+     "screens": [
+      "COM-03",
+      "COM-24"
+     ],
+     "purpose": "ログアウトでセッション・自動ログインキーが消え、ログイン画面に戻ることを確認する。",
+     "precondition": "ROLE-ADM でログイン済み。",
+     "conditionColumns": [
+      "状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示・遷移",
+      "DB・Cookie"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ヘッダーからログアウト",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ログイン済",
+        "ユーザー名クリック→ログアウト"
+       ],
+       "expected": [
+        "/manage/login を表示",
+        "セッションの username/login_hash/login_info 削除"
+       ],
+       "prep": "",
+       "op": "ヘッダーのユーザー名をクリックしてログアウトボタンを表示し、押す",
+       "detail": "ユーザー名クリック（.js-disp-logout）でログアウトボタン表示切替",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "自動ログイン設定ありでログアウト",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "mgalあり",
+        "ログアウト"
+       ],
+       "expected": [
+        "/manage/login を表示（自動ログインしない）",
+        "auto_login_key/updatetime=NULL、mgal 削除"
+       ],
+       "prep": "自動ログインONでログイン",
+       "op": "ログアウト後に /manage/login を再度開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ログアウト後に業務画面を開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ログアウト済",
+        "/manage/master/device を開く"
+       ],
+       "expected": [
+        "/manage/login にリダイレクト",
+        "―"
+       ],
+       "prep": "",
+       "op": "ブラウザの戻る or URL直打ち",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-04-error",
+     "title": "COM-04/05/06 403・404・例外時の画面",
+     "screens": [
+      "COM-04",
+      "COM-05",
+      "COM-06"
+     ],
+     "purpose": "権限なし・存在しないURL・例外発生時に現行どの画面になるかを確認する。404画面は現行では表示されないと読める。",
+     "precondition": "ログイン済みケースは ROLE-BRA を使う。",
+     "conditionColumns": [
+      "発生事象",
+      "ログイン状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "HTTP・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "異常",
+       "name": "権限のない画面",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "/manage/center/request",
+        "ログイン済"
+       ],
+       "expected": [
+        "403画面「アクセスが禁止されています。」",
+        "status 403"
+       ],
+       "prep": "",
+       "op": "URL直打ち",
+       "detail": "タイトル「403 Error」、メッセージ「アクセスが禁止されています。」「リクエストされたページは閲覧が許可されていません。」。レイアウトなしの単独HTML",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "403画面の「ログイン画面へ」",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "403画面表示中",
+        "ログイン済"
+       ],
+       "expected": [
+        "ログイン画面を表示",
+        "/manage/login/logout 経由（ログアウトされる）"
+       ],
+       "prep": "",
+       "op": "「ログイン画面へ」を押す",
+       "detail": "再度業務URLを開くとログイン画面にリダイレクトされることも確認",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しないURL（ログイン済）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "/manage/xxx",
+        "ログイン済"
+       ],
+       "expected": [
+        "403画面",
+        "status 403"
+       ],
+       "prep": "",
+       "op": "URL直打ち",
+       "detail": "_404_ ルートの Controller_Error に ACL がないため Exception_403 → 403画面と読める（実機確認推奨）",
+       "known": "Z-11",
+       "should": "404画面「お探しのページは見つかりませんでした。」を表示する"
+      },
+      {
+       "kind": "異常",
+       "name": "存在しないURL（未ログイン）",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "/manage/xxx",
+        "未ログイン"
+       ],
+       "expected": [
+        "ログイン画面",
+        "/manage/login へリダイレクト"
+       ],
+       "prep": "",
+       "op": "URL直打ち",
+       "detail": "",
+       "known": "Z-11",
+       "should": "404画面を表示する"
+      },
+      {
+       "kind": "異常",
+       "name": "不正データ例外（Exception_Illegaldata）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ソート項目に不正値（Common_Sorter）",
+        "ログイン済"
+       ],
+       "expected": [
+        "403画面（要確認）",
+        "（要確認）"
+       ],
+       "prep": "",
+       "op": "一覧URLのソート用パラメータを存在しない項目名に書き換えて開く（パラメータ名は対象画面の定義書参照）",
+       "detail": "public/index.php が全例外を catch して _404_ へ回すため、不正データ画面「不正な値を検知しました。」は表示されず403画面になると読める",
+       "known": "Z-11",
+       "should": "不正データ画面またはエラー画面を表示する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-07-barcode",
+     "title": "COM-07 バーコード読取ダイアログ",
+     "screens": [
+      "COM-07"
+     ],
+     "purpose": "バーコードモード／キーボードモードでのシリアル読取と送信、保守委託の電話照合チェックを確認する。",
+     "precondition": "ROLE-CEN で CEN-12 キッティング一覧の「バーコード検索」から開く（保守委託ケースは ROLE-HSU で HSU の引き当て画面）。",
+     "conditionColumns": [
+      "モード・ロール",
+      "入力"
+     ],
+     "expectColumns": [
+      "ダイアログの表示",
+      "送信・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ダイアログを開く（センター）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "バーコードモード",
+        "「バーコード検索」押下"
+       ],
+       "expected": [
+        "「ピッと音が鳴るまで バーコードリーダーをかざしてください。」",
+        "iframe ダイアログ表示"
+       ],
+       "prep": "",
+       "op": "CEN-12 で「バーコード検索」",
+       "detail": "「※読み取りが完了するとこの画面は自動的に閉じます」も表示。最大1000×600",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "バーコード読取で送信",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "バーコードモード",
+        "COM-SERIAL-OK を読取＋Enter"
+       ],
+       "expected": [
+        "―",
+        "barcode_next_url（/manage/center/kitting/search_barcode）へPOST"
+       ],
+       "prep": "COM-SERIAL-OK",
+       "op": "バーコードリーダーで読み取る",
+       "detail": "keyCode を蓄積。Shift は無視、189 は「-」。barcode に読取値",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "バーコード画像5回クリックで切替",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "バーコードモード",
+        "画像を5回クリック"
+       ],
+       "expected": [
+        "「シリアルコードをキーボードで入力してください。」",
+        "入力欄にフォーカス"
+       ],
+       "prep": "",
+       "op": "バーコード画像を5回クリック",
+       "detail": "隠し機能",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キーボード入力で送信（小文字→大文字）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "キーボードモード",
+        "abc-123＋Enter"
+       ],
+       "expected": [
+        "―",
+        "barcode=ABC-123 でPOST"
+       ],
+       "prep": "",
+       "op": "キーボードモードで小文字入力してEnter",
+       "detail": "大文字化して送信",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "英数字・ハイフン以外は除去",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "キーボードモード",
+        "AB_C!1 を入力"
+       ],
+       "expected": [
+        "入力欄は ABC1",
+        "―"
+       ],
+       "prep": "",
+       "op": "記号を含めて入力",
+       "detail": "入力時に即時除去（メッセージなし）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "保守委託は最初からキーボードモード",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "保守委託",
+        "ダイアログを開く"
+       ],
+       "expected": [
+        "キーボード案内と入力欄を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "HSU のキッティング一覧で「バーコード検索」",
+       "detail": "「※シリアルコード入力後、Enterキーを押してください」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "保守委託の引き当て：電話照合未チェック",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "保守委託・引き当て",
+        "チェックなしでEnter"
+       ],
+       "expected": [
+        "「確認チェックを入れてから Enter を押してください」",
+        "送信しない"
+       ],
+       "prep": "",
+       "op": "HSU の引き当て画面からダイアログを開き、シリアル入力してEnter",
+       "detail": "is_hoshu_assign=true のときだけ「シリアルを電話で読み上げ、入力予定のシリアルと合致していることを確認しましたか」を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "保守委託の引き当て：電話照合チェック済",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "保守委託・引き当て",
+        "チェックON＋Enter"
+       ],
+       "expected": [
+        "―",
+        "引き当て処理URLへPOST"
+       ],
+       "prep": "",
+       "op": "チェックを入れてEnter",
+       "detail": "is_hoshu_assign は hidden に含めない",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-08-09-dialog",
+     "title": "COM-08/09/10 エラー・完了ダイアログ",
+     "screens": [
+      "COM-08",
+      "COM-09",
+      "COM-10"
+     ],
+     "purpose": "iframe ダイアログ内のエラー表示と、完了ダイアログによる親画面リロード・遷移とトースト表示を確認する。",
+     "precondition": "ROLE-JIM で JIM-01 直送案件のファイルアップロード（COM-11）を使う。complete2 は ROLE-CEN の CEN-04 等で確認。",
+     "conditionColumns": [
+      "呼出元・状況",
+      "操作"
+     ],
+     "expectColumns": [
+      "ダイアログの表示",
+      "親画面・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "エラーダイアログ表示",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "CSVアップロード失敗",
+        "COM-CSV-NG-ROW を送信"
+       ],
+       "expected": [
+        "インラインモーダルでエラーメッセージ表示",
+        "親画面はそのまま"
+       ],
+       "prep": "COM-CSV-NG-ROW",
+       "op": "COM-11 から一括更新csvをアップロード",
+       "detail": "フラッシュ error_message の値を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "完了ダイアログ（complete）",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "CSVアップロード成功",
+        "COM-CSV-OK を送信"
+       ],
+       "expected": [
+        "ダイアログが閉じる",
+        "親画面リロード＋トースト「更新しました」"
+       ],
+       "prep": "COM-CSV-OK",
+       "op": "アップロード",
+       "detail": "keep_flash('info_message') でリロード後にトースト表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "完了ダイアログ（complete2・URL指定あり）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "url 指定ありの処理完了",
+        "ダイアログ内の処理を完了"
+       ],
+       "expected": [
+        "ダイアログが閉じる",
+        "親画面が指定URLへ遷移"
+       ],
+       "prep": "",
+       "op": "complete2 を使う画面（CEN-04 引き当て等）で処理を完了",
+       "detail": "parent.location.href = url。対象ケースは各画面の定義書を参照",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "データなしダイアログ（未使用）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/manage/dialog/not_found 直打ち",
+        "閉じる押下"
+       ],
+       "expected": [
+        "「データが見つかりません」表示（要確認）",
+        "（要確認）"
+       ],
+       "prep": "",
+       "op": "URL直打ち",
+       "detail": "呼出元なし。.js-close-reload のハンドラも共通JSにない",
+       "known": "Z-14",
+       "should": "移行対象外とするか判断する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-11-upload",
+     "title": "COM-11 ファイルアップロードダイアログ（直送案件）",
+     "screens": [
+      "COM-11"
+     ],
+     "purpose": "直送案件の一括更新csv・送り状csvのアップロードダイアログの操作と、共通のエラーメッセージを確認する。",
+     "precondition": "ROLE-JIM で JIM-01 の「ファイルアップロード」から開く。",
+     "conditionColumns": [
+      "ファイル",
+      "操作"
+     ],
+     "expectColumns": [
+      "ダイアログの表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "一括更新csv 成功",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "COM-CSV-OK",
+        "一括更新のアップロード押下"
+       ],
+       "expected": [
+        "ダイアログが閉じる",
+        "JIM-01 リロード＋トースト「更新しました」"
+       ],
+       "prep": "COM-CSV-OK",
+       "op": "アップロード",
+       "detail": "送信先 /manage/jimu/shipment/list/update_by_upload_csv。DB更新内容は JIM の定義書",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "送り状csv 成功",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "COM-CSV-SHIP-OK",
+        "送り状のアップロード押下"
+       ],
+       "expected": [
+        "ダイアログが閉じる",
+        "JIM-01 リロード＋トースト「更新しました」"
+       ],
+       "prep": "COM-CSV-SHIP-OK",
+       "op": "アップロード",
+       "detail": "送信先 /manage/jimu/shipment/list/upload_shipping_csv",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未選択でアップロード",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "未選択",
+        "アップロード押下"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください。」",
+        "COM-08 エラーダイアログ"
+       ],
+       "prep": "",
+       "op": "未選択で押下",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "拡張子違い",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "COM-FILE-TXT",
+        "アップロード押下"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください。」",
+        "COM-08"
+       ],
+       "prep": "COM-FILE-TXT",
+       "op": "アップロード",
+       "detail": "詳細なアップロードエラーは出さず固定文言",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "20MB超",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "COM-CSV-21MB",
+        "アップロード押下"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください。」",
+        "COM-08"
+       ],
+       "prep": "COM-CSV-21MB",
+       "op": "アップロード",
+       "detail": "最大20MB",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CSV内容エラー",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "COM-CSV-NG-ROW",
+        "アップロード押下"
+       ],
+       "expected": [
+        "「{行番号}行目の{エラー内容}」",
+        "COM-08、DB更新なし"
+       ],
+       "prep": "COM-CSV-NG-ROW",
+       "op": "アップロード",
+       "detail": "エラー内容は JIM の定義書",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "システム例外",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "例外を発生させる",
+        "アップロード押下"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」",
+        "COM-08"
+       ],
+       "prep": "",
+       "op": "（再現方法は JIM 側で検討）",
+       "detail": "SYSTEM_ERROR_MSG",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-12-sim-changed",
+     "title": "COM-12 SIM紐づけ変更通知ダイアログ",
+     "screens": [
+      "COM-12"
+     ],
+     "purpose": "キッティング時、IDM連携でSIMと端末の紐づけが変わったときの通知内容と、その後の遷移を確認する。",
+     "precondition": "ROLE-CEN。CEN-12/CEN-17 のキッティング操作で表示される（表示契機の詳細は 02 の定義書）。",
+     "conditionColumns": [
+      "紐づけ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "ダイアログの表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "異常",
+       "name": "利用できないステータスのSIM",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SIM-BADSTATUS",
+        "キッティングへ進む"
+       ],
+       "expected": [
+        "「IDM連携により、利用できないステータスのSIMが端末に紐づいています。担当者にお問い合わせください。」",
+        "「閉じる」のみ。キッティングに進めない"
+       ],
+       "prep": "COM-SIM-BADSTATUS",
+       "op": "対象端末でキッティングを開始",
+       "detail": "is_current_status_error",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "紐づけ解除のみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SIM-UNBIND",
+        "キッティングへ進む"
+       ],
+       "expected": [
+        "「端末とSIMの紐づけが解除されました。」シリアルCD／解除されたICCID",
+        "OK → 本来の処理"
+       ],
+       "prep": "COM-SIM-UNBIND",
+       "op": "同上",
+       "detail": "is_unbind_only",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "新規紐づけ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SIM-NEWBIND",
+        "キッティングへ進む"
+       ],
+       "expected": [
+        "「端末とSIMの紐づけが変更されました。」変更前「紐づけなし」→変更後ICCID／SIM番号",
+        "OK → 本来の処理"
+       ],
+       "prep": "COM-SIM-NEWBIND",
+       "op": "同上",
+       "detail": "is_new_binding",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "紐づけ先の変更",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SIM-CHANGED",
+        "キッティングへ進む"
+       ],
+       "expected": [
+        "変更前ICCID／SIM番号 → 変更後ICCID／SIM番号",
+        "OK → 本来の処理"
+       ],
+       "prep": "COM-SIM-CHANGED",
+       "op": "同上",
+       "detail": "共通文言「端末とSIMの紐づけを変更する際はSIM情報変更のSIMと端末の紐づけ登録変更かSIM詳細画面から変更してください」",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "com-13-ajax",
+     "title": "COM-13 端末日時更新（Ajax）",
+     "screens": [
+      "COM-13",
+      "DEV-18"
+     ],
+     "purpose": "端末管理リストの「日時更新」で updated_at が更新されることと、ステータス・ロール・セッション切れ時の応答を確認する。",
+     "precondition": "ROLE-CEN で DEV-18 端末管理リストを表示。",
+     "conditionColumns": [
+      "端末・ロール",
+      "状況"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "引き当て済系（3,4,14,16）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SERIAL-OK（status 3）",
+        "日時更新押下"
+       ],
+       "expected": [
+        "ボタンにチェックマーク（is-check）",
+        "serials.updated_at・serial_signup_date＝現在、contracts.updated_at 更新"
+       ],
+       "prep": "COM-SERIAL-OK",
+       "op": "日時更新を押す",
+       "detail": "押下時にボタン非活性。関連 contract_com/mdm/mdm2_devices.updated_at もレコードがあれば更新。変更ログ出力",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "その他の対象ステータス（例 10）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SERIAL-ST10",
+        "日時更新押下"
+       ],
+       "expected": [
+        "チェックマーク",
+        "contracts と関連テーブルの updated_at のみ更新（serials は更新しない）"
+       ],
+       "prep": "COM-SERIAL-ST10",
+       "op": "日時更新",
+       "detail": "serials 更新はステータス 3,4,14,16 のときだけ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "jimu で実行",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "COM-SERIAL-OK",
+        "日時更新押下"
+       ],
+       "expected": [
+        "alert「システムエラーを検知したため、処理を中断しました。」",
+        "更新なし"
+       ],
+       "prep": "COM-SERIAL-OK",
+       "op": "jimu で DEV-18 を開き日時更新",
+       "detail": "jimu にもボタンが表示されるがサーバーは user_div 1,2 以外を拒否（ログ label 1）",
+       "known": "01要確認-6",
+       "should": "jimu にはボタンを表示しない、または実行を許可する"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "表示後に端末ステータスが変わった",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SERIAL-OK を表示後 status を対象外へ更新",
+        "日時更新押下"
+       ],
+       "expected": [
+        "alert「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "COM-SERIAL-OK",
+       "op": "画面表示後にDBで status を変更して押下",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約が存在しない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SERIAL-NOCONTRACT",
+        "日時更新押下"
+       ],
+       "expected": [
+        "alert「契約情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "COM-SERIAL-NOCONTRACT",
+       "op": "日時更新",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しないserial_id",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "存在しないID",
+        "URLを書き換えて実行"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "開発者ツールで GET /manage/ajax/uidm/updated/999999999.json（Ajaxヘッダー付き）",
+       "detail": "ログ label 2",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "セッション切れ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SERIAL-OK",
+        "セッション破棄後に押下"
+       ],
+       "expected": [
+        "alert「タイムアウトしました。再度ログインして下さい」",
+        "/manage/login/logout へ遷移"
+       ],
+       "prep": "COM-SERIAL-OK",
+       "op": "別タブでログアウトしてから押下",
+       "detail": "{\"error\":\"auth\"}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "Ajax以外でアクセス",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-SERIAL-OK",
+        "URLをブラウザで直接開く"
+       ],
+       "expected": [
+        "403画面",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "/manage/ajax/uidm/updated/{id}.json をアドレスバーで開く",
+       "detail": "X-Requested-With なし → Exception_403",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  },
+  {
+   "id": "common-items",
+   "title": "共通項目テスト",
+   "lead": "権限マトリクス、ヘッダーメニュー・画面内タブのロール別表示、セッション切れ、フラッシュメッセージ、共通バリデーション、ファイルアップロード、共通部品を、代表画面で横断的に確認する。",
+   "concepts": [
+    {
+     "id": "ci-acl",
+     "title": "権限マトリクス：ロール×主要URL",
+     "screens": [
+      "COM-04"
+     ],
+     "purpose": "mosauth.php の権限どおりに、ロールごとに開けるURLと403になる境界を確認する。CP検証機管理（Z-1）の認可漏れも含む。",
+     "precondition": "各ロールでログイン済み（ROLE-GUEST は未ログイン）。URL直打ちで確認。",
+     "conditionColumns": [
+      "URL",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "HTTP・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "admin：メンテ（URL直打ちのみ）を開ける",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/manage/master/mainte",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-ADM でログインし /manage/master/mainte を開く",
+       "detail": "ヘッダー・タブは選択状態にならないと読める（要確認）",
+       "known": "01要確認-7",
+       "should": "ヘッダー・タブの扱いを決める"
+      },
+      {
+       "kind": "異常",
+       "name": "admin：現地画面は403",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/manage/branch/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-ADM でログインし /manage/branch/request を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center：依頼リストを開ける",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/manage/center/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-CEN でログインし /manage/center/request を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "center：マスター管理は403",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/manage/master/device",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-CEN でログインし /manage/master/device を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "center：CP検証機リストが開けてしまう",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/manage/cp/mirroring/device",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示（403にならない）",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-CEN でログインし /manage/cp/mirroring/device を開く",
+       "detail": "Controller_Cp_Mirroring_* は Controller_Hybrid 直継承でACLチェックなし",
+       "known": "Z-1",
+       "should": "403画面になる"
+      },
+      {
+       "kind": "異常",
+       "name": "branch：センター画面は403",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "/manage/center/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-BRA でログインし /manage/center/request を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：依頼リストを開ける",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "/manage/external/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-EXT でログインし /manage/external/request を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "external：端末回収状況登録は403",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "/manage/external/device/return",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-EXT でログインし /manage/external/device/return を開く",
+       "detail": "ACL に External_Device_Return なし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：CP検証機リストを開ける",
+       "role": "ROLE-CP",
+       "conditions": [
+        "/manage/cp/mirroring/device",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-CP でログインし /manage/cp/mirroring/device を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "cp：発送状況確認は403",
+       "role": "ROLE-CP",
+       "conditions": [
+        "/manage/cp/shipping/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-CP でログインし /manage/cp/shipping/request を開く",
+       "detail": "ACL に Cp_Shipping_Request なし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu：直送案件を開ける",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "/manage/jimu/shipment/list",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-JIM でログインし /manage/jimu/shipment/list を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu：センターの端末管理リストを開ける",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "/manage/center/device/list",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-JIM でログインし /manage/center/device/list を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu：新規端末一括登録を開ける（導線なし）",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "/manage/center/device/register",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-JIM でログインし /manage/center/device/register を開く",
+       "detail": "ACL に Center_Device_Register あり。ヘッダー・タブに導線なし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：端末管理リストを開ける",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "/manage/hoshu/device/list",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示",
+        "200"
+       ],
+       "prep": "",
+       "op": "ROLE-HSU でログインし /manage/hoshu/device/list を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "hoshu：現地画面は403",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "/manage/branch/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-HSU でログインし /manage/branch/request を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "旧画面 /manage/request は全ロール403",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/manage/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面",
+        "403"
+       ],
+       "prep": "",
+       "op": "ROLE-ADM でログインし /manage/request を開く",
+       "detail": "Controller_Request は ACL 定義なし（旧画面の残骸）",
+       "known": "Z-14",
+       "should": "ルートを廃止する"
+      },
+      {
+       "kind": "異常",
+       "name": "未ログイン：業務画面はログイン画面へ",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "/manage/center/request",
+        "URL直打ち"
+       ],
+       "expected": [
+        "ログイン画面",
+        "/manage/login へリダイレクト"
+       ],
+       "prep": "",
+       "op": "ROLE-GUEST でログインし /manage/center/request を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログイン：CP検証機リストが開けてしまう",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "/manage/cp/mirroring/device",
+        "URL直打ち"
+       ],
+       "expected": [
+        "画面を表示（ログイン画面にならない）（要確認）",
+        "（要確認）"
+       ],
+       "prep": "",
+       "op": "ROLE-GUEST でログインし /manage/cp/mirroring/device を開く",
+       "detail": "ログインチェックも行わないと読める。実機確認",
+       "known": "Z-1",
+       "should": "ログイン画面へリダイレクトする"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-header",
+     "title": "COM-24 ヘッダーメニュー：ロール別表示",
+     "screens": [
+      "COM-24"
+     ],
+     "purpose": "ユーザー区分ごとにヘッダーに出るメニュー・リンク先・ユーザー区分表示を確認する（00_索引 1章の表どおり）。",
+     "precondition": "各ロールでログイン済み。",
+     "conditionColumns": [
+      "ロール",
+      "状態"
+     ],
+     "expectColumns": [
+      "表示メニュー",
+      "リンク先"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ROLE-ADM のヘッダーメニュー",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ROLE-ADM",
+        "ログイン直後"
+       ],
+       "expected": [
+        "キッティング／在庫管理／SIM管理／発送状況確認／直送案件／出力履歴／CP検証機管理／マスター管理",
+        "/manage/center/request、/manage/center/device/register、/manage/center/sim/register、/manage/center/shipping/request、/manage/jimu/shipment/list、/manage/jimu/export/list、/manage/cp/mirroring/device、/manage/master/device"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "キッティングのリンクには ?cecd[]={管轄CD} が付く（01_共通 COM-24）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-CEN のヘッダーメニュー",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "ログイン直後"
+       ],
+       "expected": [
+        "キッティング／在庫管理／SIM管理／発送状況確認／直送案件／出力履歴",
+        "admin と同じ（CP検証機管理・マスター管理なし）。SIM管理は /manage/center/sim/update にリダイレクト"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "SIM管理リンク /manage/center/sim/register は action 内で update へリダイレクト",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-BRA のヘッダーメニュー",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "ログイン直後"
+       ],
+       "expected": [
+        "キッティング／在庫管理／発送状況確認",
+        "/manage/branch/request、/manage/branch/device/store、/manage/branch/shipping/request"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "発送状況確認のリンクには ?bcs[]={管轄CD} が付く（01_共通 COM-24）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-EXT のヘッダーメニュー",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "ROLE-EXT",
+        "ログイン直後"
+       ],
+       "expected": [
+        "キッティング／在庫管理／発送状況確認",
+        "/manage/external/request、/manage/external/device/store、/manage/external/shipping/request"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-CP のヘッダーメニュー",
+       "role": "ROLE-CP",
+       "conditions": [
+        "ROLE-CP",
+        "ログイン直後"
+       ],
+       "expected": [
+        "キッティング／在庫管理／CP検証機管理",
+        "/manage/cp/request、/manage/cp/device/store、/manage/cp/mirroring/device"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-JIM のヘッダーメニュー",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ROLE-JIM",
+        "ログイン直後"
+       ],
+       "expected": [
+        "在庫管理／直送案件／出力履歴",
+        "/manage/center/device/list、/manage/jimu/shipment/list、/manage/jimu/export/list"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "キッティングなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-HSU のヘッダーメニュー",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "ROLE-HSU",
+        "ログイン直後"
+       ],
+       "expected": [
+        "キッティング／在庫管理／発送状況確認",
+        "/manage/hoshu/request、/manage/hoshu/device/store、/manage/hoshu/shipping/request"
+       ],
+       "prep": "",
+       "op": "ログインしてヘッダーを確認し、各メニューをクリック",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ユーザー区分表示（admin/center）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "任意画面"
+       ],
+       "expected": [
+        "1段目「センター」2段目「南港」、ユーザー名",
+        "―"
+       ],
+       "prep": "",
+       "op": "ヘッダーを確認",
+       "detail": "admin は「Admin」。2段目は center_short_name（南港／IoTｾﾝﾀｰ／北海道ｾﾝﾀｰ／沖縄ｾﾝﾀｰ）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ユーザー区分表示（現地系）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "任意画面"
+       ],
+       "expected": [
+        "1段目に管轄名（支店A）、2段目空",
+        "―"
+       ],
+       "prep": "",
+       "op": "ヘッダーを確認",
+       "detail": "users.jurisdiction_branch_name。external/cp/hoshu も同様",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-navi",
+     "title": "COM-25 画面内タブ：ロール別表示",
+     "screens": [
+      "COM-25"
+     ],
+     "purpose": "ヘッダーメニューごとの画面内タブの表示・遷移可否（表示専用タブ）をロール別に確認する。",
+     "precondition": "各ロールでログイン済み。",
+     "conditionColumns": [
+      "ヘッダーメニュー",
+      "操作"
+     ],
+     "expectColumns": [
+      "表示タブ",
+      "選択状態・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ROLE-CEN：キッティングのタブ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "キッティング",
+        "メニューを開く"
+       ],
+       "expected": [
+        "依頼リスト／引き当て／キッティング～検品／出荷",
+        "依頼リストが active。引き当ては href=# で遷移不可"
+       ],
+       "prep": "",
+       "op": "ヘッダー「キッティング」をクリックしタブを確認",
+       "detail": "引き当て画面表示時だけ引き当てタブが active",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-ADM：SIM管理のタブ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "SIM管理",
+        "メニューを開く"
+       ],
+       "expected": [
+        "SIM情報登録／SIM情報変更／SIM管理リスト",
+        "SIM情報登録が active（SIM登録更新タブなし）"
+       ],
+       "prep": "",
+       "op": "ヘッダー「SIM管理」をクリックしタブを確認",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-CEN：SIM管理のタブ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SIM管理",
+        "メニューを開く"
+       ],
+       "expected": [
+        "SIM登録更新／SIM管理リスト",
+        "SIM登録更新が active（登録・変更タブなし）"
+       ],
+       "prep": "",
+       "op": "ヘッダー「SIM管理」をクリックしタブを確認",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-CP：CP検証機管理のタブ",
+       "role": "ROLE-CP",
+       "conditions": [
+        "CP検証機管理",
+        "メニューを開く"
+       ],
+       "expected": [
+        "CP検証機リスト／契約の検索／変更内容の確認",
+        "CP検証機リストが active。他2つは遷移不可"
+       ],
+       "prep": "",
+       "op": "ヘッダー「CP検証機管理」をクリックしタブを確認",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-EXT：在庫管理のタブ",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "在庫管理",
+        "メニューを開く"
+       ],
+       "expected": [
+        "支店入庫処理／端末管理リスト",
+        "端末回収状況登録タブなし"
+       ],
+       "prep": "",
+       "op": "ヘッダー「在庫管理」をクリックしタブを確認",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ROLE-JIM：在庫管理のタブ",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "在庫管理",
+        "メニューを開く"
+       ],
+       "expected": [
+        "端末管理リストのみ",
+        "端末管理リストが active"
+       ],
+       "prep": "",
+       "op": "ヘッダー「在庫管理」をクリックしタブを確認",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "表示専用タブはクリックしても遷移しない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "キッティング",
+        "「引き当て」タブをクリック"
+       ],
+       "expected": [
+        "変化なし",
+        "遷移しない（href=#・is-disable）"
+       ],
+       "prep": "",
+       "op": "クリック",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "メンテ画面の選択状態（要確認）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "（URL直打ち）",
+        "/manage/master/mainte を開く"
+       ],
+       "expected": [
+        "ヘッダー・タブとも選択状態なし（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "URL直打ち",
+       "detail": "Master_Mainte はフラッシュのセットがコメントアウト",
+       "known": "01要確認-7",
+       "should": "マスター管理を選択状態にするか決める"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-session",
+     "title": "未ログイン・セッション切れ時の動き",
+     "screens": [
+      "COM-01",
+      "COM-13"
+     ],
+     "purpose": "セッション切れ・未ログイン時のリダイレクト先と、セッション設定（2時間・多重ログイン許可）を確認する。",
+     "precondition": "ROLE-CEN を使う。セッション切れはセッションCookie mfid の削除で再現（時間経過ケースは2時間待機）。",
+     "conditionColumns": [
+      "状況",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "異常",
+       "name": "未ログインで業務画面",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "Cookieなし",
+        "/manage/center/device/list を開く"
+       ],
+       "expected": [
+        "ログイン画面",
+        "/manage/login。ログイン後は元画面に戻らない"
+       ],
+       "prep": "",
+       "op": "URL直打ち後にログイン",
+       "detail": "ログイン後は区分別初期画面（CEN-01）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "セッション切れで画面遷移",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mfid削除",
+        "ヘッダーメニューをクリック"
+       ],
+       "expected": [
+        "ログイン画面",
+        "/manage/login"
+       ],
+       "prep": "",
+       "op": "Cookie mfid を削除してメニューをクリック",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "セッション切れでAjax",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mfid削除",
+        "DEV-18 で日時更新"
+       ],
+       "expected": [
+        "alert「タイムアウトしました。再度ログインして下さい」",
+        "/manage/login/logout"
+       ],
+       "prep": "COM-SERIAL-OK",
+       "op": "日時更新を押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "多重ログイン可",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "別ブラウザで同一ユーザーログイン",
+        "両方で操作"
+       ],
+       "expected": [
+        "両方とも操作できる",
+        "先のセッションは切れない"
+       ],
+       "prep": "",
+       "op": "ブラウザAでログイン後、ブラウザBで同じユーザーでログインし、Aで画面遷移",
+       "detail": "multiple_logins => true",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-flash",
+     "title": "フラッシュメッセージ（トースト・エラーモーダル・入力エラー）",
+     "screens": [
+      "COM-26",
+      "COM-27"
+     ],
+     "purpose": "完了・エラーメッセージの表示先（トースト／エラーモーダル／SIM管理の赤トースト）と、1回表示で消えることを確認する。",
+     "precondition": "代表画面で確認（各画面のメッセージ原文は個別の定義書）。",
+     "conditionColumns": [
+      "メッセージ種類・画面",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "再表示時"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "完了メッセージ（トースト）",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "info_message・JIM-01",
+        "COM-CSV-OK をアップロード"
+       ],
+       "expected": [
+        "トースト「更新しました」",
+        "F5 で消える"
+       ],
+       "prep": "COM-CSV-OK",
+       "op": "アップロード後にF5",
+       "detail": "1回読むと消える（flash_expire_after_get）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "エラーメッセージ（SIM管理以外）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "error_message・CEN-01 等",
+        "エラーになる操作"
+       ],
+       "expected": [
+        "エラーモーダル（colorbox）を自動表示",
+        "「閉じる」で閉じる。F5で再表示されない"
+       ],
+       "prep": "",
+       "op": "業務エラーが出る操作（例: 他ユーザーが引き当て済の依頼を開く）",
+       "detail": "parts/error.php",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "エラーメッセージ（SIM管理）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "error_message・SIM-16",
+        "エラーになる操作"
+       ],
+       "expected": [
+        "赤いトースト表示（モーダルは出ない）",
+        "―"
+       ],
+       "prep": "",
+       "op": "SIM登録更新で列数不正CSVを取込",
+       "detail": "例「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "項目別入力エラー",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "validate_errors",
+        "必須未入力で送信"
+       ],
+       "expected": [
+        "入力欄の下に赤字メッセージ（c-error--text）",
+        "―"
+       ],
+       "prep": "",
+       "op": "必須項目のある画面で未入力送信",
+       "detail": "画面によってはツールチップ表示",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-validation",
+     "title": "共通バリデーション：ルールとメッセージ原文",
+     "screens": [],
+     "purpose": "Common_Validation／Fuel標準ルールのメッセージ原文（lang/ja/validation.php）が画面に正しく出ることを確認する。:label は項目ラベルに置換される。",
+     "precondition": "ルールを使う具体的な項目は各画面の定義書の「バリデーション・エラー」表から選ぶ。ここではルール単位の期待結果を定める。",
+     "conditionColumns": [
+      "ルール",
+      "入力値"
+     ],
+     "expectColumns": [
+      "メッセージ",
+      "結果"
+     ],
+     "cases": [
+      {
+       "kind": "バリデーション",
+       "name": "required",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "required",
+        "空"
+       ],
+       "expected": [
+        "「:labelを入力してください」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "max_length",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "max_length(n)",
+        "n＋1文字"
+       ],
+       "expected": [
+        "「:labelは:param:1文字以下で入力してください」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "n文字ちょうどはOK",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "valid_date",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "valid_date",
+        "2026/02/30"
+       ],
+       "expected": [
+        "「:labelが不正です」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "alphanum",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "alphanum",
+        "ABC-1"
+       ],
+       "expected": [
+        "「:labelは半角英数字で入力してください」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "空はOK",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "integer（負数・小数）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "integer",
+        "-1 / 1.5"
+       ],
+       "expected": [
+        "「:labelは整数で入力してください」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "^[0-9]+$。空はOK",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "reverse_date",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "reverse_date",
+        "比較日付より過去"
+       ],
+       "expected": [
+        "「:labelは:param:2と同日か未来の日付を入力してください」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "同日はOK。どちらかが空・不正ならOK",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "required_pair",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "required_pair",
+        "相手項目のみ入力"
+       ],
+       "expected": [
+        "「:param:2が入力されている場合、:labelの入力は必須です」",
+        "送信されない（DB更新なし）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目に値を入れて送信",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "exist / unique（要確認）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "exist / unique",
+        "存在しない値／重複値"
+       ],
+       "expected": [
+        "「:labelが存在しません」「:labelはすでに登録されています」（要確認）",
+        "（要確認）"
+       ],
+       "prep": "",
+       "op": "このルールを使う項目で確認",
+       "detail": "del_flg 前提だが UDS のテーブルは deleted_at。使用箇所と動作を要確認",
+       "known": "01要確認-9",
+       "should": "deleted_at を条件にする"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-upload",
+     "title": "ファイルアップロードの共通チェック",
+     "screens": [],
+     "purpose": "process_upload／validate_file_upload の共通チェック（拡張子・サイズ・未選択）とメッセージ原文を確認する。",
+     "precondition": "代表として ROLE-ADM の MST-11（master_user_csv：csv/20MB）で確認する。画像は MST-08（master_device_img）。",
+     "conditionColumns": [
+      "ファイル",
+      "操作"
+     ],
+     "expectColumns": [
+      "メッセージ",
+      "結果"
+     ],
+     "cases": [
+      {
+       "kind": "バリデーション",
+       "name": "未選択（必須）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "未選択",
+        "アップロード"
+       ],
+       "expected": [
+        "「ファイルを選択してください」",
+        "取込しない"
+       ],
+       "prep": "",
+       "op": "MST-11 U∞DSユーザー登録等のCSV取込で選択して取込",
+       "detail": "$required=true の場合",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "拡張子違い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "COM-FILE-TXT",
+        "アップロード"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください」",
+        "取込しない"
+       ],
+       "prep": "COM-FILE-TXT",
+       "op": "MST-11 U∞DSユーザー登録等のCSV取込で選択して取込",
+       "detail": ":extension を CSV に置換",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "20MB超",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "COM-CSV-21MB",
+        "アップロード"
+       ],
+       "expected": [
+        "「20MB以下のファイルを選択してください」",
+        "取込しない"
+       ],
+       "prep": "COM-CSV-21MB",
+       "op": "MST-11 U∞DSユーザー登録等のCSV取込で選択して取込",
+       "detail": ":max_size を 20MB に置換",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "20MBちょうど",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "COM-CSV-20MB",
+        "アップロード"
+       ],
+       "expected": [
+        "サイズエラーにならない",
+        "取込しない"
+       ],
+       "prep": "COM-CSV-20MB",
+       "op": "MST-11 U∞DSユーザー登録等のCSV取込で選択して取込",
+       "detail": "境界値。内容エラーは別",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "画像：拡張子違い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "COM-IMG-GIF",
+        "アップロード"
+       ],
+       "expected": [
+        "（要確認）",
+        "取込しない"
+       ],
+       "prep": "COM-IMG-GIF",
+       "op": "MST-08 で画像を選択",
+       "detail": "master_device_img は jpg/jpeg/png。message_replaces 定義がないため :extension が置換されない／Warning の可能性",
+       "known": "01要確認-9",
+       "should": "「jpg,jpeg,pngファイルを選択してください」等の正しい文言"
+      },
+      {
+       "kind": "異常",
+       "name": "UQファイルは拡張子制限なし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "COM-FILE-TXT",
+        "SIM-02 UQファイルとしてアップロード"
+       ],
+       "expected": [
+        "拡張子エラーにならない",
+        "内容チェックへ進む"
+       ],
+       "prep": "COM-FILE-TXT",
+       "op": "SIM-02 で uq_sim_file に指定",
+       "detail": "uq_sim_file / uq_billing_file は制限なし・20MB",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "ci-parts",
+     "title": "共通部品・共通JS（ページャ・ソート・選択部品・二重送信防止 等）",
+     "screens": [
+      "COM-28",
+      "COM-29",
+      "COM-30",
+      "COM-31",
+      "COM-32",
+      "COM-33",
+      "COM-34"
+     ],
+     "purpose": "画面をまたいで使う部品とJSの動きを、代表画面で確認する。",
+     "precondition": "代表画面: CEN-01（ROLE-CEN）、DEV-18（ROLE-CEN）、JIM-01（ROLE-JIM）、CEN-04（ROLE-CEN）。COM-LIST-81 を用意。",
+     "conditionColumns": [
+      "部品・画面",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "動作"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "未検索表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "nosearch・DEV-18",
+        "初回表示"
+       ],
+       "expected": [
+        "「検索条件を入力して「検索」ボタンを押してください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "DEV-18 を開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "0件表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "nodata・CEN-01",
+        "該当なしの条件で検索"
+       ],
+       "expected": [
+        "「項目がありません。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "存在しない条件で検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ページャ：80件ごと",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "COM-LIST-81・DEV-18",
+        "検索"
+       ],
+       "expected": [
+        "1ページ目80件、2ページ目1件",
+        "ページリンクで移動"
+       ],
+       "prep": "COM-LIST-81",
+       "op": "検索してページ2へ",
+       "detail": "Common_Pagination。表示件数は Cookie per_pg、選択肢は80件のみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "一覧・ソート可能な列",
+        "列見出しをクリック（2回）"
+       ],
+       "expected": [
+        "昇順→降順で並ぶ（要確認）",
+        "オーバーレイ表示後に再描画"
+       ],
+       "prep": "COM-LIST-81",
+       "op": "ソートリンクを2回クリック",
+       "detail": "対象列・順序は各画面の定義書。ソートボタンは .js-overlay",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "オーバーレイ（連打防止）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "検索ボタン",
+        "クリック"
+       ],
+       "expected": [
+        "全画面に半透明オーバーレイ",
+        "連打できない"
+       ],
+       "prep": "",
+       "op": "検索ボタンを素早く2回クリック",
+       "detail": ".js-overlay",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "二重送信防止",
+       "role": "ROLE-CEN",
+       "conditions": [
+        ".js-prevent-double-submit のボタン",
+        "素早く2回クリック"
+       ],
+       "expected": [
+        "ボタンが disabled",
+        "1回だけ送信"
+       ],
+       "prep": "",
+       "op": "対象ボタンをダブルクリック",
+       "detail": "DB更新が1回であることを確認",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "datepicker",
+       "role": "ROLE-CEN",
+       "conditions": [
+        ".js-datepicker",
+        "日付欄をクリック"
+       ],
+       "expected": [
+        "yy/mm/dd 形式、2015/01/01 以降のみ選択可",
+        "「今日」「閉じる」「クリア」ボタン"
+       ],
+       "prep": "",
+       "op": "カレンダーで選択",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "月選択（flatpickr）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        ".js-flatpicker",
+        "月欄をクリック"
+       ],
+       "expected": [
+        "表示 Y年m月、値 Y/m",
+        "「クリア」で空"
+       ],
+       "prep": "",
+       "op": "月を選択",
+       "detail": "CDN @latest 読込のため挙動変化に注意",
+       "known": "01要確認-10",
+       "should": "バージョン固定"
+      },
+      {
+       "kind": "正常",
+       "name": "CSV自動ダウンロード",
+       "role": "ROLE-CEN",
+       "conditions": [
+        ".js-download-csv",
+        "CSV出力"
+       ],
+       "expected": [
+        "CSVがダウンロードされる",
+        "SJIS-win。Cookie dlcp セット"
+       ],
+       "prep": "",
+       "op": "CSV出力を実行",
+       "detail": "ページロード時に自動でリンクへ遷移",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "引き当て中の離脱確認：OK",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CEN-04 引き当て中",
+        "タブをクリック→OK"
+       ],
+       "expected": [
+        "リンク先へ遷移",
+        "/manage/center/assign/reset_save/... で引き当てリセット"
+       ],
+       "prep": "",
+       "op": "OK",
+       "detail": "失敗時は alert「error」",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  }
+ ],
+ "prepData": [
+  {
+   "id": "COM-USER-DISABLED",
+   "content": "無効ユーザー",
+   "value": "users.status≠1（無効）、deleted_at=NULL、user_div=2"
+  },
+  {
+   "id": "COM-USER-DELETED",
+   "content": "削除済みユーザー",
+   "value": "users.status=1、deleted_at=任意の日時、user_div=2"
+  },
+  {
+   "id": "COM-USER-INVALID",
+   "content": "定義外のユーザー区分",
+   "value": "users.user_div=8、status=1、deleted_at=NULL"
+  },
+  {
+   "id": "COM-COOKIE-NONE",
+   "content": "Cookieなし",
+   "value": "mgal・mfid を削除した状態"
+  },
+  {
+   "id": "COM-COOKIE-VALID",
+   "content": "有効な自動ログインCookie",
+   "value": "自動ログインONでログイン後、セッション（mfid）だけ削除。users.auto_login_updatetime=現在−1日"
+  },
+  {
+   "id": "COM-COOKIE-EXPIRED",
+   "content": "期限切れの自動ログインCookie",
+   "value": "COM-COOKIE-VALID を作成後、users.auto_login_updatetime=現在−31日に更新"
+  },
+  {
+   "id": "COM-SERIAL-OK",
+   "content": "日時更新対象の端末（引き当て済）",
+   "value": "serials.status=3、contract_cd 有効（contracts あり）、deleted_at=NULL、センター南港管轄"
+  },
+  {
+   "id": "COM-SERIAL-ST10",
+   "content": "日時更新対象の端末（serials更新なし側）",
+   "value": "serials.status=10、契約あり"
+  },
+  {
+   "id": "COM-SERIAL-NOCONTRACT",
+   "content": "契約が存在しない端末",
+   "value": "serials.status=3、contract_cd に対応する contracts なし（または deleted_at あり）"
+  },
+  {
+   "id": "COM-SIM-BADSTATUS",
+   "content": "利用できないステータスのSIMが紐づいた端末",
+   "value": "キッティング対象端末に、IDM連携で利用不可ステータスのSIMが紐づいている（詳細は02定義書）"
+  },
+  {
+   "id": "COM-SIM-UNBIND",
+   "content": "SIM紐づけが解除された端末",
+   "value": "IDM連携で SIM 紐づけが解除された状態"
+  },
+  {
+   "id": "COM-SIM-NEWBIND",
+   "content": "SIM紐づけが新規に付いた端末",
+   "value": "紐づけなし→IDM連携で ICCID が紐づいた状態"
+  },
+  {
+   "id": "COM-SIM-CHANGED",
+   "content": "SIM紐づけ先が変わった端末",
+   "value": "ICCID-A → ICCID-B に変わった状態"
+  },
+  {
+   "id": "COM-CSV-OK",
+   "content": "正常な取込CSV",
+   "value": "対象画面のフォーマットどおり、エラー行なし（直送案件一括更新用／ユーザー登録用をそれぞれ用意）"
+  },
+  {
+   "id": "COM-CSV-SHIP-OK",
+   "content": "正常な送り状CSV",
+   "value": "直送案件の送り状csvフォーマットどおり"
+  },
+  {
+   "id": "COM-CSV-NG-ROW",
+   "content": "内容エラー行を含むCSV",
+   "value": "3行目に必須欠落など1件のエラー"
+  },
+  {
+   "id": "COM-CSV-20MB",
+   "content": "20MBちょうどのCSV",
+   "value": "20971520 バイト"
+  },
+  {
+   "id": "COM-CSV-21MB",
+   "content": "20MB超のCSV",
+   "value": "約21MB"
+  },
+  {
+   "id": "COM-FILE-TXT",
+   "content": "拡張子違いのファイル",
+   "value": "中身はCSV、拡張子 .txt"
+  },
+  {
+   "id": "COM-IMG-GIF",
+   "content": "許可外拡張子の画像",
+   "value": "GIF画像 100KB"
+  },
+  {
+   "id": "COM-LIST-81",
+   "content": "ページャ確認用の端末81件",
+   "value": "センター南港管轄の serials 81件（同一検索条件でヒットする）"
+  }
+ ],
+ "openQuestions": [
+  "ヘッダーメニューのリンク先は 00_索引 の表どおりに書いた。01_共通 COM-24 ではキッティング（admin/center）に ?cecd[]={管轄CD}、branch の発送状況確認に ?bcs[]={管轄CD} が付くとあり、索引と差がある（detail に注記）。",
+  "ソートの対象列・昇順/降順の切替、ソート用パラメータ名は 01 に記載がなく、ケースは（要確認）とした。",
+  "共通バリデーション・アップロードは、ルールを使う具体的な項目が 01 に無いため、代表画面での確認方法は他グループの定義書に依存する。",
+  "COM-12 の表示契機（どの操作で表示するか）は 02 の定義書側にある。"
+ ]
+}

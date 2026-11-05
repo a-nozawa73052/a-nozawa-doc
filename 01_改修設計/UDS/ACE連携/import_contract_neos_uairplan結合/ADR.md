@@ -87,6 +87,25 @@ NeOS・UNISのACE統合に伴い、現在別ファイルでUDSへ連携してい
 - **追加（A4）**：`ace-import_contract_update`（旧`import_neos_uairplan`）は「業務ロジックに手を入れない」前提を超え、`COLUMN_LIST`の67列レイアウトへの全面再構築、`neos_item_cd`逆引き（`getNeosItems`）廃止、`direct_shipments`11列UPDATE（`updateDirectShipments`）削除、連鎖更新の整理等が必要と判明（見積りA4、3〜4日。詳細は改修概要書2章）。本ADRの案A（2系統維持）の採用判断自体は変わらない。
 - **要確認（`status_update_date`）**：`import_contract`に`status_update_date`へ`now()`を設定する実装は存在しない。ACE後に`contract_status_cd`が変化した際の`status_update_date`の扱いは要確認。
 
+### 2026-11-05 追記（`unis_export`依存の全削除）
+
+> 本追記はClaudeによる下書き。内容は人が確認・修正してから確定する。
+
+- **コンテキスト**：`unis_export`（UNIS_DB）はSGSの別DB（RDS/DynamoDB）へ吸収され、スキーマとしては無くなる方針となった（`import_u1`もSGS側で持つ。import_u1 ADRとは別ADRで記録）。`ace-import_contract_new`（旧`import_contract`）は本番で`unis_export`を次のように使っている：①起動時に`unisConnection`を作成（`try`の外）、②`getAreaInfo`で`unis_customer_brands`のエリアを取得（全契約で実行）、③U90〜U92の契約のみ`unis_customer_service_groups`＋`brands`＋`companies`から企業・ブランド・権限CDを取得し`contracts`を上書き（`updateContracts`）、④②の値と権限CDで`unis_customer_service_groups`を更新（`updateUnisCustomerServiceGroups`、`uds`側トランザクションの外＝自動コミット）。改修しないと、DBごと無くなった場合は①で例外となり全サービスの契約取込が停止する（Google Chat通知も飛ばない）。テーブルだけ無い場合は②が全行エラーとなり無限リトライ＋Chat大量通知となる。
+- **事実（本番データ、2026-11-05）**：`unis_customer_service_groups`・`brands`・`companies`の新規登録は3テーブルとも2026-02-27（旧UM最終営業日）を最後に停止しており、UM刷新リリース（2026-03-02）によるものと確定。3月以降のU90/U91契約は約98%で`customer_group_authority_cd`が空文字上書きされている。`company_cd`は全行で空のため`customer_chain_cd`/`_name`は以前から常に空文字。U90〜U92の`contracts.customer_group_cd`・`customer_group_authority_cd`を読んでいる人はいない（ユーザー確認）。`contracts`の列53〜55（エリア）はINSERT/UPDATE対象外で、②の値は④でのみ使われる。
+- **④（`updateUnisCustomerServiceGroups`）も現状意味が無いことの裏付け（2026-11-05）**：
+  - `umembers_grant_cd`は直前に同テーブルから読んだ値を書き戻すだけで値は変わらない。エリアも`unis_customer_brands`と食い違うのは4,683件中15件（0.3%）のみ。
+  - インスタンス名`unis-export-production-reader`が実際は**writer**（`instance-1`がreader）。旧UMの接続先（`members/ums-parameters`の`unis-export-production-reader.…`）はこのインスタンスを直接指すエンドポイント。
+  - CloudWatchで、writerの月最大`DatabaseConnections`は2026-02まで50〜67→2026-03以降4〜8、`SelectThroughput`平均は約5.5→約3.5件/秒に減少。UM刷新と同時に旧UMの接続が消えた。readerは期間を通して1〜2接続・約2.47件/秒で一定。
+  - Performance Schemaは無効（OFF）のためクエリ単位の確認は不可。writerのPROCESSLISTでは自分の接続以外は無し（UDSのLambdaはバッチ実行中のみ短時間接続）。
+  - 以上から、`unis_customer_service_groups`を読んでいる利用者はおらず、④は現状意味の無い処理と判断した。
+- **検討した案**：
+  - 案A：`unis_export`依存（①〜④、デッドコード、環境変数`DB_*_UNIS`）を全削除する（**採用**）。メリット：`unis_export`が無くなっても動く、DB接続と障害点が1つ減る、3月以降の実際の動き（空文字上書き）と比べて失うものが無い。デメリット：U90〜U92の該当列にはTSVの値がそのまま入る（読む人がいないため問題なし）。
+  - 案B：取得元をSGS／新UMに置き換える。メリット：`contracts`の列が本来の値で埋まる。デメリット：読む人がいない列のために新たな外部連携・SGS依存・障害点を作り、工数も大きい。
+  - 案C：SGS側に同構造のテーブルを作り接続先のみ変更する。メリット：改修が最小。デメリット：スキーマ廃止方針と矛盾し、中身も更新されないため空文字上書きが続く。
+- **決定**：案Aを採用する（2026-11-05、ユーザー決定）。見積りA14を「`unis_export`依存の全削除（デッドコード含む）」に範囲拡大（0.25〜0.5→0.5〜1人日）。`ace-import_contract_update`（旧`import_neos_uairplan`）は`unis_export`を使っていないため対象外。決定10（デッドコード削除）はA14に包含される。
+- **残る確認事項**：`unis_customer_service_groups`のエリア・権限列を読んでいる側はワークスペース内に見つかっていない（テーブルごと無くなるため、`unis_export`廃止そのものの影響確認に含める）。詳細: `doc/05_改修設計/ace/01_要求事項_進捗管理/タスク一覧.md` C44・A14。
+
 ### 影響・トレードオフ
 
 - 性能・データ量急増時への影響: 分類Lambdaにおいて、1バッチ内にflg=1/flg=0が混在する場合のDB SELECT回数が最大2倍になりうる。想定データ量（日次・ピーク件数）は未確認（TODO: 要確認、`タスク一覧.md` C10）。※2026-10-23追記：C10は台帳上解決済み。

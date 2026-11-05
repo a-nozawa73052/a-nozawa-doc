@@ -60,6 +60,14 @@ S3(U1.csv) → u1_ecs_start（Lambda、S3トリガー）→ ECS Fargate起動
 - **コンテキストの補足**：`import_contract`から`unis_customer_brands`/`unis_customer_brand_confirms`への反映は、master でも 2022-11-25（commit 73979ab）以降コメントアウトされており現本番では動いていない（見積りA14でデッドコード削除）。`import_u1`の依存維持という本決定の結論には影響しない。
 - **改修概要書「影響範囲・リスク」の未確認事項の解決**：tsv仕様（区切り文字・文字コード等）は台帳#13（スプレッドシート【ACE後】・S3設計）で、並用期間の切り分けは台帳#13（`ace-`専用バケットで分離）・#14（連携元の運用で二重送信を防止、UDS側対応不要）で解決済み。
 
+### 2026-11-05 追記（訂正）
+
+本ADRの決定内容は書き換えず、以下を追記する。
+
+- **`api_customerinfo`は未使用（コンテキストの訂正）**：「外部向け『U1情報取得API』として現役稼働中」は誤り。本番`prd-api_customerinfo`は最終更新2021-03-26のまま、CloudWatchのInvocationsは直近455日間データなし、ロググループ`/aws/lambda/prd-api_customerinfo`も存在しない（＝一度も実行されていない可能性が高い）。ワークスペース内のコードにも呼び出し元は無い。`u1_datas`の依存先として考慮する必要は無く、廃止候補。
+- **`import_contract`の依存（コンテキストの訂正）**：`import_contract`が`u1_datas`を参照するのはデッドコード（`UnisCustomerBrandsProcess`系）のみ。実際に動いている依存は`unis_customer_brands`（エリア）と`unis_customer_service_groups`等であり、これらは2026-11-05に案A（`unis_export`依存の全削除）で解消する方針となった（`import_contract_neos_uairplan結合/ADR.md` 2026-11-05追記、台帳C44）。
+- **方針変更は別ADRで記録**：`unis_export`をSGSの別DBへ吸収してスキーマとしては無くし、`import_u1`もSGS側で持つ方針（2026-11-05）は、本ADRの決定3（DB・実行環境はUDSのまま）を変更するものであるため、本追記ではなく新しいADR（0002）として記録する。
+
 ### 影響・トレードオフ
 
 - 性能・データ量急増時への影響: 現行のECS Fargate分割処理をそのまま流用するため、想定データ量に対する処理能力面の変化は無い。

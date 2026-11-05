@@ -1,0 +1,4729 @@
+{
+ "source": "02_センター_キッティング発送.md",
+ "groups": [
+  {
+   "id": "center-kitting",
+   "title": "センター キッティング・発送",
+   "lead": "センターの引き当て→キッティング～検品→出荷（出庫処理）までの更新処理と端末ステータス遷移、ロック（10分）・契約キャンセル時の扱い、発送状況確認の表示を確認する。",
+   "concepts": [
+    {
+     "id": "cen-auth",
+     "title": "CEN 共通：権限・画面アクセス・タブ",
+     "screens": [
+      "CEN-01",
+      "CEN-02",
+      "CEN-03",
+      "CEN-04",
+      "CEN-12",
+      "CEN-17",
+      "CEN-25",
+      "CEN-27",
+      "CEN-28"
+     ],
+     "purpose": "キッティング・発送系の画面を開けるのは admin と center だけであること、未ログインはログイン画面へ戻ること、未使用の /manage/request は全ロール403であることを確認する。",
+     "precondition": "ブラウザでURLを直接開く。DATA-CEN-REQ-N1 を用意。",
+     "conditionColumns": [
+      "ロール",
+      "アクセス先"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "center ログイン後のトップ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "ログイン直後"
+       ],
+       "expected": [
+        "依頼リスト（未検索）",
+        "/manage/center/request?cecd[]=南港CD"
+       ],
+       "prep": "",
+       "op": "ROLE-CEN でログインする",
+       "detail": "出荷センター名に所属センター（センター南港）が選択済み。parts/nosearch「検索してください」を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "admin で依頼リストを開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "admin",
+        "/manage/center/request"
+       ],
+       "expected": [
+        "依頼リスト表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "ヘッダー「キッティング」を押す",
+       "detail": "admin のログイン後トップは /manage/master/device。キッティング画面は開ける",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center で各画面を開く",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "CEN-12/25/27"
+       ],
+       "expected": [
+        "各画面を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "タブ「キッティング～検品」「出荷」、ヘッダー「発送状況確認」を順に押す",
+       "detail": "/manage/center/kitting、/manage/center/shipment、/manage/center/shipping/request が表示される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "branch で依頼リストを開く",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "branch",
+        "/manage/center/request"
+       ],
+       "expected": [
+        "403画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "URLを直接入力",
+       "detail": "Exception_403 が送出される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "external・cp・hoshu で開く",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external/cp/hoshu_itaku",
+        "/manage/center/kitting"
+       ],
+       "expected": [
+        "403画面",
+        "―"
+       ],
+       "prep": "ROLE-EXT・ROLE-CP・ROLE-HSU をそれぞれ用意",
+       "op": "各ロールでURLを直接入力",
+       "detail": "Center_Kitting の権限は administrator・center のみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインでアクセス",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "未ログイン",
+        "CEN-01/12/25/27"
+       ],
+       "expected": [
+        "―",
+        "/manage/login へリダイレクト"
+       ],
+       "prep": "",
+       "op": "各URLを直接入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未使用画面 /manage/request",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "admin・center",
+        "/manage/request/index・provision"
+       ],
+       "expected": [
+        "403画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "ROLE-ADM・ROLE-CEN でURLを直接入力",
+       "detail": "CEN-02/03 はどのロールにも権限キー Request が無く403。ビューも無い",
+       "known": "Z-14",
+       "should": "不要コードとして削除（移行対象外）"
+      },
+      {
+       "kind": "正常",
+       "name": "タブ「引き当て」は押せない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "CEN-04 表示中"
+       ],
+       "expected": [
+        "タブ「引き当て」がアクティブ・is-disable",
+        "クリックしても遷移しない"
+       ],
+       "prep": "DATA-CEN-REQ-N1",
+       "op": "CEN-04 でタブ「引き当て」を押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "ロール",
+       "values": "admin / center / その他 / 未ログイン",
+       "meaning": "mosauth.php で Center_* と Dialog が許可されているのは administrator・center のみ"
+      }
+     ]
+    },
+    {
+     "id": "cen-01-search",
+     "title": "CEN-01 依頼リスト：検索条件",
+     "screens": [
+      "CEN-01"
+     ],
+     "purpose": "未引き当ての通常新設・支店在庫の依頼が、各検索条件で正しく絞り込まれること、未検索時に nosearch、0件時に nodata が出ることを確認する。",
+     "precondition": "ROLE-CEN でログイン。DATA-CEN-REQ-N1/N2/S1/FUTURE/NODISP/ASSIGNED を用意。いずれも center_cd=センター南港。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示は未検索",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "cecd のみ",
+        "対象依頼あり"
+       ],
+       "expected": [
+        "「検索してください」(nosearch)",
+        "―"
+       ],
+       "prep": "",
+       "op": "ログイン直後の画面を確認",
+       "detail": "種別の通常新設・支店在庫はどちらも ON 表示。一覧は出ない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件指定なしで検索",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別2つON",
+        "N1/N2/S1"
+       ],
+       "expected": [
+        "N1・N2・S1 の依頼を表示",
+        "件数「n件」表示"
+       ],
+       "prep": "",
+       "op": "そのまま「検索」を押す",
+       "detail": "request_type_cd IN (1,2)。依頼日未入力のため request_date が明日より前のもの",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：通常新設のみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "tpn=ON・tpb=OFF",
+        "N1/S1"
+       ],
+       "expected": [
+        "通常新設（緑）だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "支店在庫をOFFにして検索",
+       "detail": "request_type_cd='1'",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：支店在庫のみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "tpn=OFF・tpb=ON",
+        "N1/S1"
+       ],
+       "expected": [
+        "支店在庫（青）だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "通常新設をOFFにして検索",
+       "detail": "request_type_cd='2'",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：両方OFF",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "tpn・tpb とも OFF",
+        "N1/S1"
+       ],
+       "expected": [
+        "N1・S1 両方を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "両方OFFで検索",
+       "detail": "どちらも未指定なら ('1','2')。再表示時はチェックが両方ON表示に戻る",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼日 From/To",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rdf=rdt=N1の依頼日",
+        "N1/N2（別日）"
+       ],
+       "expected": [
+        "N1 の依頼日のものだけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "datepicker で同じ日を From/To に指定",
+       "detail": "From 以上、To+1日 未満",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼日未入力時は明日以降を除外",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "依頼日未入力",
+        "DATA-CEN-REQ-FUTURE"
+       ],
+       "expected": [
+        "FUTURE は表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "条件なしで検索",
+       "detail": "request_date が明日以降の依頼は出ない。依頼日Toに明日を指定すると表示される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "着荷希望日 From/To",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "cdf/cdt 指定",
+        "N1/S1"
+       ],
+       "expected": [
+        "範囲内のものだけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "着荷希望日を指定して検索",
+       "detail": "delivery_request_date が From 以上、To+1日 未満",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "出荷先管轄",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "bcs[]=支店A",
+        "支店A/支店B の依頼"
+       ],
+       "expected": [
+        "支店A の依頼だけ",
+        "詳細検索エリアが開いた状態"
+       ],
+       "prep": "",
+       "op": "詳細検索を開き、出荷先管轄で支店Aを選んで検索",
+       "detail": "エリア一括（新杉田／南港／北海道／沖縄）・絞り込み・全選択が使える。選んだ名前がカンマ区切りで表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット名 部分一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "isn=セット名の一部",
+        "N2（セット品）"
+       ],
+       "expected": [
+        "N2 のセット明細を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "詳細検索でセット名を入力",
+       "detail": "sets.set_name LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番 部分一致（種別別）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn=XX-1",
+        "N1（device_type=XX-100）/S1（model_number=ST-200）"
+       ],
+       "expected": [
+        "N1 のみ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "型番に XX-1 を入力",
+       "detail": "種別1は device_types.device_type、種別2は shipping_requests.model_number で LIKE。mn=ST-2 なら S1 のみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼ID 正しい形式",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rid=N00000000123",
+        "N1（id=123）"
+       ],
+       "expected": [
+        "N1 の1件だけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "依頼IDに12桁を入力して検索",
+       "detail": "プレフィックス N/S＋11桁ゼロ埋め",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "依頼ID 桁不足",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rid=N123",
+        "N1"
+       ],
+       "expected": [
+        "nodata（0件）",
+        "メッセージなし"
+       ],
+       "prep": "",
+       "op": "11桁未満で検索",
+       "detail": "12文字でない場合は0件扱い",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "出荷センター名",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "cecd[]=北海道",
+        "南港の依頼のみ"
+       ],
+       "expected": [
+        "nodata（0件）",
+        "―"
+       ],
+       "prep": "",
+       "op": "詳細検索で出荷センターを北海道だけにして検索",
+       "detail": "shipping_requests.center_cd IN cecd",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "顧客CD=存在しない値",
+        "―"
+       ],
+       "expected": [
+        "parts/nodata を表示",
+        "件数ラベル非表示"
+       ],
+       "prep": "",
+       "op": "該当なしの条件で検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "検索条件クリア",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件入力済み",
+        "―"
+       ],
+       "expected": [
+        "未検索（nosearch）",
+        "?cecd[]=所属センターCD へ遷移"
+       ],
+       "prep": "",
+       "op": "「検索条件クリア」を押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "引き当て済み等は対象外",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件なし",
+        "DATA-CEN-REQ-ASSIGNED/NODISP"
+       ],
+       "expected": [
+        "どちらも表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "検索",
+       "detail": "complete_allocation_date 等が NOT NULL、または request_display_flg=0 の依頼は出ない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "契約キャンセルの通常新設は出ない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件なし",
+        "DATA-CEN-REQ-CANCEL（契約3）"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "検索",
+       "detail": "contracts.contract_status_cd が NULL（支店在庫）または '1' のみ",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "種別",
+       "values": "tpn / tpb",
+       "meaning": "request_type_cd 1/2。未指定時は両方"
+      },
+      {
+       "item": "依頼ID",
+       "values": "N/S＋11桁",
+       "meaning": "12文字・先頭種別・数値以外は0件"
+      }
+     ]
+    },
+    {
+     "id": "cen-01-list",
+     "title": "CEN-01 依頼リスト：一覧表示・ソート・ページャ・ロック除外",
+     "screens": [
+      "CEN-01"
+     ],
+     "purpose": "一覧の表示内容、ソート、80件ページャ、他ユーザーが10分以内にロックしている依頼を表示しないことを確認する。",
+     "precondition": "ROLE-CEN でログインし、条件なしで検索した状態。",
+     "conditionColumns": [
+      "データ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "列の表示内容",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1/S1",
+        "検索"
+       ],
+       "expected": [
+        "種別・センター/管轄・セット名・型番・依頼ID・日付・顧客",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-N1/S1",
+       "op": "",
+       "detail": "種別: '1'→通常新設（緑）、それ以外→支店在庫（青）。出荷ｾﾝﾀｰ名は center_short_name、下段は request_branch_name。依頼ID N/S＋11桁",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期ソート",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "依頼日の異なる3件",
+        "検索"
+       ],
+       "expected": [
+        "依頼日の降順、同日は顧客CDの昇順",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート切替",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "複数件",
+        "依頼日見出しを2回クリック"
+       ],
+       "expected": [
+        "1回目 asc、2回目 desc",
+        "オーバーレイ表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "tps/bcss/isns/mns/rids/rds/crds/ccds/cpns の各見出しで確認。第2ソートは常に顧客CD昇順",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ページャ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "81件",
+        "検索"
+       ],
+       "expected": [
+        "1ページ80件、ページャ表示",
+        "2ページ目に1件"
+       ],
+       "prep": "DATA-CEN-REQ-MANY（81件）",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリックで引き当てへ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1",
+        "行をクリック"
+       ],
+       "expected": [
+        "―",
+        "/manage/center/assign/serial/{id}?<現在のクエリ>"
+       ],
+       "prep": "DATA-CEN-REQ-N1",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "自分のロックは表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "lock_user_id=自分・2分前",
+        "検索"
+       ],
+       "expected": [
+        "表示される",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-LOCKSELF",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーが10分以内にロック",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-OTHER が5分前にロック",
+        "検索"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-LOCK",
+       "op": "",
+       "detail": "lock_user_id が他人かつ lock_date が10分以内は除外",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他ユーザーのロックが10分経過",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-OTHER が11分前にロック",
+        "検索"
+       ],
+       "expected": [
+        "表示される",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-LOCKOLD",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "遷移先から戻されたメッセージ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CEN-04 でエラー",
+        "redirect"
+       ],
+       "expected": [
+        "トーストに 「他のユーザーが作業中です。」 等",
+        "CEN-01"
+       ],
+       "prep": "DATA-CEN-REQ-LOCK の URL を直接開く",
+       "op": "",
+       "detail": "flash error_message を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "末尾スラッシュ付きURLの行リンク（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/manage/center/request/ でアクセス",
+        "行をクリック"
+       ],
+       "expected": [
+        "―",
+        "リンク先が崩れる（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "行リンクが相対パス assign/serial/{id} のため",
+       "known": "02要確認-14",
+       "should": "どのURLでアクセスしても /manage/center/assign/serial/{id} へ遷移する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-04-view",
+     "title": "CEN-04 引き当て：画面表示・ロード時チェック・ボタン活性",
+     "screens": [
+      "CEN-04"
+     ],
+     "purpose": "引き当て画面の表示内容、ロード時のエラー（他ユーザー作業中・契約キャンセル等）、シリアル登録・引き当て・初期不良返品ボタンの表示条件を確認する。",
+     "precondition": "ROLE-CEN。CEN-01 で依頼行をクリックして開く（またはURL直接）。",
+     "conditionColumns": [
+      "依頼・データ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "通常新設 単体の表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1（未仮登録）",
+        "行クリック"
+       ],
+       "expected": [
+        "種別「通常新設」、型番、シリアル登録ボタン",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-N1",
+       "op": "",
+       "detail": "出庫先・依頼ID・依頼日・着荷希望日・顧客CD・企業名・店舗名を表示。宛先シール印刷ボタンは表示しない。引き当てボタンは is-disable",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット品の表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N2（端末＋同梱機材）",
+        "行クリック"
+       ],
+       "expected": [
+        "端末: シリアル登録、同梱機材: 同梱機材引き当て",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-N2",
+       "op": "",
+       "detail": "並び順は device_type 昇順、created_at 降順",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1",
+        "行クリック"
+       ],
+       "expected": [
+        "種別「支店在庫」、宛先シール印刷ボタンと印刷OK(OFF)",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-S1",
+       "op": "",
+       "detail": "型番は model_number。画像は device_type_id から",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全明細仮登録済み（通常新設）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N2 の全明細を仮登録",
+        "画面再表示"
+       ],
+       "expected": [
+        "シリアルNo.表示、引き当てボタン is-ok",
+        "初期不良返品リンク表示"
+       ],
+       "prep": "DATA-CEN-REQ-N2 を CEN-05/06 で仮登録",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫はシール印刷まで引き当て不可",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1 仮登録済み・hp なし",
+        "表示"
+       ],
+       "expected": [
+        "引き当てボタン is-disable",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-S1 を仮登録",
+       "op": "",
+       "detail": "is_assign_btn_active は支店在庫なら hp=1 が必須",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫 hp=1",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1 仮登録済み",
+        "?hp=1 付きで表示"
+       ],
+       "expected": [
+        "印刷OK checked、引き当てボタン is-ok",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "is-disable の引き当てボタン押下（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1 未仮登録",
+        "引き当てを押す"
+       ],
+       "expected": [
+        "送信される（要確認）",
+        "CEN-08 のサーバーチェックで 「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "02要確認-6",
+       "should": "非活性ボタンは押しても送信されない"
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーが作業中",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-OTHER が5分前にロック",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-01 へ、「他のユーザーが作業中です。」"
+       ],
+       "prep": "DATA-CEN-REQ-LOCK",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他ユーザーのロック10分経過",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-OTHER が11分前にロック",
+        "URL直接"
+       ],
+       "expected": [
+        "画面表示、シリアル登録ボタン表示",
+        "―"
+       ],
+       "prep": "DATA-CEN-REQ-LOCKOLD",
+       "op": "",
+       "detail": "is_read_serial: lock_date から10分以上経過で true",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約キャンセル（通常新設）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "契約ステータス≠1",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-01 へ、「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "DATA-CEN-REQ-CANCEL",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "引き当て完了済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "全明細引き当て済み",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-01 へ、「他のユーザーによって引き当てが完了しています。」"
+       ],
+       "prep": "DATA-CEN-REQ-ASSIGNED",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しないID",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "id=99999999",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-01 へ、「他のユーザーによって引き当てが完了しています。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "id 未指定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/manage/center/assign/serial/",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-01 へ、「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "system_error_log 1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫のレンタル品デバイス種別なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-REQ-NORENT",
+        "行クリック"
+       ],
+       "expected": [
+        "―",
+        "CEN-01 へ、「連携対象NeOS品目マスタに同型番のレンタル品の登録がありません。デバイス種別登録画面から登録してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 3",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼リストに戻る（OK）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1 仮登録あり",
+        "戻る→confirm OK"
+       ],
+       "expected": [
+        "「引き当てが完了していませんが、この画面を離れますか？」 を表示",
+        "CEN-09 呼出し後 CEN-01（ct・hp 除去）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "仮登録・ロックが解除される（cen-09 参照）",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-05-serial",
+     "title": "CEN-04-D1/CEN-05 シリアル登録バーコード読取・仮登録",
+     "screens": [
+      "CEN-04-D1",
+      "CEN-05"
+     ],
+     "purpose": "バーコードダイアログで読み取ったシリアルの照合（存在・型番・センター・状態・重複）と、仮登録・ロック（10分）の更新内容を確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-REQ-N1（device_type=XX-100）を CEN-04 で開き「シリアル登録」を押した状態。",
+     "conditionColumns": [
+      "読取値",
+      "端末・依頼の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ダイアログ表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "―"
+       ],
+       "expected": [
+        "案内「ピッと音が鳴るまでバーコードリーダーをかざしてください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "「※読み取りが完了するとこの画面は自動的に閉じます」も表示。キーボード入力欄は非表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キーボード入力モード",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "案内を5回クリック",
+        "―"
+       ],
+       "expected": [
+        "「シリアルコードをキーボードで入力してください。」と入力欄",
+        "―"
+       ],
+       "prep": "",
+       "op": "入力欄に「ab-12#」を入力しEnter",
+       "detail": "大文字化し英数字とハイフン以外を除去して AB-12 を送信",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設の仮登録",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-NEW",
+        "status 1・契約NULL・南港"
+       ],
+       "expected": [
+        "CEN-04 にシリアルNo.表示",
+        "serial_cd・model_number 設定、セット全明細 lock"
+       ],
+       "prep": "",
+       "op": "バーコードを読み取る",
+       "detail": "shipping_requests.serial_cd=読取値、model_number=serials.model_number、lock_date=現在、lock_user_id=自分。complete2 で /manage/center/assign/serial/{id}?…&ct=1 へ。端末ステータスは変わらない（1のまま）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "互換型番の端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-COMPAT",
+        "互換引き当てマスタにある型番"
+       ],
+       "expected": [
+        "仮登録される",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の仮登録",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-ST",
+        "S1（model_number=ST-200）"
+       ],
+       "expected": [
+        "仮登録される",
+        "model_number は変更しない"
+       ],
+       "prep": "DATA-CEN-REQ-S1",
+       "op": "",
+       "detail": "POST の model_number と一致すること。hp=1 が付いていれば遷移先にも &hp=1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "存在しない値",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」",
+        "DB更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "型番不一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-MISMATCH",
+        "YY-999"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "DB更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "他センターの端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-OTHERCEN",
+        "center_cd=北海道"
+       ],
+       "expected": [
+        "error ダイアログ「読み込んだ端末の管轄センターは北海道キッティングセンターのため、引き当てできません。引き当てを行いたい場合は、管轄センター変更登録をしてください。」",
+        "DB更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約紐付け済み端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-USED",
+        "status 3・契約あり"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "DB更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他の依頼で使用中のシリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N2 に仮登録済みのシリアル",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「他のユーザーが作業中です。」",
+        "DB更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "読取の間に他ユーザーがロック",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SER-NEW",
+        "ROLE-OTHER が直前にロック"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "ダイアログ表示後、別ブラウザで ROLE-OTHER が同じ依頼に仮登録してから読み取る",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "読取の間に契約キャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SER-NEW",
+        "契約ステータスを3に変更"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "barcode 未指定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "barcode 空でPOST",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「シリアルNo.を読み取れませんでした。」"
+       ],
+       "prep": "",
+       "op": "開発ツール等で barcode を空にしてPOST",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ロック切れ後の再読取で初期化",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "自分の仮登録が10分超",
+        "ct なしで再表示し読取"
+       ],
+       "expected": [
+        "新しいシリアルで仮登録",
+        "セット全明細の serial_cd・model_number を一旦NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ct≠1・ロック切れ・未引き当ての場合は先に初期化してからロック設定",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "遷移先URL（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SER-NEW",
+        "仮登録成功"
+       ],
+       "expected": [
+        "CEN-04 が再表示される（要確認）",
+        "クエリ全体が urlencode される"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "02要確認-7",
+       "should": "/manage/center/assign/serial/{id}?<クエリ>&ct=1 に正しく遷移する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-06-other",
+     "title": "CEN-04-D2/CEN-06 同梱機材引き当て",
+     "screens": [
+      "CEN-04-D2",
+      "CEN-06"
+     ],
+     "purpose": "シリアル管理対象外の明細にダミーシリアルを発番して仮登録すること（serials は 1 新品入庫で作成）を確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-REQ-N2（同梱機材 OT-01、uds_non_target_flg=2）を CEN-04 で表示。",
+     "conditionColumns": [
+      "選択値",
+      "依頼の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ダイアログ表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "N2 同梱機材"
+       ],
+       "expected": [
+        "型番・(シリアル管理対象外)、新品端末（初期選択）／中古端末",
+        "―"
+       ],
+       "prep": "",
+       "op": "「同梱機材引き当て」を押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "新品端末で引き当て",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "unis2_type_cd=0",
+        "N2"
+       ],
+       "expected": [
+        "CEN-04 に「(シリアル管理対象外)」「新品端末を引き当て選択」",
+        "dummy_serials・serials INSERT（端末 新規→1 新品入庫）"
+       ],
+       "prep": "",
+       "op": "「引き当てる」を押す",
+       "detail": "serial_cd=DUMMY_SERIAL_CD＋dummy_serials.id の11桁ゼロ埋め。serials: model_number=device_type、unis2_cd 末尾=0、center_cd=南港、device_branch=CENTER_CD/センター。shipping_requests.serial_cd=ダミー、model_number=device_type、セット全明細 lock",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "中古端末で引き当て",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "unis2_type_cd=1",
+        "N2"
+       ],
+       "expected": [
+        "「中古端末を引き当て選択」",
+        "serials.unis2_cd 末尾=1"
+       ],
+       "prep": "",
+       "op": "中古端末を選び「引き当てる」",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーがロック中",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "ROLE-OTHER が5分前にロック"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "ダイアログ表示中に別ユーザーがロック後に登録",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "引き当て完了済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "既に引き当て確定"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「他のユーザーによって引き当てが完了しています。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約キャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "契約ステータス3"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫でデバイス種別なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "DATA-CEN-REQ-NORENT"
+       ],
+       "expected": [
+        "ダイアログ内で CEN-01 を表示",
+        "「連携対象NeOS品目マスタに同型番のレンタル品の登録がありません。デバイス種別登録画面から登録してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "redirect のためダイアログ内で遷移する（log 37）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "unis2_type_cd 未送信（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "unis2_type_cd なしでPOST",
+        "N2"
+       ],
+       "expected": [
+        "エラーにならず登録される（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "条件式が AND のため実質チェックが効かない",
+       "known": "02要確認-8",
+       "should": "「システムエラーを検知したため、処理を中断しました。」 で中断（log 38）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-07-return",
+     "title": "CEN-04-D3/CEN-07 初期不良返品（引き当て時）",
+     "screens": [
+      "CEN-04-D3",
+      "CEN-07"
+     ],
+     "purpose": "仮登録済みの端末を複数選択して初期不良返品し、仮登録解除と端末ステータス（1/7/26→2 初期不良廃棄）の更新を確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-REQ-N2 の全明細を仮登録済み（端末 SER-NEW status 1、同梱機材ダミー）。",
+     "conditionColumns": [
+      "選択",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ダイアログ表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "仮登録済み2明細"
+       ],
+       "expected": [
+        "「初期不良返品する端末を選択してください」と端末カード2枚",
+        "初期不良返品するボタン is-disable"
+       ],
+       "prep": "",
+       "op": "「初期不良返品」を押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "1台返品",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末1枚",
+        "SER-NEW（status 1）"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「初期不良返品しました。」"
+       ],
+       "prep": "",
+       "op": "端末を選び「初期不良返品する」",
+       "detail": "shipping_requests: serial_cd・lock_date・lock_user_id・model_number=NULL。serials: device_status 1→2 初期不良廃棄、service_status=2、device_branch=0000000001/センター",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "複数台返品",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2枚",
+        "端末＋ダミー"
+       ],
+       "expected": [
+        "―",
+        "2明細とも解除、両端末 →2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の返品",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1枚",
+        "S1 仮登録済み（SER-ST）"
+       ],
+       "expected": [
+        "―",
+        "model_number は保持、端末 1→2"
+       ],
+       "prep": "DATA-CEN-REQ-S1",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーがロック中",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "ROLE-OTHER のロック（10分以内）"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約キャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1枚",
+        "契約ステータス3"
+       ],
+       "expected": [
+        "―",
+        "complete2、「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "端末状態が変わった",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1枚",
+        "端末に契約が紐付いた"
+       ],
+       "expected": [
+        "―",
+        "complete2、「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "対象0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "仮登録なしで /return/{id} を直接開く"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-01、「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 9",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "serial_cd 未選択でPOST（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "選択なしでPOST",
+        "―"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」（log 16）",
+        "return が無く処理が続く（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "02要確認-8",
+       "should": "エラー表示して処理を中断する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-08-assign",
+     "title": "CEN-08 引き当て確定",
+     "screens": [
+      "CEN-08"
+     ],
+     "purpose": "仮登録を確定し、依頼明細の引き当て完了日と端末ステータス（通常新設 1/7/26→3、支店在庫 →4）が更新されること、他ユーザー作業中・契約キャンセル時は中断することを確認する。",
+     "precondition": "ROLE-CEN。CEN-04 で全明細を仮登録済み（支店在庫はシール印刷済み）。",
+     "conditionColumns": [
+      "依頼・端末の状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "メッセージ・遷移",
+      "DB更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "通常新設 単体の確定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1 仮登録（SER-NEW status 1）",
+        "引き当てを押す"
+       ],
+       "expected": [
+        "CEN-01、「引き当てが完了しました。」",
+        "端末 1→3 通常新設引き当て済"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests.complete_allocation_date=処理日時、center_cd=南港。serials: contract_cd・service_cd 設定、service_status=1、device_branch=依頼管轄（支店A）、serial_signup_count+1、unis2_cd=デバイス種別の unis2_cd",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット品の確定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N2 全明細仮登録",
+        "引き当て"
+       ],
+       "expected": [
+        "引き当て完了",
+        "全明細に引当日、端末 1→3（ダミー含む）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の確定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1 仮登録・hp=1",
+        "引き当て"
+       ],
+       "expected": [
+        "引き当て完了",
+        "端末 1→4 支店在庫引き当て済、service_status=NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "NeOS品目の世代更新は支店在庫では行わない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "signup_count の上限",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "serial_signup_count=9 の端末",
+        "引き当て"
+       ],
+       "expected": [
+        "引き当て完了",
+        "count は 9 のまま"
+       ],
+       "prep": "DATA-CEN-SER-COUNT9",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "NeOS品目の世代更新",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N1 の neos_item_cd が旧世代",
+        "引き当て"
+       ],
+       "expected": [
+        "引き当て完了",
+        "shipping_requests・contracts・contract_com/mdm_devices の neos_item_cd/name を最新世代に"
+       ],
+       "prep": "DATA-CEN-REQ-GEN（assign_enable_devices に新世代あり）",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIMの previous_serial_cd クリア",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "previous_serial_cd=引き当てたシリアルのSIM",
+        "引き当て"
+       ],
+       "expected": [
+        "引き当て完了",
+        "sims.previous_serial_cd=NULL"
+       ],
+       "prep": "DATA-CEN-SIM-PREV",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "UME(TV) の SQS 送信（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "neos_item_cd=UTV43L0_n01",
+        "引き当て"
+       ],
+       "expected": [
+        "引き当て完了",
+        "SQS が送信されない可能性が高い（要確認）"
+       ],
+       "prep": "DATA-CEN-REQ-UME",
+       "op": "",
+       "detail": "api_ux_open に {serialCd, contractCd} を送る処理が redirect の後ろにある",
+       "known": "Z-7",
+       "should": "コミット後に SQS へ {serialCd, contractCd} を送信する"
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーがロック中",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-OTHER が10分以内にロック",
+        "引き当て"
+       ],
+       "expected": [
+        "CEN-01、「他のユーザーが作業中です。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "自分のロックが切れた後に ROLE-OTHER が仮登録した状態で押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約キャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "仮登録後に契約ステータス3",
+        "引き当て"
+       ],
+       "expected": [
+        "CEN-01、「契約情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未仮登録の明細あり",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N2 の一部のみ仮登録",
+        "引き当て"
+       ],
+       "expected": [
+        "CEN-01、「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "端末状態が変わった",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "仮登録端末を status 2 に変更",
+        "引き当て"
+       ],
+       "expected": [
+        "CEN-01、「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーが確定済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "別タブで確定済み",
+        "引き当て"
+       ],
+       "expected": [
+        "CEN-01、「他のユーザーによって引き当てが完了しています。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "同じ画面を2タブで開き、両方で引き当てを押す（二重送信）",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-09-10",
+     "title": "CEN-09 仮引き当て解除／CEN-10 宛先シール印刷（引き当て）",
+     "screens": [
+      "CEN-09",
+      "CEN-10"
+     ],
+     "purpose": "画面離脱時に仮登録・ロックが解除されること（ダミーは論理削除）、支店在庫の宛先シールPDFが生成・印刷されることを確認する。",
+     "precondition": "ROLE-CEN。CEN-04 を表示。",
+     "conditionColumns": [
+      "データ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・出力"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "離脱で仮登録解除",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "N2 仮登録（端末＋ダミー）",
+        "戻る→OK"
+       ],
+       "expected": [
+        "CEN-01 へ遷移",
+        "serial_cd・lock を NULL、model_number NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ダミーシリアルの dummy_serials・serials を論理削除。端末ステータスは変わらない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の離脱",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1 仮登録",
+        "戻る→OK"
+       ],
+       "expected": [
+        "CEN-01 へ遷移",
+        "serial_cd・lock NULL、model_number は保持"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーのロックなら何もしない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-OTHER のロック",
+        "reset_save を呼ぶ"
+       ],
+       "expected": [
+        "HTTP 200（空）",
+        "DB更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "宛先シール印刷",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1 仮登録",
+        "宛先シール印刷"
+       ],
+       "expected": [
+        "印刷ダイアログ、印刷OK が ON",
+        "contents/pdf/assign/{id}.pdf 生成"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "印字: request_branch_name、model_number、serial_cd（ダミーは非表示）。シリアル表示があれば引き当てボタンが is-ok になる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "印刷ダイアログが開けない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "S1",
+        "printJS 失敗"
+       ],
+       "expected": [
+        "alert 「印刷ダイアログを開くことができません。シールをダウンロードします。」",
+        "PDF をダウンロード"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "依頼が取得できない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "他ユーザーが完了済み",
+        "宛先シール印刷"
+       ],
+       "expected": [
+        "alert 「システムエラーが発生しました。お手数ですが、このページを再読み込みをしてから、やり直してください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-12-list",
+     "title": "CEN-12 キッティング～検品：一覧・検索",
+     "screens": [
+      "CEN-12"
+     ],
+     "purpose": "自センターの引き当て済み（端末3）とキャンセル再入庫予定（端末6）の明細が表示され、同期状況などで絞り込めること、行のクリック可否を確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-KIT-N1/DLNG/SET/CANCEL/FLG1/FLG2/OTHERCEN を用意。",
+     "conditionColumns": [
+      "検索条件・データ",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件なし",
+        "タブで開く"
+       ],
+       "expected": [
+        "自センターの端末3/6を全件表示（ページングなし）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "初期ソート依頼日降順・顧客CD昇順。種別: 端末3→通常新設（緑）、それ以外→キャンセル（赤）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他センターは出ない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-OTHERCEN",
+        "表示"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "center_cd=ログインユーザーの jurisdiction_branch_cd",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：通常新設のみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "tpn=ON・tpc=OFF",
+        "検索"
+       ],
+       "expected": [
+        "端末3のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同期状況：完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "syc[]=1",
+        "検索"
+       ],
+       "expected": [
+        "KIT-N1・KIT-SET",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "(flg0 かつ uidm あり) または (flg2 かつ uidm・uradio あり)",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同期状況：未完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "syc[]=3",
+        "検索"
+       ],
+       "expected": [
+        "KIT-DLNG・KIT-FLG2（uradio NULL）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同期状況：対象外",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "syc[]=2",
+        "検索"
+       ],
+       "expected": [
+        "KIT-FLG1（dl_non_target_flg=1）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアルNo. 部分一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "sc=シリアルの一部",
+        "検索"
+       ],
+       "expected": [
+        "該当端末のみ。同梱機材は除外",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "該当なし条件",
+        "検索"
+       ],
+       "expected": [
+        "nodata 表示",
+        "送り状データ出力ボタン非表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同期完了行をクリック",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1",
+        "行クリック"
+       ],
+       "expected": [
+        "ダイアログ（CEN-14 判定）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "同期未完了の通常新設はクリック不可",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-DLNG",
+        "行クリック"
+       ],
+       "expected": [
+        "反応しない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "data-url を付けない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル行はクリック可",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-CANCEL（同期未完了でも）",
+        "行クリック"
+       ],
+       "expected": [
+        "バーコード読取ダイアログ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫が一覧に出るか（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末3の種別2明細",
+        "表示"
+       ],
+       "expected": [
+        "一覧に表示される（要確認）",
+        "―"
+       ],
+       "prep": "DATA-CEN-KIT-TYPE2",
+       "op": "",
+       "detail": "一覧は request_type_cd で絞らない",
+       "known": "02要確認-2",
+       "should": "詳細・選択処理と同じく通常新設のみ表示する"
+      },
+      {
+       "kind": "正常",
+       "name": "admin で開く（要確認）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なし",
+        "表示"
+       ],
+       "expected": [
+        "センター条件の効き方は要確認",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "02要確認-13",
+       "should": "admin の対象センターが仕様として定まっている"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-13-csv",
+     "title": "CEN-13 送り状データCSV出力",
+     "screens": [
+      "CEN-13"
+     ],
+     "purpose": "一覧で選択した明細の送り状データが CSV（SJIS-win、ヘッダーあり）で出力されることを確認する。",
+     "precondition": "ROLE-CEN。CEN-12 に KIT-N1・KIT-SET を表示。DATA-CEN-CSVFMT（csv_formats div=23）。",
+     "conditionColumns": [
+      "選択",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "出力"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "選択モード",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "送り状データ出力を押す"
+       ],
+       "expected": [
+        "チェック列・全選択を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行選択で確認ボックス",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1行",
+        "行クリック"
+       ],
+       "expected": [
+        "確認ボックス表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "CSV出力",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1・KIT-SET",
+        "送り状データを出力する"
+       ],
+       "expected": [
+        "選択が解除されボックス非表示",
+        "kitting_YYYYmmddHHMMSS.csv をDL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SJIS-win、ヘッダー行あり。列は csv_formats div=23 の sort 昇順。serial_cd はダミーなら空、shipping_request_cd は依頼ID形式、日付は Y/m/d。並びは既定で construction_date 降順・顧客CD昇順",
+       "known": "Z-15",
+       "should": "本番 csv_formats の列構成を確認して期待値を確定する"
+      },
+      {
+       "kind": "正常",
+       "name": "確認ボックスのキャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1行",
+        "キャンセル"
+       ],
+       "expected": [
+        "選択解除、選択モード終了",
+        "出力なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "ソート指定後に出力（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別でソート済み・1行",
+        "出力"
+       ],
+       "expected": [
+        "SQL エラーの可能性（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "02要確認-3",
+       "should": "ソート順どおりに CSV を出力する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-14-select",
+     "title": "CEN-14 リスト選択判定と通知ダイアログ（D2/D3/D5）",
+     "screens": [
+      "CEN-14",
+      "CEN-12-D2",
+      "CEN-12-D3",
+      "CEN-12-D5"
+     ],
+     "purpose": "一覧の行を選んだときの分岐（キャンセル・SIM紐づけ変更・未引き当て・他端末DL未完了・対象外品・通常）を確認する。",
+     "precondition": "ROLE-CEN。CEN-12 で対象行をクリック。",
+     "conditionColumns": [
+      "選択した依頼の状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "表示されるダイアログ",
+      "次の遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "通常（単体・DL完了）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1",
+        "行クリック"
+       ],
+       "expected": [
+        "バーコード読取ダイアログ（id 付き）",
+        "読取で CEN-15"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-CANCEL（端末6）",
+        "行クリック"
+       ],
+       "expected": [
+        "バーコード読取ダイアログ",
+        "読取で CEN-12-D8"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIM紐づけ変更あり",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-SIMCHG",
+        "行クリック"
+       ],
+       "expected": [
+        "「端末とSIMの紐づけが変更されました。」と変更前後 ICCID・SIM番号",
+        "OK で confirmed=1 付き再判定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SIM情報変更（center: /manage/center/sim/update）、SIM詳細（/manage/center/sim/list）は別タブ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIM紐づけ解除",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-SIMUNBIND",
+        "行クリック"
+       ],
+       "expected": [
+        "「端末とSIMの紐づけが解除されました。」＋変更前シリアル・ICCID",
+        "OK で再判定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "利用できないステータスのSIM",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-SIMERR",
+        "行クリック"
+       ],
+       "expected": [
+        "「IDM連携により、利用できないステータスのSIMが端末に紐づいています。担当者にお問い合わせください。」",
+        "閉じるのみ（進めない）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "admin の SIM情報変更リンク",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "KIT-SIMCHG",
+        "行クリック"
+       ],
+       "expected": [
+        "SIM情報変更リンク /manage/center/sim/modify",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット内の他端末DL未完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-SET-DLNG の完了側の行",
+        "行クリック"
+       ],
+       "expected": [
+        "「この依頼と紐付いた他の端末の初期DLが未完了です。初期DL完了後、キッティング〜検品を行ってください。」",
+        "OK で閉じる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "未完了の端末カードに「初期DL未完了」バッジ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同梱機材の行（全台そろう）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-OTONLY（対象外のみのセット）",
+        "行クリック"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-17"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "未引き当て通知（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "セットに未引き当て明細",
+        "行クリック"
+       ],
+       "expected": [
+        "実際には表示されにくい（要確認）",
+        "―"
+       ],
+       "prep": "DATA-CEN-KIT-SET-UNASSIGN",
+       "op": "",
+       "detail": "通知文「端末の引き当てが完了していません。引き当てを完了させてください。」OK で CEN-04 へ",
+       "known": "02要確認-12",
+       "should": "未引き当て明細があれば CEN-12-D3 を表示する"
+      },
+      {
+       "kind": "異常",
+       "name": "依頼が取得できない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "他ユーザーがキッティング完了済み",
+        "行クリック"
+       ],
+       "expected": [
+        "error ダイアログ 「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "選択した依頼が DL 未完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-DLNG の select_list URL",
+        "直接開く"
+       ],
+       "expected": [
+        "error ダイアログ 「システムエラーを検知したため、処理を中断しました。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 32",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-15-barcode",
+     "title": "CEN-12-D1/CEN-15 バーコード検索判定と分岐ダイアログ（D4/D6/D7）",
+     "screens": [
+      "CEN-12-D1",
+      "CEN-15",
+      "CEN-12-D4",
+      "CEN-12-D6",
+      "CEN-12-D7"
+     ],
+     "purpose": "読み取った端末バーコードから対象依頼を特定し、詳細画面または各ダイアログへ分岐することを確認する。",
+     "precondition": "ROLE-CEN。CEN-12 の「バーコード検索」から読み取る（id なし）。",
+     "conditionColumns": [
+      "読取値",
+      "依頼・端末の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "単体端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1 のシリアル",
+        "端末3・DL完了"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-17（/kitting/view/{id}）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット1台目",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-SET 端末A",
+        "全台DL完了"
+       ],
+       "expected": [
+        "スキャン状況「読み取りが完了しました。残りの端末を読み取る場合は「バーコードの読み取りに進む」を押してください」",
+        "端末Aと同梱機材に「読み取り済み」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット2台目",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-SET 端末B",
+        "D7 から続けて読取"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-17"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "complete_rows に読取済み・対象外を追加し件数がセット数に達した",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "読取端末が DL 未完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-DLNG",
+        "端末3"
+       ],
+       "expected": [
+        "「端末の初期DLが完了していません。初期DL完了後、キッティング〜検品を行ってください。もしくは、初期不良返品をする場合は「初期不良返品する」ボタンを押してください。」",
+        "初期不良返品する→CEN-17-D1／依頼一覧に戻る→閉じる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット他端末が DL 未完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-SET-DLNG の完了側",
+        "―"
+       ],
+       "expected": [
+        "「この依頼と紐付いた他の端末の初期DLが未完了です。初期不良返品をする場合は「初期不良返品する」を押してください。」",
+        "初期不良返品する→CEN-17-D1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "読取端末に「読取済」、未完了端末に「初期DL未完了」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-CANCEL",
+        "端末6"
+       ],
+       "expected": [
+        "キャンセル確認ダイアログ",
+        "CEN-12-D8"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "存在しない値",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "依頼に紐付かない端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SER-NEW（契約なし）",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "端末状態≠3",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "キッティング完了済み端末（5）",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "行選択後に別セットの端末を読取",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1 行から KIT-SET 端末を読取",
+        "id 指定あり"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "barcode 未指定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "空でPOST",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "complete2（閉じるだけ）、「シリアルNo.を読み取れませんでした。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-16-cancel",
+     "title": "CEN-12-D8/CEN-16 キャンセル確認・キャンセル再入庫",
+     "screens": [
+      "CEN-12-D8",
+      "CEN-16"
+     ],
+     "purpose": "契約がキャンセルされた端末（6 キャンセル再入庫予定）を読み取ったときに、7 キャンセル再入庫へ更新し契約との紐付けを解除することを確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-KIT-CANCEL（端末 device_status_cd=6、contract_cd あり）。",
+     "conditionColumns": [
+      "端末の状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "キャンセル確認表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末6",
+        "バーコード読取"
+       ],
+       "expected": [
+        "「この端末に紐づく契約がすでにキャンセルされています。」OK のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル再入庫登録",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末6",
+        "OK"
+       ],
+       "expected": [
+        "メッセージなし",
+        "端末 6→7 キャンセル再入庫、complete2 → CEN-12"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials: contract_cd=NULL、device_status_name='キャンセル再入庫'、service_status=2、device_branch=CENTER_CD/センター。shipping_requests は更新しない（complete_cancel_date は API 側）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "登録後は一覧から消える",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "登録済み",
+        "CEN-12 再表示"
+       ],
+       "expected": [
+        "該当行が表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials の contract_cd が NULL になり JOIN 条件から外れる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "二重登録",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "既に7に更新済み",
+        "別タブで OK"
+       ],
+       "expected": [
+        "error ダイアログ（要確認: 依頼取得不可なら 「システムエラーを検知したため、処理を中断しました。」／状態≠6なら 「端末情報が更新されました。お手数ですが、最初からやり直してください。」）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "依頼が取得できない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "存在しない id",
+        "/kitting/cancel/{id}"
+       ],
+       "expected": [
+        "error ダイアログ 「システムエラーを検知したため、処理を中断しました。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "表示時 log 35",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-17-view",
+     "title": "CEN-17 キッティング～検品（詳細）：表示・チェック・シール印刷",
+     "screens": [
+      "CEN-17",
+      "CEN-21",
+      "CEN-22",
+      "CEN-23",
+      "CEN-24"
+     ],
+     "purpose": "詳細画面の表示内容、チェック項目と各シール印刷OKがすべて ON になるまで完了ボタンが活性化しないこと、各シールPDFの生成内容を確認する。",
+     "precondition": "ROLE-CEN。CEN-15 から詳細を開く。",
+     "conditionColumns": [
+      "依頼・端末の状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "出力・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "単体の表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1（device_checks 2件）",
+        "表示"
+       ],
+       "expected": [
+        "種別「通常新設」、端末、初期DL完了、動作チェックOK、同梱2項目",
+        "完了ボタン is-disable"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "宛先シール印刷と印刷OK(OFF)。QR・Wi-Fi は非表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "チェックだけでは活性しない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1",
+        "動作チェック・同梱すべて ON"
+       ],
+       "expected": [
+        "完了ボタン is-disable のまま",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "宛先シール印刷OKが未",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全チェック＋印刷で活性",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1",
+        "宛先シール印刷＋全チェック"
+       ],
+       "expected": [
+        "完了ボタン活性",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "宛先シールPDF",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-SET",
+        "宛先シール印刷"
+       ],
+       "expected": [
+        "印刷ダイアログ、印刷OK ON",
+        "contents/pdf/shipment/{id}.pdf"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "セット全端末: 顧客CD、管轄名、店舗名、型番、シリアル（13桁超は2段、ダミーは非表示）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "URX-03 QRシール",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-QR1（qrcode_flg=1）",
+        "URX-03 QRシール印刷"
+       ],
+       "expected": [
+        "ボタンと印刷OK を表示、印刷で ON",
+        "{id}_ume_qrcode.pdf"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "UME対象明細ごとに1ページ。QR=https://web.musicvideo.usen.com/?param1={unis_customer_cd}&param2={contract_cd}＋シリアル。一時PNGは削除される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "URX-05 QRシール",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-QR2（qrcode_flg=2）",
+        "URX-05 QRシール印刷"
+       ],
+       "expected": [
+        "ボタンと印刷OK を表示",
+        "{id}_urx_qrcode.pdf"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "QR URL は本番 https://web2.musicvideo.usen.com/loading?param1=…、それ以外 https://web-stg.requestvision.usen.com/loading?param1=…",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "Wi-Fi SSIDシール",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-WIFI（com_ssid2_enable=1）",
+        "Wi-Fi SSIDシール印刷"
+       ],
+       "expected": [
+        "SSID「#UW123456789」パスワード「98765432」表示",
+        "contents/pdf/wifi/{id}.pdf"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "印字: com_ssid2_name、com_ssid2_pass、serial_cd。値は contract_com_devices の取込値（SSID2=#UW＋顧客CD9桁、パス=顧客CD8桁の反転）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "シール生成の Ajax 失敗",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "他ユーザーが完了済み",
+        "宛先シール印刷"
+       ],
+       "expected": [
+        "alert 「システムエラーが発生しました。お手数ですが、このページを再読み込みをしてから、やり直してください。」（要確認: redirect が success 扱いになる可能性）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "QR 対象0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "QR対象なしの id で download_qrcode_label_save",
+        "直接呼出し"
+       ],
+       "expected": [
+        "「QRシール印刷の対象となる依頼が存在しません。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "チェック項目マスタ0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-KIT-NOCHK",
+        "表示"
+       ],
+       "expected": [
+        "CEN-12、「キッティングチェック項目の登録がありません。デバイス種別登録画面から登録してください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "DL 未完了の明細あり",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-SET-DLNG の view URL",
+        "直接開く"
+       ],
+       "expected": [
+        "CEN-12、「システムエラーを検知したため、処理を中断しました。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 5",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "端末状態≠3",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "キャンセル済み（6）の view URL",
+        "直接開く"
+       ],
+       "expected": [
+        "CEN-12、「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "検索画面に戻る",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1",
+        "検索画面に戻る"
+       ],
+       "expected": [
+        "―",
+        "/manage/center/kitting＋クエリ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-18-return",
+     "title": "CEN-17-D1〜D4/CEN-18/CEN-19 初期不良返品（キッティング時）",
+     "screens": [
+      "CEN-17-D1",
+      "CEN-17-D2",
+      "CEN-17-D3",
+      "CEN-17-D4",
+      "CEN-18",
+      "CEN-19"
+     ],
+     "purpose": "キッティング中に端末を1台選んで初期不良返品し、引き当て解除と端末ステータス（3→2 初期不良廃棄）の更新、その後の代替引き当て・後で行うの遷移を確認する。",
+     "precondition": "ROLE-CEN。KIT-SET（端末A・端末B・同梱機材、端末3）を CEN-17 で表示、または CEN-12-D4/D6 から開く。",
+     "conditionColumns": [
+      "選択・読取",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "端末選択ダイアログ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "―",
+        "KIT-SET"
+       ],
+       "expected": [
+        "「初期不良返品する端末を選択してください」と端末カード（単一選択）",
+        "初期不良返品するボタン is-disable"
+       ],
+       "prep": "",
+       "op": "CEN-17 で「初期不良返品」",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル管理対象を選択",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末A",
+        "―"
+       ],
+       "expected": [
+        "ボタン活性",
+        "押すとバーコード読取（CEN-17-D2）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "照合一致で返品",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末A のシリアルを読取",
+        "端末A 3"
+       ],
+       "expected": [
+        "初期不良返品後の選択「初期不良返品が完了しました。代替端末の引き当てをしますか？」",
+        "端末A 3→2 初期不良廃棄"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests の model_number・serial_cd・complete_allocation_date を NULL。serials: service_status=2、device_branch=CENTER_CD/センター",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "引き当てをする",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "返品後",
+        "「引き当てをする」"
+       ],
+       "expected": [
+        "―",
+        "complete2 → /manage/center/assign/serial/{id}（CEN-04）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "返品した明細は未引き当てとして CEN-01 に再び出る",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "後で行う",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "返品後",
+        "「後で行う」"
+       ],
+       "expected": [
+        "―",
+        "complete2 → CEN-12"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同梱機材を選択",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "同梱機材",
+        "―"
+       ],
+       "expected": [
+        "「この同梱機材初期不良返品する」ダイアログ（CEN-17-D3）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "リンクは foreach 後の最後の row.id を使う",
+       "known": "02要確認-9",
+       "should": "選んだ明細の id を使って遷移する"
+      },
+      {
+       "kind": "正常",
+       "name": "同梱機材の返品",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CEN-17-D3 で返品",
+        "ダミー 3"
+       ],
+       "expected": [
+        "初期不良返品後の選択",
+        "ダミー端末 3→2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "照合不一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末Bのシリアル（端末A選択）",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "barcode 未指定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "空でPOST",
+        "―"
+       ],
+       "expected": [
+        "error ダイアログ 「シリアルNo.を読み取れませんでした。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "依頼が更新済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "端末A",
+        "他ユーザーが返品済み"
+       ],
+       "expected": [
+        "error ダイアログ 「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-20-save",
+     "title": "CEN-20 キッティング～検品完了",
+     "screens": [
+      "CEN-20"
+     ],
+     "purpose": "キッティング完了日の登録、端末ステータス（3→5 通常新設キッティング完了）、チェック履歴の登録と、各エラー時の戻り先を確認する。",
+     "precondition": "ROLE-CEN。CEN-17 で全チェック・印刷OK を ON にした状態。",
+     "conditionColumns": [
+      "データ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "メッセージ・遷移",
+      "DB更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "単体の完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1（端末3）",
+        "完了を押す"
+       ],
+       "expected": [
+        "CEN-12、「キッティングが完了しました。」",
+        "端末 3→5、complete_kitting_date 設定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials: service_status=1、device_branch=依頼管轄。device_check_histories にチェック項目数分 INSERT（shipping_request_id・serial_id・serial_cd・neos_item_cd・div・detail）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セットの完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-SET",
+        "完了"
+       ],
+       "expected": [
+        "CEN-12、完了メッセージ",
+        "全明細 3→5、履歴は各端末分"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "完了後は出荷一覧に出る",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1 完了済み",
+        "CEN-25 表示"
+       ],
+       "expected": [
+        "KIT-N1 が出荷対象に表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "チェック履歴の device_check_id（要確認）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1",
+        "完了"
+       ],
+       "expected": [
+        "完了",
+        "device_check_id が空で登録（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-8",
+       "should": "device_check_histories.device_check_id に device_checks.id が入る"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "チェックリストがマスタ更新",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "画面表示後に device_checks の detail 変更",
+        "完了"
+       ],
+       "expected": [
+        "CEN-17、「キッティングチェックリストが更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "チェック件数不一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "画面表示後に device_checks を1件追加",
+        "完了"
+       ],
+       "expected": [
+        "CEN-17、「システムエラーを検知したため、処理を中断しました。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 16",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "動作チェック件数不一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "check_ok を1件削ってPOST",
+        "完了"
+       ],
+       "expected": [
+        "CEN-17、「システムエラーを検知したため、処理を中断しました。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 14",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "端末状態が変わった（二重送信）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "別タブで完了済み",
+        "完了"
+       ],
+       "expected": [
+        "CEN-12、「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "DL 未完了になった",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "uidm_sync_comple_date を NULL に",
+        "完了"
+       ],
+       "expected": [
+        "CEN-12、「システムエラーを検知したため、処理を中断しました。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 5",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-25-list",
+     "title": "CEN-25 出荷：一覧・検索・選択",
+     "screens": [
+      "CEN-25"
+     ],
+     "purpose": "自センターの出荷待ち（端末4 支店在庫引き当て済、端末5 通常新設キッティング完了）が表示され、検索・選択・発送日入力ボックスが動くことを確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-SHP-N1/S1/NSET/SDUMMY を用意。",
+     "conditionColumns": [
+      "検索条件・データ",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "一覧表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件なし",
+        "タブ「出荷」"
+       ],
+       "expected": [
+        "SHP-N1（通常新設）・SHP-S1（支店在庫）等を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "初期ソート依頼日降順。シリアルは対象外なら空欄",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キッティング未完了は出ない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "KIT-N1（端末3）",
+        "表示"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：通常新設のみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "tpn=ON・tpb=OFF",
+        "検索"
+       ],
+       "expected": [
+        "通常新設のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番・シリアル・その他",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn/sc/rid/ccd/cpn/isn/bcs/日付",
+        "検索"
+       ],
+       "expected": [
+        "条件どおり絞り込み",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "型番は shipping_requests.model_number または device_type。シリアルは対象外を除外",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリックで選択",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-N1",
+        "行クリック"
+       ],
+       "expected": [
+        "チェック ON、発送日入力ボックス表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "該当なし条件",
+        "検索"
+       ],
+       "expected": [
+        "nodata 表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他センターは出ない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-CEN-SHP-OTHERCEN",
+        "表示"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-26-ship",
+     "title": "CEN-26 出庫処理（組織間移動）・ZIP出力",
+     "screens": [
+      "CEN-26"
+     ],
+     "purpose": "出庫処理で依頼完了日・発送日が登録され、端末ステータスが 5→10/12、4→9/11 に更新されること、出荷CSV・送り状Excel・UNIS移動Excel を含む ZIP が出力されることを確認する。",
+     "precondition": "ROLE-CEN（所属センター＝センター南港）。CEN-25 で明細を選び発送日を入力。",
+     "conditionColumns": [
+      "選択明細・発送日",
+      "端末の状態"
+     ],
+     "expectColumns": [
+      "メッセージ・画面",
+      "DB・出力"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "通常新設の出庫",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-N1・発送日=明日",
+        "端末5"
+       ],
+       "expected": [
+        "「出庫処理が完了しました。ZIPファイルを自動DLしています。」",
+        "端末 5→10 通常新設出庫"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests.complete_request_date=処理日時、shipping_date=入力値。serials: service_status=1、device_branch=依頼管轄",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の出庫",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-S1",
+        "端末4"
+       ],
+       "expected": [
+        "完了メッセージ",
+        "端末 4→9 支店在庫出庫"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫ダミー",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-SDUMMY",
+        "ダミー端末4"
+       ],
+       "expected": [
+        "完了メッセージ",
+        "端末 4→11 支店在庫入庫"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設セット（端末＋ダミー）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-NSET 全明細",
+        "端末5・ダミー5"
+       ],
+       "expected": [
+        "完了メッセージ",
+        "端末 5→10、ダミー 5→10"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ダミーでも自分以外にシリアル管理対象のセット品があれば 10",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設ダミーのみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-NDUMMYONLY",
+        "ダミー5・他に対象なし"
+       ],
+       "expected": [
+        "完了メッセージ",
+        "ダミー 5→12 通常新設入庫"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ZIP の内容（南港）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-N1",
+        "―"
+       ],
+       "expected": [
+        "ZIP を自動DL（要確認: readfile 後の redirect の挙動）",
+        "shipments_YYYYmmddHHMMSS.zip"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "中身: 出荷CSV YYYYmmddHHMMSS.csv（cp932、div=23）、福山形式 fukuyama_*.xlsx、unis_*.xlsx。S3 に <file_type名>/<ファイル名> で保存、export_lists に file_type 4/5/6 を INSERT",
+       "known": "02要確認-10",
+       "should": "出庫完了後に ZIP が1回だけ確実にDLされる"
+      },
+      {
+       "kind": "正常",
+       "name": "SBS形式（北海道・IoT PF）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "所属センター=北海道の明細",
+        "―"
+       ],
+       "expected": [
+        "完了メッセージ",
+        "送り状は sbs_YYYYmmddHHMMSS.xlsx"
+       ],
+       "prep": "DATA-CEN-USER-HOK（所属=北海道のセンターユーザー）",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "出庫後は一覧から消える",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "出庫済み",
+        "CEN-25 再表示"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "発送日未入力",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-N1・発送日空",
+        "―"
+       ],
+       "expected": [
+        "CEN-25、「発送日を入力してください」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーが出庫済み（二重送信）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-N1",
+        "別タブで出庫済み"
+       ],
+       "expected": [
+        "CEN-25、「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "取得件数≠選択件数",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "id 未選択でPOST",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "id[] なし",
+        "―"
+       ],
+       "expected": [
+        "CEN-25、「システムエラーを検知したため、処理を中断しました。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "画面上はボックスが出ないため通常は発生しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "S3 アップロード失敗",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "SHP-N1",
+        "S3 接続不可"
+       ],
+       "expected": [
+        "CEN-25、「システムエラーを検知したため、処理を中断しました。」",
+        "rollback、S3 上のファイル削除"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "catch の名前空間により捕捉できない可能性（要確認）",
+       "known": "02要確認-10",
+       "should": "rollback して 「システムエラーを検知したため、処理を中断しました。」 を表示"
+      },
+      {
+       "kind": "異常",
+       "name": "送り状リストに無いセンター（要確認）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "admin 等リスト外の所属",
+        "出庫"
+       ],
+       "expected": [
+        "$excel 未定義でエラー（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "02要確認-10",
+       "should": "送り状の形式が決まらない場合のエラーを明示する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-27-search",
+     "title": "CEN-27 依頼検索（発送状況確認）",
+     "screens": [
+      "CEN-27"
+     ],
+     "purpose": "全種別の依頼を検索でき、依頼ステータスの判定（検索・表示）が正しいこと、未検索表示・ソート・ページャを確認する。",
+     "precondition": "ROLE-CEN。DATA-CEN-RQ-ST1〜ST8（各依頼ステータスに該当する依頼）と種別1〜5の依頼を用意。センター条件では絞り込まない。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "パラメータなし",
+        "―"
+       ],
+       "expected": [
+        "nosearch（一覧なし）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "種別5つはすべて ON",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件なしで検索",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別すべてON",
+        "種別1〜5"
+       ],
+       "expected": [
+        "全種別を表示（他センター分・完了済みも含む）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "種別色: 通常新設・支店在庫・緊急新設・デジ化・交換",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別で絞り込み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "tpe のみ ON",
+        "種別1〜5"
+       ],
+       "expected": [
+        "緊急新設（E）のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼ID（各プレフィックス）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rid=D00000000456",
+        "デジ化 id=456"
+       ],
+       "expected": [
+        "該当1件",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "N/S/D/E/C＋11桁",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "依頼ID 形式不正",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rid=D456",
+        "―"
+       ],
+       "expected": [
+        "0件（メッセージなし）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアルNo.",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "sc=ダミーシリアルの一部",
+        "―"
+       ],
+       "expected": [
+        "同梱機材も含めて該当",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "対象外の除外なし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：未引き当て",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=1",
+        "ST1"
+       ],
+       "expected": [
+        "「未引き当て」の依頼のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：キャンセル／解約",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=2,3",
+        "契約3/契約4"
+       ],
+       "expected": [
+        "「キャンセル」「解約」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "複数選択は OR",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：発送準備中",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=4",
+        "引当済・依頼完了NULL"
+       ],
+       "expected": [
+        "「発送準備中」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：発送済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=5",
+        "依頼完了・端末10/9"
+       ],
+       "expected": [
+        "「発送済み」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：支店入庫済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=6",
+        "端末12/11"
+       ],
+       "expected": [
+        "「支店入庫済み」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：支店作業中",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=7",
+        "種別3/4/5・引当済"
+       ],
+       "expected": [
+        "「支店作業中」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス：設置完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rsn[]=8",
+        "顧客出庫あり"
+       ],
+       "expected": [
+        "「設置完了」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート・ページャ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "81件",
+        "依頼日見出しクリック"
+       ],
+       "expected": [
+        "asc/desc 切替、80件/ページ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "依頼ステータス列はソートできない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリック",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ST4",
+        "行クリック"
+       ],
+       "expected": [
+        "―",
+        "CEN-28（クエリ引き継ぎ）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "cen-28-view",
+     "title": "CEN-28 発送状況詳細",
+     "screens": [
+      "CEN-28"
+     ],
+     "purpose": "依頼1件の進捗日付とステータスが種別ごとに正しく表示されること（参照のみ）を確認する。",
+     "precondition": "ROLE-CEN。CEN-27 から行クリック。",
+     "conditionColumns": [
+      "依頼の種別・状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "通常新設 発送済み",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別1・端末10",
+        "表示"
+       ],
+       "expected": [
+        "ステータス「発送済み」、引当完了日・キッティング完了日・発送日",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "キッティング場所=center_cd のセンター名。依頼ID N＋11桁",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別2・引当済",
+        "表示"
+       ],
+       "expected": [
+        "顧客CD・企業名・キッティング完了日・顧客出庫完了日を表示しない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "型番は model_number",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "デジ化・緊急新設・交換",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別3/4/5・引当済",
+        "表示"
+       ],
+       "expected": [
+        "「支店作業中」、キッティング場所=出庫先管轄、発送日なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "引当前",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ST1",
+        "表示"
+       ],
+       "expected": [
+        "シリアルNo.空、「未引き当て」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ダミーシリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "同梱機材の明細",
+        "表示"
+       ],
+       "expected": [
+        "シリアルNo.「(シリアル管理対象外)」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別切替ボタンは無い",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "種別1・未引当",
+        "表示"
+       ],
+       "expected": [
+        "緊急新設/通常新設切替ボタンなし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-14",
+       "should": "センターでは提供しない（移行対象外）"
+      },
+      {
+       "kind": "異常",
+       "name": "存在しないID",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "id=99999999",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-27、「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 2",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "id 未指定",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/view/",
+        "URL直接"
+       ],
+       "expected": [
+        "―",
+        "CEN-27、「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "log 1",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  }
+ ],
+ "prepData": [
+  {
+   "id": "DATA-CEN-REQ-N1",
+   "content": "通常新設・単体の未引き当て依頼",
+   "value": "id=123、request_type_cd=1、center_cd=センター南港、request_branch=支店A、device_type=XX-100（シリアル管理対象）、contract_status_cd=1、set_cd 空、request_date=昨日、request_display_flg=1、引当/キッティング/依頼完了/キャンセル日 NULL、lock なし"
+  },
+  {
+   "id": "DATA-CEN-REQ-N2",
+   "content": "通常新設・セット品の未引き当て依頼",
+   "value": "同一顧客・同日・同 set_cd の2明細: 端末 XX-100 ＋ 同梱機材 OT-01（uds_non_target_flg=2）。契約1、センター南港"
+  },
+  {
+   "id": "DATA-CEN-REQ-S1",
+   "content": "支店在庫の未引き当て依頼",
+   "value": "request_type_cd=2、model_number=ST-200、contract_cd NULL、device_types にレンタル品 ST-200 あり、センター南港"
+  },
+  {
+   "id": "DATA-CEN-REQ-CANCEL",
+   "content": "契約キャンセルの通常新設依頼",
+   "value": "N1 と同条件で contract_status_cd=3"
+  },
+  {
+   "id": "DATA-CEN-REQ-LOCK",
+   "content": "他ユーザーが作業中の依頼",
+   "value": "N1 と同条件、lock_user_id=ROLE-OTHER、lock_date=5分前"
+  },
+  {
+   "id": "DATA-CEN-REQ-LOCKOLD",
+   "content": "他ユーザーのロックが切れた依頼",
+   "value": "lock_user_id=ROLE-OTHER、lock_date=11分前"
+  },
+  {
+   "id": "DATA-CEN-REQ-LOCKSELF",
+   "content": "自分がロック中の依頼",
+   "value": "lock_user_id=ROLE-CEN、lock_date=2分前"
+  },
+  {
+   "id": "DATA-CEN-REQ-FUTURE",
+   "content": "依頼日が明日の依頼",
+   "value": "request_date=明日、その他 N1 と同じ"
+  },
+  {
+   "id": "DATA-CEN-REQ-NODISP",
+   "content": "非表示の依頼",
+   "value": "request_display_flg=0"
+  },
+  {
+   "id": "DATA-CEN-REQ-ASSIGNED",
+   "content": "引き当て済みの依頼",
+   "value": "complete_allocation_date 設定済み、端末3"
+  },
+  {
+   "id": "DATA-CEN-REQ-MANY",
+   "content": "ページャ確認用",
+   "value": "未引き当て依頼81件（センター南港）"
+  },
+  {
+   "id": "DATA-CEN-REQ-NORENT",
+   "content": "レンタル品デバイス種別が無い支店在庫依頼",
+   "value": "request_type_cd=2、model_number=ST-999（device_types にレンタル品なし）"
+  },
+  {
+   "id": "DATA-CEN-REQ-GEN",
+   "content": "NeOS品目が旧世代の依頼",
+   "value": "neos_item_cd=旧世代、assign_enable_devices に新世代あり"
+  },
+  {
+   "id": "DATA-CEN-REQ-UME",
+   "content": "UME(TV) の通常新設依頼",
+   "value": "neos_item_cd=UTV43L0_n01"
+  },
+  {
+   "id": "DATA-CEN-SER-NEW",
+   "content": "引き当て可能な端末",
+   "value": "model_number=XX-100、device_status_cd=1、contract_cd NULL、center_cd=センター南港"
+  },
+  {
+   "id": "DATA-CEN-SER-7",
+   "content": "キャンセル再入庫の端末",
+   "value": "XX-100、device_status_cd=7、contract_cd NULL"
+  },
+  {
+   "id": "DATA-CEN-SER-26",
+   "content": "status 26 の端末",
+   "value": "XX-100、device_status_cd=26、contract_cd NULL"
+  },
+  {
+   "id": "DATA-CEN-SER-COMPAT",
+   "content": "互換型番の端末",
+   "value": "XX-100 の互換引き当てマスタにある型番 XX-110、status 1"
+  },
+  {
+   "id": "DATA-CEN-SER-ST",
+   "content": "支店在庫用端末",
+   "value": "model_number=ST-200、status 1、センター南港"
+  },
+  {
+   "id": "DATA-CEN-SER-MISMATCH",
+   "content": "型番違いの端末",
+   "value": "model_number=YY-999、status 1"
+  },
+  {
+   "id": "DATA-CEN-SER-OTHERCEN",
+   "content": "他センターの端末",
+   "value": "XX-100、status 1、center_cd=北海道キッティングセンター"
+  },
+  {
+   "id": "DATA-CEN-SER-USED",
+   "content": "契約紐付け済み端末",
+   "value": "XX-100、status 3、contract_cd あり"
+  },
+  {
+   "id": "DATA-CEN-SER-BROKEN",
+   "content": "初期不良廃棄の端末",
+   "value": "XX-100、status 2、contract_cd NULL"
+  },
+  {
+   "id": "DATA-CEN-SER-COUNT9",
+   "content": "登録回数上限の端末",
+   "value": "XX-100、status 1、serial_signup_count=9"
+  },
+  {
+   "id": "DATA-CEN-SIM-PREV",
+   "content": "previous_serial_cd を持つSIM",
+   "value": "sims.previous_serial_cd=DATA-CEN-SER-NEW のシリアル"
+  },
+  {
+   "id": "DATA-CEN-KIT-N1",
+   "content": "キッティング対象・単体",
+   "value": "通常新設、引当済、端末3、dl_non_target_flg=0、uidm_sync_comple_date あり、device_checks（neos_item_cd 一致、div=1、active=1）2件、センター南港"
+  },
+  {
+   "id": "DATA-CEN-KIT-DLNG",
+   "content": "初期DL未完了の単体",
+   "value": "KIT-N1 と同じで uidm_sync_comple_date NULL"
+  },
+  {
+   "id": "DATA-CEN-KIT-SET",
+   "content": "キッティング対象・セット",
+   "value": "端末A・端末B（端末3、同期完了）＋同梱機材（ダミー、端末3）"
+  },
+  {
+   "id": "DATA-CEN-KIT-SET-DLNG",
+   "content": "他端末DL未完了のセット",
+   "value": "KIT-SET と同構成で端末Bの uidm NULL"
+  },
+  {
+   "id": "DATA-CEN-KIT-SET-UNASSIGN",
+   "content": "未引き当て明細を含むセット",
+   "value": "端末Aは引当済（3）、同じセットの別明細が complete_allocation_date NULL"
+  },
+  {
+   "id": "DATA-CEN-KIT-OTONLY",
+   "content": "同梱機材のみのセット",
+   "value": "シリアル管理対象外の明細だけ（ダミー、端末3）"
+  },
+  {
+   "id": "DATA-CEN-KIT-CANCEL",
+   "content": "キャンセル再入庫予定",
+   "value": "通常新設、引当済、端末6、contract_cd あり"
+  },
+  {
+   "id": "DATA-CEN-KIT-FLG1",
+   "content": "同期対象外",
+   "value": "dl_non_target_flg=1、端末3"
+  },
+  {
+   "id": "DATA-CEN-KIT-FLG2",
+   "content": "uradio 未完了",
+   "value": "dl_non_target_flg=2、uidm あり、uradio_dl_complete_date NULL"
+  },
+  {
+   "id": "DATA-CEN-KIT-OTHERCEN",
+   "content": "他センターのキッティング対象",
+   "value": "center_cd=北海道、端末3"
+  },
+  {
+   "id": "DATA-CEN-KIT-TYPE2",
+   "content": "端末3の支店在庫明細",
+   "value": "request_type_cd=2、引当済、端末3（要確認データ）"
+  },
+  {
+   "id": "DATA-CEN-KIT-NOCHK",
+   "content": "チェック項目なし",
+   "value": "KIT-N1 と同じで device_checks 0件"
+  },
+  {
+   "id": "DATA-CEN-KIT-QR1",
+   "content": "URX-03 QR対象",
+   "value": "contract_mdm2_devices.option2_neos_item_cd が device_types.qrcode_flg='1'"
+  },
+  {
+   "id": "DATA-CEN-KIT-QR2",
+   "content": "URX-05 QR対象",
+   "value": "contracts.neos_item_cd が device_types.qrcode_flg='2'"
+  },
+  {
+   "id": "DATA-CEN-KIT-WIFI",
+   "content": "Wi-Fi SSIDシール対象",
+   "value": "unis_customer_cd=123456789、device_types.com_ssid2_enable='1'、contract_com_devices.com_ssid2_name=#UW123456789、com_ssid2_pass=98765432"
+  },
+  {
+   "id": "DATA-CEN-KIT-SIMCHG",
+   "content": "SIM紐づけ変更あり",
+   "value": "セット内シリアルに Model_Sim::find_serial_change が新ICCID への変更を返す"
+  },
+  {
+   "id": "DATA-CEN-KIT-SIMUNBIND",
+   "content": "SIM紐づけ解除あり",
+   "value": "find_serial_change が紐づけ解除のみを返す"
+  },
+  {
+   "id": "DATA-CEN-KIT-SIMERR",
+   "content": "利用不可ステータスのSIM",
+   "value": "紐づくSIMが is_current_status_error に該当"
+  },
+  {
+   "id": "DATA-CEN-KIT-DONE",
+   "content": "キッティング完了済み依頼",
+   "value": "complete_kitting_date あり、端末5"
+  },
+  {
+   "id": "DATA-CEN-SHP-N1",
+   "content": "出荷待ち・通常新設",
+   "value": "キッティング完了、端末5、complete_request_date NULL、センター南港、管轄支店A"
+  },
+  {
+   "id": "DATA-CEN-SHP-S1",
+   "content": "出荷待ち・支店在庫",
+   "value": "引当済、端末4、センター南港"
+  },
+  {
+   "id": "DATA-CEN-SHP-SDUMMY",
+   "content": "出荷待ち・支店在庫ダミー",
+   "value": "ダミーシリアル、端末4"
+  },
+  {
+   "id": "DATA-CEN-SHP-NSET",
+   "content": "出荷待ち・通常新設セット",
+   "value": "端末（5）＋同梱機材ダミー（5）"
+  },
+  {
+   "id": "DATA-CEN-SHP-NDUMMYONLY",
+   "content": "出荷待ち・ダミーのみ通常新設",
+   "value": "セット内にシリアル管理対象が無く、自端末はダミー（5）"
+  },
+  {
+   "id": "DATA-CEN-SHP-OTHERCEN",
+   "content": "他センターの出荷待ち",
+   "value": "center_cd=北海道、端末5"
+  },
+  {
+   "id": "DATA-CEN-USER-HOK",
+   "content": "北海道所属のセンターユーザー",
+   "value": "user_div=2、jurisdiction_branch_cd=北海道キッティングセンター"
+  },
+  {
+   "id": "DATA-CEN-CSVFMT",
+   "content": "送り状・出荷CSVの列定義",
+   "value": "csv_formats div=23（本番データを投入）"
+  },
+  {
+   "id": "DATA-CEN-RQ-ST1",
+   "content": "依頼ステータス確認用（ST1〜ST8）",
+   "value": "ST1 未引当（契約1）／ST2 契約3／ST3 契約4／ST4 引当済・依頼完了NULL／ST5 依頼完了・端末10（種別1）または9（種別2）／ST6 端末12/11／ST7 種別3〜5・引当済・契約1／ST8 complete_shipping_date あり。種別1〜5を各1件以上"
+  }
+ ],
+ "openQuestions": [
+  "admin（ROLE-ADM）が jurisdiction_branch_cd を持たない場合の CEN-05/12/25/26 の挙動が定義書から判断できないため、admin の更新系ケースは作成していない（02要確認-13）。",
+  "CEN-16 の二重登録時、依頼が取得できるか（log 37/38 の SYSTEM_ERROR）か状態不一致（SERIAL_UPDATE_MSG）のどちらになるか定義書から断定できない。",
+  "CEN-21〜24 の Ajax エラー時に redirect が success 扱いになるか（定義書で要確認）。",
+  "CEN-13/26 の CSV 列名・順序は csv_formats div=23 の本番データ依存（Z-15）。"
+ ]
+}

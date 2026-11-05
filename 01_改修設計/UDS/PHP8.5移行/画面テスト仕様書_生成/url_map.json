@@ -1,0 +1,1358 @@
+{
+"COM-01": [
+"ログイン",
+"`/manage/login`（`/manage/login/index`、`/` も同じ。`_root_` ルート）"
+],
+"COM-02": [
+"ログイン処理",
+"`/manage/login/login`（POST）"
+],
+"COM-03": [
+"ログアウト",
+"`/manage/login/logout`"
+],
+"COM-04": [
+"403エラー",
+"`/manage/error/403`（＋ `Exception_403` 発生時）"
+],
+"COM-05": [
+"404エラー",
+"`/manage/error/404`（`_404_` ルート）"
+],
+"COM-07": [
+"バーコード読取ダイアログ",
+"`/manage/dialog/barcode`（POST）／各画面の `search_barcode` 系 action からも `render_barcode()` で表示"
+],
+"COM-08": [
+"エラーダイアログ",
+"`/manage/dialog/error`"
+],
+"COM-09": [
+"完了ダイアログ",
+"`/manage/dialog/complete`（ビュー `dialog/complete` / `dialog/complete2`）"
+],
+"COM-10": [
+"データなしダイアログ",
+"`/manage/dialog/not_found`"
+],
+"COM-11": [
+"ファイルアップロードダイアログ",
+"`/manage/dialog/file_upload`（POST）"
+],
+"COM-12": [
+"SIM紐づけ変更通知ダイアログ",
+"（URLなし。`/manage/center/kitting/...` からビュー `dialog/sim_serial_changed` を描画）"
+],
+"COM-13": [
+"端末日時更新（Ajax）",
+"`/manage/ajax/uidm/updated/{serial_id}.json`（GET）"
+],
+"COM-28": [
+"nodata",
+"`項目がありません。`"
+],
+"COM-29": [
+"nosearch",
+"`検索条件を入力して「検索」ボタンを押してください。`"
+],
+"CEN-01": [
+"依頼リスト（センター）",
+"/manage/center/request"
+],
+"CEN-02": [
+"依頼リスト（共通・未使用）",
+"/manage/request/index"
+],
+"CEN-03": [
+"引き当て（共通・未使用）",
+"/manage/request/provision"
+],
+"CEN-04": [
+"引き当て（シリアル登録）",
+"/manage/center/assign/serial/{id}"
+],
+"CEN-04-D1": [
+"シリアル登録バーコード読取",
+"/manage/dialog/barcode（送信先 /manage/center/assign/serial_save）"
+],
+"CEN-04-D2": [
+"同梱機材引き当て",
+"/manage/center/assign/other_serial/{id}"
+],
+"CEN-04-D3": [
+"初期不良返品（引き当て時）",
+"/manage/center/assign/return/{id}"
+],
+"CEN-05": [
+"シリアル仮登録",
+"/manage/center/assign/serial_save"
+],
+"CEN-06": [
+"同梱機材引き当て登録",
+"/manage/center/assign/other_serial_save"
+],
+"CEN-07": [
+"初期不良返品登録（引き当て時）",
+"/manage/center/assign/return_save"
+],
+"CEN-08": [
+"引き当て確定",
+"/manage/center/assign/assign_save"
+],
+"CEN-09": [
+"仮引き当て解除",
+"/manage/center/assign/reset_save/{id}"
+],
+"CEN-10": [
+"宛先シールPDF生成（引き当て・支店在庫）",
+"/manage/center/assign/download_assign_label_save/{id}"
+],
+"CEN-11": [
+"完了ダイアログ（引き当て）",
+"/manage/center/assign/complete"
+],
+"CEN-12": [
+"キッティング～検品（一覧）",
+"/manage/center/kitting"
+],
+"CEN-12-D1": [
+"キッティング用バーコード検索",
+"/manage/dialog/barcode（送信先 /manage/center/kitting/search_barcode）"
+],
+"CEN-12-D2": [
+"SIM紐づけ変更通知",
+"（select_list 内で描画: dialog/sim_serial_changed）"
+],
+"CEN-12-D3": [
+"未引き当て通知",
+"/manage/center/kitting/dialog_assign/{id}"
+],
+"CEN-12-D4": [
+"初期DL未完了通知",
+"/manage/center/kitting/dialog_dl/{id}"
+],
+"CEN-12-D5": [
+"他端末初期DL未完了通知",
+"（select_list 内で描画: center/kitting/dialog/other_dl）"
+],
+"CEN-12-D6": [
+"他端末初期DL未完了通知（初期不良返品可）",
+"（search_barcode 内で描画: other_return）"
+],
+"CEN-12-D7": [
+"スキャン状況",
+"（search_barcode / select_list 内で描画: scan）"
+],
+"CEN-12-D8": [
+"キャンセル確認",
+"/manage/center/kitting/cancel/{id}"
+],
+"CEN-13": [
+"送り状データCSV出力",
+"/manage/center/kitting/download_save"
+],
+"CEN-14": [
+"リスト選択判定",
+"/manage/center/kitting/select_list/{id}"
+],
+"CEN-15": [
+"バーコード検索判定",
+"/manage/center/kitting/search_barcode"
+],
+"CEN-16": [
+"キャンセル再入庫登録",
+"/manage/center/kitting/cancel_save"
+],
+"CEN-17": [
+"キッティング～検品（詳細）",
+"/manage/center/kitting/view/{id}"
+],
+"CEN-17-D1": [
+"初期不良返品端末選択（キッティング）",
+"/manage/center/kitting/return/{id}"
+],
+"CEN-17-D2": [
+"初期不良返品バーコード照合",
+"/manage/dialog/barcode（送信先 /manage/center/kitting/return_save）"
+],
+"CEN-17-D3": [
+"同梱機材初期不良返品",
+"/manage/center/kitting/other_serial/{id}"
+],
+"CEN-17-D4": [
+"初期不良返品後の選択",
+"/manage/center/kitting/next/{id}"
+],
+"CEN-18": [
+"初期不良返品登録（キッティング）",
+"/manage/center/kitting/return_save"
+],
+"CEN-19": [
+"遷移用処理（complete / later）",
+"/manage/center/kitting/complete/{id}, /manage/center/kitting/later"
+],
+"CEN-20": [
+"キッティング～検品完了",
+"/manage/center/kitting/kitting_save"
+],
+"CEN-21": [
+"宛先シールPDF生成（キッティング）",
+"/manage/center/kitting/download_shipment_label_save/{id}"
+],
+"CEN-22": [
+"URX-03 QRシールPDF生成",
+"/manage/center/kitting/download_qrcode_label_save/{id}"
+],
+"CEN-23": [
+"URX-05 QRシールPDF生成",
+"/manage/center/kitting/download_urx_qrcode_label_save/{id}"
+],
+"CEN-24": [
+"Wi-Fi SSIDシールPDF生成",
+"/manage/center/kitting/download_wifi_label_save/{id}"
+],
+"CEN-25": [
+"出荷",
+"/manage/center/shipment"
+],
+"CEN-26": [
+"出庫処理（組織間移動）",
+"/manage/center/shipment/download_save"
+],
+"CEN-27": [
+"依頼検索（発送状況確認）",
+"/manage/center/shipping/request"
+],
+"CEN-28": [
+"発送状況詳細",
+"/manage/center/shipping/request/view/{id}"
+],
+"CEN-28-D1": [
+"緊急新設切替（センターでは未使用）",
+"/manage/center/shipping/request/emergency/{id}"
+],
+"CEN-28-D2": [
+"通常新設切替（センターでは未使用）",
+"/manage/center/shipping/request/normal/{id}"
+],
+"CEN-29": [
+"緊急新設切替登録（未使用）",
+"/manage/center/shipping/request/emergency_save"
+],
+"CEN-30": [
+"通常新設切替登録（未使用）",
+"/manage/center/shipping/request/normal_save"
+],
+"DEV-01": [
+"新規端末一括登録",
+"/manage/center/device/register"
+],
+"DEV-02": [
+"新規端末CSVアップロード",
+"/manage/center/device/register/upload_csv"
+],
+"DEV-03": [
+"管轄センター変更CSVアップロード",
+"/manage/center/device/register/upload_device_move_csv"
+],
+"DEV-04": [
+"直前アップロードCSVダウンロード",
+"/manage/center/device/register/download_device_move_csv"
+],
+"DEV-05": [
+"最新のマスタCSV DL（管轄センター変更）",
+"/manage/center/device/register/download_all_device_move_csv"
+],
+"DEV-06": [
+"リワーク再入庫（UNISⅡ登録）CSV出力",
+"/manage/center/device/register/download_rework_csv_save"
+],
+"DEV-07": [
+"端末回収状況登録",
+"/manage/center/device/return"
+],
+"DEV-07-D1": [
+"バーコード読み取り（共通ダイアログ）",
+"/manage/dialog/barcode"
+],
+"DEV-08": [
+"バーコード読取結果転送",
+"/manage/center/device/return/search_barcode"
+],
+"DEV-09": [
+"回収済み端末チェック",
+"/manage/center/device/return/view/{serial_cd}"
+],
+"DEV-09-D1": [
+"リワーク再入庫確認",
+"/manage/center/device/return/rework_dialog/{serial_cd}"
+],
+"DEV-09-D2": [
+"廃棄確認（リサイクル廃棄／初期不良廃棄）",
+"/manage/center/device/return/discard_dialog/{serial_cd}"
+],
+"DEV-10": [
+"リワーク再入庫実行",
+"/manage/center/device/return/rework/{serial_cd}"
+],
+"DEV-11": [
+"廃棄実行",
+"/manage/center/device/return/discard/{serial_cd}"
+],
+"DEV-12": [
+"回収処理完了",
+"/manage/center/device/return/return_complete"
+],
+"DEV-13": [
+"紛失報告リスト",
+"/manage/center/device/lost"
+],
+"DEV-14": [
+"回収不可情報詳細",
+"/manage/center/device/lost/view/{shipping_request_id}"
+],
+"DEV-14-D1": [
+"差し戻し（再回収依頼）",
+"/manage/center/device/lost/send_back_dialog/{shipping_request_id}"
+],
+"DEV-14-D2": [
+"紛失廃棄確認",
+"/manage/center/device/lost/discard_dialog/{serial_id}"
+],
+"DEV-15": [
+"差し戻し実行",
+"/manage/center/device/lost/send_back/{shipping_request_id}"
+],
+"DEV-16": [
+"紛失廃棄実行",
+"/manage/center/device/lost/discard/{serial_id}"
+],
+"DEV-17": [
+"紛失処理完了",
+"/manage/center/device/lost/lost_complete"
+],
+"DEV-18": [
+"端末管理リスト",
+"/manage/center/device/list"
+],
+"DEV-18-D1": [
+"初期不良登録確認",
+"/manage/center/device/list/failure/{id}"
+],
+"DEV-18-D2": [
+"修理依頼確認",
+"/manage/center/device/list/repair/{id}"
+],
+"DEV-19": [
+"初期不良登録実行",
+"/manage/center/device/list/failure_save"
+],
+"DEV-20": [
+"修理依頼実行",
+"/manage/center/device/list/repair_save"
+],
+"DEV-21": [
+"端末管理リストCSVダウンロード",
+"/manage/center/device/list/download_csv"
+],
+"DEV-22": [
+"日時更新（Ajax）",
+"/manage/ajax/uidm/updated/{serial_id}.json"
+],
+"DEV-13 の初期検索条件（返却先センター）": [
+"自ユーザーの jurisdiction_branch_cd",
+"（アクセス不可）"
+],
+"DEV-09 の返却先センターチェック・DEV-10 の serials.center_cd": [
+"自ユーザーの jurisdiction_branch_cd と比較・設定",
+"（アクセス不可）"
+],
+"SIM-01": [
+"SIM管理（入口）",
+"/manage/center/sim"
+],
+"SIM-02": [
+"SIM情報登録",
+"/manage/center/sim/register"
+],
+"SIM-02-D1": [
+"アップロードエラーメッセージモーダル",
+"（画面内）"
+],
+"SIM-03": [
+"UQ以外SIM登録",
+"/manage/center/sim/upload_general_csv"
+],
+"SIM-04": [
+"UQ SIM登録",
+"/manage/center/sim/upload_uq_file"
+],
+"SIM-05": [
+"アクティベーションCSV生成",
+"/manage/center/sim/download_activation"
+],
+"SIM-06": [
+"UQ 加入者コード登録",
+"/manage/center/sim/upload_subscriber"
+],
+"SIM-07": [
+"UQ 課金開始日登録",
+"/manage/center/sim/upload_billing"
+],
+"SIM-08": [
+"SIM情報変更",
+"/manage/center/sim/modify"
+],
+"SIM-09": [
+"U-NEXT 4G→5G SIM変更登録",
+"/manage/center/sim/upload_unext_change_csv"
+],
+"SIM-10": [
+"解約登録",
+"/manage/center/sim/upload_cancellation"
+],
+"SIM-11": [
+"利用停止ファイル生成（UQのみ）",
+"/manage/center/sim/upload_suspension"
+],
+"SIM-12": [
+"利用再開ファイル生成（UQのみ）",
+"/manage/center/sim/upload_resumption"
+],
+"SIM-13": [
+"SIM解約撤回",
+"/manage/center/sim/upload_revoke"
+],
+"SIM-14": [
+"SIMと端末の紐づけ登録変更",
+"/manage/center/sim/upload_bind"
+],
+"SIM-14-D1": [
+"紐づけ変更確認モーダル",
+"（画面内）"
+],
+"SIM-15": [
+"一時ファイルダウンロード",
+"/manage/center/sim/download_temp_file/{suspension|resumption|cancellation}?filename={filename}"
+],
+"SIM-16": [
+"SIM登録更新",
+"/manage/center/sim/update"
+],
+"SIM-17": [
+"SIM管理リスト",
+"/manage/center/sim/list"
+],
+"SIM-18": [
+"SIM管理リストCSVダウンロード",
+"/manage/center/sim/download_csv"
+],
+"SIM-19": [
+"SIM詳細",
+"/manage/center/sim/detail/{id}"
+],
+"SIM-20": [
+"シリアル更新",
+"/manage/center/sim/update_serial"
+],
+"SIM-21": [
+"既存紐づけ確認（Ajax）",
+"/manage/center/sim/check_existing_bindings"
+],
+"SIM-14 execute 後の戻り先": [
+"/modify",
+"/update"
+],
+"BRA-01": [
+"依頼リスト",
+"/manage/branch/request"
+],
+"CPK-01": [
+"依頼リスト",
+"/manage/cp/request"
+],
+"HSU-01": [
+"依頼リスト",
+"/manage/hoshu/request"
+],
+"EXT-01": [
+"依頼リスト",
+"/manage/external/request"
+],
+"XX-01": [
+"依頼リスト",
+"/manage/`<g>`/request"
+],
+"BRA-02": [
+"引き当て",
+"/manage/branch/assign/serial/{id}"
+],
+"CPK-02": [
+"引き当て",
+"/manage/cp/assign/serial/{id}"
+],
+"HSU-02": [
+"引き当て",
+"/manage/hoshu/assign/serial/{id}"
+],
+"EXT-02": [
+"引き当て",
+"/manage/external/assign/serial/{id}"
+],
+"XX-02": [
+"引き当て",
+"/manage/`<g>`/assign/serial/{id}"
+],
+"BRA-02-D1": [
+"バーコード読取（シリアル登録）",
+"/manage/dialog/barcode → /manage/branch/assign/serial_save"
+],
+"CPK-02-D1": [
+"バーコード読取（シリアル登録）",
+"/manage/dialog/barcode → /manage/cp/assign/serial_save"
+],
+"HSU-02-D1": [
+"バーコード読取（シリアル登録）",
+"/manage/dialog/barcode → /manage/hoshu/assign/serial_save"
+],
+"EXT-02-D1": [
+"バーコード読取（シリアル登録）",
+"/manage/dialog/barcode → /manage/external/assign/serial_save"
+],
+"XX-02-D1": [
+"バーコード読取（シリアル登録）",
+"/manage/dialog/barcode → /manage/`<g>`/assign/serial_save"
+],
+"BRA-02-D2": [
+"同梱機材引き当て（シリアル管理対象外）",
+"/manage/branch/assign/other_serial/{id} → other_serial_save"
+],
+"CPK-02-D2": [
+"同梱機材引き当て（シリアル管理対象外）",
+"/manage/cp/assign/other_serial/{id} → other_serial_save"
+],
+"HSU-02-D2": [
+"同梱機材引き当て（シリアル管理対象外）",
+"/manage/hoshu/assign/other_serial/{id} → other_serial_save"
+],
+"EXT-02-D2": [
+"同梱機材引き当て（シリアル管理対象外）",
+"/manage/external/assign/other_serial/{id} → other_serial_save"
+],
+"XX-02-D2": [
+"同梱機材引き当て（シリアル管理対象外）",
+"/manage/`<g>`/assign/other_serial/{id} → other_serial_save"
+],
+"BRA-02-D3": [
+"初期不良返品端末選択",
+"/manage/branch/assign/return/{id} → return_save"
+],
+"CPK-02-D3": [
+"初期不良返品端末選択",
+"/manage/cp/assign/return/{id} → return_save"
+],
+"HSU-02-D3": [
+"初期不良返品端末選択",
+"/manage/hoshu/assign/return/{id} → return_save"
+],
+"EXT-02-D3": [
+"初期不良返品端末選択",
+"/manage/external/assign/return/{id} → return_save"
+],
+"XX-02-D3": [
+"初期不良返品端末選択",
+"/manage/`<g>`/assign/return/{id} → return_save"
+],
+"BRA-02-A1": [
+"仮引き当て解除",
+"/manage/branch/assign/reset_save/{id}"
+],
+"CPK-02-A1": [
+"仮引き当て解除",
+"/manage/cp/assign/reset_save/{id}"
+],
+"HSU-02-A1": [
+"仮引き当て解除",
+"/manage/hoshu/assign/reset_save/{id}"
+],
+"EXT-02-A1": [
+"仮引き当て解除",
+"/manage/external/assign/reset_save/{id}"
+],
+"XX-02-A1": [
+"仮引き当て解除",
+"/manage/`<g>`/assign/reset_save/{id}"
+],
+"BRA-02-P1": [
+"引き当て確定",
+"/manage/branch/assign/assign_save"
+],
+"CPK-02-P1": [
+"引き当て確定",
+"/manage/cp/assign/assign_save"
+],
+"HSU-02-P1": [
+"引き当て確定",
+"/manage/hoshu/assign/assign_save"
+],
+"EXT-02-P1": [
+"引き当て確定",
+"/manage/external/assign/assign_save"
+],
+"XX-02-P1": [
+"引き当て確定",
+"/manage/`<g>`/assign/assign_save"
+],
+"BRA-03": [
+"キッティング～検品（一覧）",
+"/manage/branch/kitting"
+],
+"CPK-03": [
+"キッティング～検品（一覧）",
+"/manage/cp/kitting"
+],
+"HSU-03": [
+"キッティング～検品（一覧）",
+"/manage/hoshu/kitting"
+],
+"EXT-03": [
+"キッティング～検品（一覧）",
+"/manage/external/kitting"
+],
+"XX-03": [
+"キッティング～検品（一覧）",
+"/manage/`<g>`/kitting"
+],
+"BRA-03-D1": [
+"バーコード読取（キッティング）",
+"/manage/dialog/barcode → /manage/branch/kitting/search_barcode"
+],
+"CPK-03-D1": [
+"バーコード読取（キッティング）",
+"/manage/dialog/barcode → /manage/cp/kitting/search_barcode"
+],
+"HSU-03-D1": [
+"バーコード読取（キッティング）",
+"/manage/dialog/barcode → /manage/hoshu/kitting/search_barcode"
+],
+"EXT-03-D1": [
+"バーコード読取（キッティング）",
+"/manage/dialog/barcode → /manage/external/kitting/search_barcode"
+],
+"XX-03-D1": [
+"バーコード読取（キッティング）",
+"/manage/dialog/barcode → /manage/`<g>`/kitting/search_barcode"
+],
+"BRA-03-D2": [
+"スキャン状況",
+"（search_barcode / select_list の描画）"
+],
+"CPK-03-D2": [
+"スキャン状況",
+"（search_barcode / select_list の描画）"
+],
+"HSU-03-D2": [
+"スキャン状況",
+"（search_barcode / select_list の描画）"
+],
+"EXT-03-D2": [
+"スキャン状況",
+"（search_barcode / select_list の描画）"
+],
+"XX-03-D2": [
+"スキャン状況",
+"（search_barcode / select_list の描画）"
+],
+"BRA-03-D3": [
+"未引き当て",
+"/manage/branch/kitting/dialog_assign/{id}"
+],
+"CPK-03-D3": [
+"未引き当て",
+"/manage/cp/kitting/dialog_assign/{id}"
+],
+"HSU-03-D3": [
+"未引き当て",
+"/manage/hoshu/kitting/dialog_assign/{id}"
+],
+"EXT-03-D3": [
+"未引き当て",
+"/manage/external/kitting/dialog_assign/{id}"
+],
+"XX-03-D3": [
+"未引き当て",
+"/manage/`<g>`/kitting/dialog_assign/{id}"
+],
+"BRA-03-D4": [
+"未DL / 他端末未DL",
+"/manage/branch/kitting/dialog_dl/{id}、（select_list 描画 other_dl / other_return）"
+],
+"CPK-03-D4": [
+"未DL / 他端末未DL",
+"/manage/cp/kitting/dialog_dl/{id}、（select_list 描画 other_dl / other_return）"
+],
+"HSU-03-D4": [
+"未DL / 他端末未DL",
+"/manage/hoshu/kitting/dialog_dl/{id}、（select_list 描画 other_dl / other_return）"
+],
+"EXT-03-D4": [
+"未DL / 他端末未DL",
+"/manage/external/kitting/dialog_dl/{id}、（select_list 描画 other_dl / other_return）"
+],
+"XX-03-D4": [
+"未DL / 他端末未DL",
+"/manage/`<g>`/kitting/dialog_dl/{id}、（select_list 描画 other_dl / other_return）"
+],
+"BRA-03-D5": [
+"キャンセル（返却案内）",
+"/manage/branch/kitting/cancel/{id} → cancel_save"
+],
+"CPK-03-D5": [
+"キャンセル（返却案内）",
+"/manage/cp/kitting/cancel/{id} → cancel_save"
+],
+"HSU-03-D5": [
+"キャンセル（返却案内）",
+"/manage/hoshu/kitting/cancel/{id} → cancel_save"
+],
+"EXT-03-D5": [
+"キャンセル（返却案内）",
+"/manage/external/kitting/cancel/{id} → cancel_save"
+],
+"XX-03-D5": [
+"キャンセル（返却案内）",
+"/manage/`<g>`/kitting/cancel/{id} → cancel_save"
+],
+"BRA-03-D6": [
+"初期不良返品端末選択（キッティング）",
+"/manage/branch/kitting/return/{id} → return_save / other_serial"
+],
+"CPK-03-D6": [
+"初期不良返品端末選択（キッティング）",
+"/manage/cp/kitting/return/{id} → return_save / other_serial"
+],
+"HSU-03-D6": [
+"初期不良返品端末選択（キッティング）",
+"/manage/hoshu/kitting/return/{id} → return_save / other_serial"
+],
+"EXT-03-D6": [
+"初期不良返品端末選択（キッティング）",
+"/manage/external/kitting/return/{id} → return_save / other_serial"
+],
+"XX-03-D6": [
+"初期不良返品端末選択（キッティング）",
+"/manage/`<g>`/kitting/return/{id} → return_save / other_serial"
+],
+"BRA-03-D7": [
+"初期不良返品後アクション",
+"/manage/branch/kitting/next/{id}、later、complete/{id}"
+],
+"CPK-03-D7": [
+"初期不良返品後アクション",
+"/manage/cp/kitting/next/{id}、later、complete/{id}"
+],
+"HSU-03-D7": [
+"初期不良返品後アクション",
+"/manage/hoshu/kitting/next/{id}、later、complete/{id}"
+],
+"EXT-03-D7": [
+"初期不良返品後アクション",
+"/manage/external/kitting/next/{id}、later、complete/{id}"
+],
+"XX-03-D7": [
+"初期不良返品後アクション",
+"/manage/`<g>`/kitting/next/{id}、later、complete/{id}"
+],
+"BRA-04": [
+"キッティング～検品（詳細）",
+"/manage/branch/kitting/view/{id}"
+],
+"CPK-04": [
+"キッティング～検品（詳細）",
+"/manage/cp/kitting/view/{id}"
+],
+"HSU-04": [
+"キッティング～検品（詳細）",
+"/manage/hoshu/kitting/view/{id}"
+],
+"EXT-04": [
+"キッティング～検品（詳細）",
+"/manage/external/kitting/view/{id}"
+],
+"XX-04": [
+"キッティング～検品（詳細）",
+"/manage/`<g>`/kitting/view/{id}"
+],
+"BRA-04-F1": [
+"宛先シール / Wi-Fi SSIDシール印刷",
+"/manage/branch/kitting/download_shipment_label_save/{id}、download_wifi_label_save/{id}"
+],
+"CPK-04-F1": [
+"宛先シール / Wi-Fi SSIDシール印刷",
+"/manage/cp/kitting/download_shipment_label_save/{id}、download_wifi_label_save/{id}"
+],
+"HSU-04-F1": [
+"宛先シール / Wi-Fi SSIDシール印刷",
+"/manage/hoshu/kitting/download_shipment_label_save/{id}、download_wifi_label_save/{id}"
+],
+"EXT-04-F1": [
+"宛先シール / Wi-Fi SSIDシール印刷",
+"/manage/external/kitting/download_shipment_label_save/{id}、download_wifi_label_save/{id}"
+],
+"XX-04-F1": [
+"宛先シール / Wi-Fi SSIDシール印刷",
+"/manage/`<g>`/kitting/download_shipment_label_save/{id}、download_wifi_label_save/{id}"
+],
+"BRA-04-P1": [
+"キッティング完了",
+"/manage/branch/kitting/kitting_save"
+],
+"CPK-04-P1": [
+"キッティング完了",
+"/manage/cp/kitting/kitting_save"
+],
+"HSU-04-P1": [
+"キッティング完了",
+"/manage/hoshu/kitting/kitting_save"
+],
+"EXT-04-P1": [
+"キッティング完了",
+"/manage/external/kitting/kitting_save"
+],
+"XX-04-P1": [
+"キッティング完了",
+"/manage/`<g>`/kitting/kitting_save"
+],
+"BRA-05": [
+"支店入庫処理（バーコード読取）",
+"/manage/branch/device/store"
+],
+"CPK-05": [
+"支店入庫処理（バーコード読取）",
+"/manage/cp/device/store"
+],
+"HSU-05": [
+"支店入庫処理（バーコード読取）",
+"/manage/hoshu/device/store"
+],
+"EXT-05": [
+"支店入庫処理（バーコード読取）",
+"/manage/external/device/store"
+],
+"XX-05": [
+"支店入庫処理（バーコード読取）",
+"/manage/`<g>`/device/store"
+],
+"BRA-05-D1": [
+"バーコード読取（入庫）・スキャン状況",
+"/manage/dialog/barcode → /manage/branch/device/store/search_barcode"
+],
+"CPK-05-D1": [
+"バーコード読取（入庫）・スキャン状況",
+"/manage/dialog/barcode → /manage/cp/device/store/search_barcode"
+],
+"HSU-05-D1": [
+"バーコード読取（入庫）・スキャン状況",
+"/manage/dialog/barcode → /manage/hoshu/device/store/search_barcode"
+],
+"EXT-05-D1": [
+"バーコード読取（入庫）・スキャン状況",
+"/manage/dialog/barcode → /manage/external/device/store/search_barcode"
+],
+"XX-05-D1": [
+"バーコード読取（入庫）・スキャン状況",
+"/manage/dialog/barcode → /manage/`<g>`/device/store/search_barcode"
+],
+"BRA-05-D2": [
+"キャンセル返却案内（入庫）",
+"（search_barcode / store_save で描画）"
+],
+"CPK-05-D2": [
+"キャンセル返却案内（入庫）",
+"（search_barcode / store_save で描画）"
+],
+"HSU-05-D2": [
+"キャンセル返却案内（入庫）",
+"（search_barcode / store_save で描画）"
+],
+"EXT-05-D2": [
+"キャンセル返却案内（入庫）",
+"（search_barcode / store_save で描画）"
+],
+"XX-05-D2": [
+"キャンセル返却案内（入庫）",
+"（search_barcode / store_save で描画）"
+],
+"BRA-06": [
+"入庫処理詳細（通常新設）",
+"/manage/branch/device/store/view/{shipping_request_id}"
+],
+"CPK-06": [
+"入庫処理詳細（通常新設）",
+"/manage/cp/device/store/view/{shipping_request_id}"
+],
+"HSU-06": [
+"入庫処理詳細（通常新設）",
+"/manage/hoshu/device/store/view/{shipping_request_id}"
+],
+"EXT-06": [
+"入庫処理詳細（通常新設）",
+"/manage/external/device/store/view/{shipping_request_id}"
+],
+"XX-06": [
+"入庫処理詳細（通常新設）",
+"/manage/`<g>`/device/store/view/{shipping_request_id}"
+],
+"BRA-07": [
+"入庫処理詳細（支店在庫）",
+"/manage/branch/device/store/view_stock/{serial_id}"
+],
+"CPK-07": [
+"入庫処理詳細（支店在庫）",
+"/manage/cp/device/store/view_stock/{serial_id}"
+],
+"HSU-07": [
+"入庫処理詳細（支店在庫）",
+"/manage/hoshu/device/store/view_stock/{serial_id}"
+],
+"EXT-07": [
+"入庫処理詳細（支店在庫）",
+"/manage/external/device/store/view_stock/{serial_id}"
+],
+"XX-07": [
+"入庫処理詳細（支店在庫）",
+"/manage/`<g>`/device/store/view_stock/{serial_id}"
+],
+"BRA-07-D1": [
+"初期不良返品（入庫）",
+"/manage/branch/device/store/return/{serial_id} → return_save"
+],
+"CPK-07-D1": [
+"初期不良返品（入庫）",
+"/manage/cp/device/store/return/{serial_id} → return_save"
+],
+"HSU-07-D1": [
+"初期不良返品（入庫）",
+"/manage/hoshu/device/store/return/{serial_id} → return_save"
+],
+"EXT-07-D1": [
+"初期不良返品（入庫）",
+"/manage/external/device/store/return/{serial_id} → return_save"
+],
+"XX-07-D1": [
+"初期不良返品（入庫）",
+"/manage/`<g>`/device/store/return/{serial_id} → return_save"
+],
+"BRA-08": [
+"端末回収状況登録（回収依頼一覧）",
+"/manage/branch/device/return"
+],
+"CPK-08": [
+"端末回収状況登録（回収依頼一覧）",
+"/manage/cp/device/return"
+],
+"HSU-08": [
+"端末回収状況登録（回収依頼一覧）",
+"/manage/hoshu/device/return"
+],
+"XX-08": [
+"端末回収状況登録（回収依頼一覧）",
+"/manage/`<g>`/device/return"
+],
+"BRA-08-D1": [
+"回収方法選択",
+"/manage/branch/device/return/select/{id}"
+],
+"CPK-08-D1": [
+"回収方法選択",
+"/manage/cp/device/return/select/{id}"
+],
+"HSU-08-D1": [
+"回収方法選択",
+"/manage/hoshu/device/return/select/{id}"
+],
+"XX-08-D1": [
+"回収方法選択",
+"/manage/`<g>`/device/return/select/{id}"
+],
+"BRA-08-D2": [
+"差し戻しコメント",
+"/manage/branch/device/return/send_back/{id}/{serial_cd}"
+],
+"CPK-08-D2": [
+"差し戻しコメント",
+"/manage/cp/device/return/send_back/{id}/{serial_cd}"
+],
+"HSU-08-D2": [
+"差し戻しコメント",
+"/manage/hoshu/device/return/send_back/{id}/{serial_cd}"
+],
+"XX-08-D2": [
+"差し戻しコメント",
+"/manage/`<g>`/device/return/send_back/{id}/{serial_cd}"
+],
+"BRA-08-D3": [
+"キャンセル返却案内（回収）",
+"/manage/branch/device/return/cancel/{id}"
+],
+"CPK-08-D3": [
+"キャンセル返却案内（回収）",
+"/manage/cp/device/return/cancel/{id}"
+],
+"HSU-08-D3": [
+"キャンセル返却案内（回収）",
+"/manage/hoshu/device/return/cancel/{id}"
+],
+"XX-08-D3": [
+"キャンセル返却案内（回収）",
+"/manage/`<g>`/device/return/cancel/{id}"
+],
+"BRA-09": [
+"回収報告",
+"/manage/branch/device/return/report/{id}（保存: report_save）"
+],
+"CPK-09": [
+"回収報告",
+"/manage/cp/device/return/report/{id}（保存: report_save）"
+],
+"HSU-09": [
+"回収報告",
+"/manage/hoshu/device/return/report/{id}（保存: report_save）"
+],
+"XX-09": [
+"回収報告",
+"/manage/`<g>`/device/return/report/{id}（保存: report_save）"
+],
+"BRA-10": [
+"回収不可報告",
+"/manage/branch/device/return/enable/{id}（保存: enable_save）"
+],
+"CPK-10": [
+"回収不可報告",
+"/manage/cp/device/return/enable/{id}（保存: enable_save）"
+],
+"HSU-10": [
+"回収不可報告",
+"/manage/hoshu/device/return/enable/{id}（保存: enable_save）"
+],
+"XX-10": [
+"回収不可報告",
+"/manage/`<g>`/device/return/enable/{id}（保存: enable_save）"
+],
+"BRA-11": [
+"端末管理リスト",
+"/manage/branch/device/list"
+],
+"CPK-11": [
+"端末管理リスト",
+"/manage/cp/device/list"
+],
+"HSU-11": [
+"端末管理リスト",
+"/manage/hoshu/device/list"
+],
+"EXT-11": [
+"端末管理リスト",
+"/manage/external/device/list"
+],
+"XX-11": [
+"端末管理リスト",
+"/manage/`<g>`/device/list"
+],
+"BRA-11-D1": [
+"初期不良登録",
+"/manage/branch/device/list/failure/{id} → failure_save"
+],
+"CPK-11-D1": [
+"初期不良登録",
+"/manage/cp/device/list/failure/{id} → failure_save"
+],
+"HSU-11-D1": [
+"初期不良登録",
+"/manage/hoshu/device/list/failure/{id} → failure_save"
+],
+"EXT-11-D1": [
+"初期不良登録",
+"/manage/external/device/list/failure/{id} → failure_save"
+],
+"XX-11-D1": [
+"初期不良登録",
+"/manage/`<g>`/device/list/failure/{id} → failure_save"
+],
+"BRA-11-D2": [
+"修理依頼",
+"/manage/branch/device/list/repair/{id} → repair_save"
+],
+"CPK-11-D2": [
+"修理依頼",
+"/manage/cp/device/list/repair/{id} → repair_save"
+],
+"HSU-11-D2": [
+"修理依頼",
+"/manage/hoshu/device/list/repair/{id} → repair_save"
+],
+"EXT-11-D2": [
+"修理依頼",
+"/manage/external/device/list/repair/{id} → repair_save"
+],
+"XX-11-D2": [
+"修理依頼",
+"/manage/`<g>`/device/list/repair/{id} → repair_save"
+],
+"BRA-11-F1": [
+"CSVダウンロード",
+"/manage/branch/device/list/download_csv"
+],
+"CPK-11-F1": [
+"CSVダウンロード",
+"/manage/cp/device/list/download_csv"
+],
+"HSU-11-F1": [
+"CSVダウンロード",
+"/manage/hoshu/device/list/download_csv"
+],
+"EXT-11-F1": [
+"CSVダウンロード",
+"/manage/external/device/list/download_csv"
+],
+"XX-11-F1": [
+"CSVダウンロード",
+"/manage/`<g>`/device/list/download_csv"
+],
+"BRA-12": [
+"依頼検索（発送状況確認）",
+"/manage/branch/shipping/request"
+],
+"HSU-12": [
+"依頼検索（発送状況確認）",
+"/manage/hoshu/shipping/request"
+],
+"EXT-12": [
+"依頼検索（発送状況確認）",
+"/manage/external/shipping/request"
+],
+"XX-12": [
+"依頼検索（発送状況確認）",
+"/manage/`<g>`/shipping/request"
+],
+"BRA-13": [
+"発送状況詳細",
+"/manage/branch/shipping/request/view/{id}"
+],
+"HSU-13": [
+"発送状況詳細",
+"/manage/hoshu/shipping/request/view/{id}"
+],
+"EXT-13": [
+"発送状況詳細",
+"/manage/external/shipping/request/view/{id}"
+],
+"XX-13": [
+"発送状況詳細",
+"/manage/`<g>`/shipping/request/view/{id}"
+],
+"BRA-13-D1": [
+"緊急新設／通常新設 切替",
+"/manage/branch/shipping/request/emergency/{id}・normal/{id} → *_save"
+],
+"XX-13-D1": [
+"緊急新設／通常新設 切替",
+"/manage/`<g>`/shipping/request/emergency/{id}・normal/{id} → *_save"
+],
+"MIR-01": [
+"CP検証機リスト",
+"/manage/cp/mirroring/device"
+],
+"MIR-02": [
+"契約の検索",
+"/manage/cp/mirroring/contract"
+],
+"MIR-03": [
+"変更内容の確認",
+"/manage/cp/mirroring/conf"
+],
+"MIR-04": [
+"変更適用（変更完了）",
+"/manage/cp/mirroring/comp"
+],
+"JIM-01": [
+"直送案件 検索",
+"/manage/jimu/shipment/list"
+],
+"JIM-01-D1": [
+"ファイルアップロード",
+"/manage/dialog/file_upload"
+],
+"JIM-02": [
+"一括更新CSV取込",
+"/manage/jimu/shipment/list/update_by_upload_csv"
+],
+"JIM-03": [
+"送り状CSV取込",
+"/manage/jimu/shipment/list/upload_shipping_csv"
+],
+"JIM-04": [
+"ファイル出力（全項目CSV / NP審査CSV / UNIS確定Excel）",
+"/manage/jimu/shipment/list/download_file"
+],
+"JIM-05": [
+"内容詳細",
+"/manage/jimu/shipment/detail/view/{id}"
+],
+"JIM-06": [
+"作業情報編集",
+"/manage/jimu/shipment/detail/update/{id}"
+],
+"JIM-07": [
+"作業情報更新",
+"/manage/jimu/shipment/detail/update_work_info"
+],
+"JIM-08": [
+"出力履歴 履歴一覧",
+"/manage/jimu/export/list"
+],
+"JIM-09": [
+"再ダウンロード",
+"/manage/jimu/export/list/download_csv"
+],
+"MST-01": [
+"U∞デバイス種別登録",
+"/manage/master/device"
+],
+"MST-01-D1": [
+"ヘルプ",
+"/manage/master/device/help_dialog/{id}"
+],
+"MST-02": [
+"セットマスタCSV取込",
+"/manage/master/device/upload_set_csv"
+],
+"MST-03": [
+"セットマスタCSV出力",
+"/manage/master/device/download_all_set_csv（最新） / download_set_csv（直前）"
+],
+"MST-04": [
+"型番マスタCSV取込",
+"/manage/master/device/upload_model_number_csv"
+],
+"MST-06": [
+"連携対象NeOS品目マスタCSV取込",
+"/manage/master/device/upload_csv"
+],
+"MST-08": [
+"デバイス種別編集",
+"/manage/master/device/edit/{id}"
+],
+"MST-08-D1": [
+"サムネイル画像アップロード",
+"/manage/master/device/img_dialog/{id} → device_upload_img/{id} → img_complete"
+],
+"MST-08-D2": [
+"上書き確認",
+"/manage/master/device/edit_dialog"
+],
+"MST-08-D3": [
+"削除確認",
+"/manage/master/device/delete_dialog/{id} → content_delete/{id} → delete_complete"
+],
+"MST-09": [
+"デバイス種別登録確認",
+"/manage/master/device/confirm/{id}"
+],
+"MST-10": [
+"デバイス種別登録",
+"/manage/master/device/save/{id}"
+],
+"MST-11": [
+"U∞DSユーザー登録",
+"/manage/master/user"
+],
+"MST-12": [
+"ユーザーマスタCSV取込",
+"/manage/master/user/upload_csv"
+],
+"MST-13": [
+"ユーザーマスタCSV出力",
+"/manage/master/user/download_all_csv（最新） / download_csv（直前）"
+],
+"MST-14": [
+"その他マスター更新",
+"/manage/master/other"
+],
+"MST-15": [
+"その他マスタCSV取込（8種）",
+"/manage/master/other/{upload_csv, branch_replacement_upload_csv, assign_enable_device_upload_csv, cp_device_upload_csv, direct_shipment_category_upload_csv, direct_shipment_item_upload_csv, carrier_upload_csv, provider_upload_csv}"
+],
+"MST-16": [
+"その他マスタCSV出力",
+"/manage/master/other/{download_all_csv, download_csv, branch_replacement_download_all_csv, branch_replacement_download_csv, assign_enable_device_download_all_csv, assign_enable_device_download_csv, cp_device_download_all_csv, cp_device_download_csv, direct_shipment_category_download_all_csv, direct_shipment_category_download_csv, direct_shipment_item_download_all_csv, direct_shipment_item_download_csv, carrier_download_all_csv, provider_download_all_csv}"
+],
+"MST-17": [
+"メンテ",
+"/manage/master/mainte"
+],
+"MST-18": [
+"メンテ各処理",
+"/manage/master/mainte/{caf_search, shitenzaiko_remove_save, shitenzaiko_revival_save, update_signup_date, change_device_status, change_new_item, change_rework_item, change_store_stock, change_request_date}"
+],
+"COM-06": [
+"不正データエラー",
+"（URLなし：Exception_Illegaldata 発生時に表示）"
+],
+"COM-24": [
+"ヘッダーメニュー",
+"（共通部品：各画面に表示）"
+],
+"COM-25": [
+"画面内タブ（ナビ）",
+"（共通部品：各画面に表示）"
+],
+"COM-26": [
+"トースト",
+"（共通部品：各画面に表示）"
+],
+"COM-27": [
+"エラーモーダル",
+"（共通部品：各画面に表示）"
+],
+"COM-30": [
+"検索用複数選択プルダウン",
+"（共通部品：各画面に表示）"
+],
+"COM-31": [
+"管轄検索（センター／管轄）",
+"（共通部品：各画面に表示）"
+],
+"COM-32": [
+"管轄検索（エリア一括）",
+"（共通部品：各画面に表示）"
+],
+"COM-33": [
+"営業支店選択",
+"（共通部品：各画面に表示）"
+],
+"COM-34": [
+"ページャ",
+"（共通部品：各画面に表示）"
+],
+"MST-05": [
+"型番マスタCSV出力",
+"/manage/master/device/download_all_model_number_csv（最新） / download_model_number_csv（直前）"
+],
+"MST-07": [
+"連携対象NeOS品目マスタCSV出力",
+"/manage/master/device/download_all_csv（最新） / download_csv（直前）"
+],
+"CPK-*": [
+"CP 各画面",
+"/manage/cp/…（branch の同じ連番の画面）"
+],
+"HSU-*": [
+"保守委託 各画面",
+"/manage/hoshu/…（branch の同じ連番の画面）"
+],
+"EXT-*": [
+"外部委託 各画面",
+"/manage/external/…（branch の同じ連番の画面）"
+]
+}

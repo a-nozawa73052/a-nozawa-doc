@@ -1,0 +1,5407 @@
+{
+ "source": "03_センター_在庫SIM.md",
+ "groups": [
+  {
+   "id": "center-device",
+   "title": "センター 在庫管理",
+   "lead": "新規端末・管轄センター変更のCSV取込、リワーク再入庫CSV、回収・紛失処理、端末管理リストの検索と初期不良・修理依頼が現行どおり動くことを確認する。jimu で使える範囲の違いも確認する。",
+   "concepts": [
+    {
+     "id": "dev-auth",
+     "title": "DEV 在庫管理：権限とユーザー区分による分岐",
+     "screens": [
+      "DEV-01",
+      "DEV-07",
+      "DEV-13",
+      "DEV-18"
+     ],
+     "purpose": "ロールごとに在庫管理の各画面を開けるか、ヘッダー・ナビのリンク先が正しいかを確認する。jimu は端末管理リストだけがナビに出るが、DEV-01 は URL 直打ちで使える現行の動きを確認する。",
+     "precondition": "各ロールのユーザーでログイン済み（ROLE-GUEST を除く）。",
+     "conditionColumns": [
+      "ロール",
+      "アクセス先"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "admin：ヘッダー「在庫管理」",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "admin",
+        "ヘッダー「在庫管理」"
+       ],
+       "expected": [
+        "新規端末一括登録（DEV-01）",
+        "ナビに4タブ"
+       ],
+       "prep": "",
+       "op": "ヘッダーの「在庫管理」を押す",
+       "detail": "ナビ: 新規端末一括登録／端末回収状況登録／紛失報告リスト／端末管理リスト。紛失報告リストのリンクは ?cecd[]=自ユーザーの管轄CD 付き",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center：ヘッダー「在庫管理」",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "ヘッダー「在庫管理」"
+       ],
+       "expected": [
+        "新規端末一括登録（DEV-01）",
+        "ナビに4タブ"
+       ],
+       "prep": "",
+       "op": "ヘッダーの「在庫管理」を押す",
+       "detail": "紛失報告リストのタブは ?cecd[]=0100080000_01（センター南港）付き",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu：ヘッダー「在庫管理」",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "jimu",
+        "ヘッダー「在庫管理」"
+       ],
+       "expected": [
+        "端末管理リスト（DEV-18）",
+        "ナビは端末管理リストのみ"
+       ],
+       "prep": "",
+       "op": "ヘッダーの「在庫管理」を押す",
+       "detail": "リンク先は /manage/center/device/list",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu：DEV-01 を URL 直打ち",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "jimu",
+        "/manage/center/device/register"
+       ],
+       "expected": [
+        "DEV-01 が表示される",
+        "―"
+       ],
+       "prep": "",
+       "op": "URL を直接入力して開く",
+       "detail": "Center_Device_Register 権限があるため表示できる。ナビには出ない",
+       "known": "03要確認-6",
+       "should": "jimu に新規端末登録を使わせるかを業務で決め、権限とナビを揃える"
+      },
+      {
+       "kind": "異常",
+       "name": "jimu：端末回収状況登録",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "jimu",
+        "/manage/center/device/return"
+       ],
+       "expected": [
+        "403エラー画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "URL を直接入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "jimu：紛失報告リスト",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "jimu",
+        "/manage/center/device/lost"
+       ],
+       "expected": [
+        "403エラー画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "URL を直接入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "branch：在庫管理画面",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "branch",
+        "/manage/center/device/register"
+       ],
+       "expected": [
+        "403エラー画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "URL を直接入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインで DEV-18",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "未ログイン",
+        "/manage/center/device/list"
+       ],
+       "expected": [
+        "―",
+        "/manage/login へリダイレクト"
+       ],
+       "prep": "",
+       "op": "URL を直接入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "ロール",
+       "values": "admin / center / jimu / branch / 未ログイン",
+       "meaning": "mosauth の Center_Device_* 権限の有無"
+      }
+     ]
+    },
+    {
+     "id": "dev-01-rework-search",
+     "title": "DEV-01 新規端末一括登録：リワーク再入庫一覧の検索・ソート・選択",
+     "screens": [
+      "DEV-01"
+     ],
+     "purpose": "リワーク再入庫（UNISⅡ登録）データの検索条件（初回出力のみ・リワーク再入庫日）、ソート、行選択と件数表示を確認する。",
+     "precondition": "ROLE-CEN でログイン。DATA-DEV-RW1（未出力）、DATA-DEV-RW2（出力済み）、DATA-DEV-NEW1（unis2_cd 末尾が1でない）を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "一覧の表示",
+      "件数・その他"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "GETパラメータなし",
+        "DATA-DEV-RW1/RW2"
+       ],
+       "expected": [
+        "未検索表示（nosearch）",
+        "件数表示なし"
+       ],
+       "prep": "",
+       "op": "ナビから DEV-01 を開く",
+       "detail": "説明文「新規端末の登録を行います。CSVファイルをアップロードしてください。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件なしで検索",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ino=OFF、日付なし",
+        "DATA-DEV-RW1/RW2/NEW1"
+       ],
+       "expected": [
+        "RW1・RW2 を表示",
+        "「2件」"
+       ],
+       "prep": "",
+       "op": "何も入れずに検索",
+       "detail": "固定条件 RIGHT(unis2_cd,1)=1。NEW1 は出ない。初期ソートは型番昇順。検索中はオーバーレイ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初回出力のみ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ino=ON",
+        "DATA-DEV-RW1/RW2"
+       ],
+       "expected": [
+        "RW1 のみ表示",
+        "「1件」"
+       ],
+       "prep": "",
+       "op": "「初回出力のみ」をチェックして検索",
+       "detail": "output_rework_at IS NULL の端末だけ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "リワーク再入庫日 From",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rwf=RW2 の rework_at 日",
+        "RW1 が RW2 より前の日付"
+       ],
+       "expected": [
+        "RW2 のみ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "From を指定して検索",
+       "detail": "rework_at >= rwf",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "リワーク再入庫日 To",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rwt=RW1 の rework_at 日",
+        "同上"
+       ],
+       "expected": [
+        "RW1 のみ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "To を指定して検索",
+       "detail": "rework_at < rwt+1日（To 当日分は含む）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "該当なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rwf=未来日",
+        "―"
+       ],
+       "expected": [
+        "該当なし（nodata）",
+        "CSVダウンロードバーなし"
+       ],
+       "prep": "",
+       "op": "未来日で検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート：シリアルNo.",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "sco=asc→desc",
+        "2件以上"
+       ],
+       "expected": [
+        "シリアルNo. の昇順→降順",
+        "―"
+       ],
+       "prep": "",
+       "op": "列見出し「シリアルNo.」を2回押す",
+       "detail": "管轄/型番/状態/端末ステータス/契約ステータスも bro/mno/sso/dso/cso で同様",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行選択で件数が変わる",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件なし",
+        "2件表示"
+       ],
+       "expected": [
+        "選択行が is-active",
+        "「1件CSVをダウンロードする」"
+       ],
+       "prep": "",
+       "op": "1行クリック→もう一度クリック",
+       "detail": "選択前は「2件…」。再クリックで解除され「2件」に戻る",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "ino",
+       "values": "ON / OFF",
+       "meaning": "output_rework_at IS NULL"
+      },
+      {
+       "item": "rwf / rwt",
+       "values": "日付",
+       "meaning": "serials.rework_at の範囲"
+      }
+     ]
+    },
+    {
+     "id": "dev-02-upload",
+     "title": "DEV-02 新規端末CSVアップロード",
+     "screens": [
+      "DEV-01",
+      "DEV-02"
+     ],
+     "purpose": "新規端末CSV（csv_formats div=21）の取込で、登録・削除・SIM紐づけが正しく行われ、ファイル・行のエラーが原文どおり出ることを確認する。エラーが1件でもあれば全件登録しないことも確認する。",
+     "precondition": "ROLE-CEN でログインし DEV-01 を開く。ファイルは SJIS で作成。1行目はヘッダー。",
+     "conditionColumns": [
+      "CSVの内容",
+      "DBの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "新規登録（ICCIDなし）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-DEV-NEW-OK（2行、control_code=0）",
+        "シリアル未登録"
+       ],
+       "expected": [
+        "toast「登録しました」",
+        "serials に2件 INSERT"
+       ],
+       "prep": "",
+       "op": "新規端末の CSV を選んでアップロード",
+       "detail": "device_status_cd=1（新品入庫）、center_cd=0100080000_01（ログインユーザーの管轄CD）、device_branch_cd='0000000001'、device_branch_name='センター'、serial_signup_count=0、service_cd=型番の device_types.service_cd",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "新規登録＋ICCID紐づけ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-DEV-NEW-ICCID（4列目=DATA-DEV-SIM1）",
+        "DATA-DEV-SIM1 あり"
+       ],
+       "expected": [
+        "「登録しました」",
+        "sims.serial_cd 更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "sims: serial_cd=CSVの値、bound_at=現在日時、unbound_at=NULL。型番が sim_sync_devices に無ければ INSERT",
+       "known": "Z-9",
+       "should": "本番の csv_formats div=21 の4列目キーを iccid にし、本番でも紐づけされること（現行の本番キー sim_number では紐づかない可能性）"
+      },
+      {
+       "kind": "正常",
+       "name": "削除（control_code=1）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-DEV-NEW-DEL（DATA-DEV-NEW1 を削除）",
+        "DATA-DEV-NEW1 が新品入庫"
+       ],
+       "expected": [
+        "「登録しました」",
+        "deleted_at 設定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.deleted_at/updated_at=現在日時",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同じシリアルが2行",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "同じ serial_cd を2行（型番違い）",
+        "未登録"
+       ],
+       "expected": [
+        "「登録しました」",
+        "後の行の値で登録"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ファイル内重複はエラーにならず後勝ち",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ファイルなし",
+        "―"
+       ],
+       "expected": [
+        "「ファイルを選択してください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "選ばずにアップロード",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "拡張子が csv でない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "devices.txt",
+        "―"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "20MB超",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "20MBを超えるCSV",
+        "―"
+       ],
+       "expected": [
+        "「20MB以下のファイルを選択してください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "列数違い",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行目が4列",
+        "―"
+       ],
+       "expected": [
+        "「2行目:列数が不正です（指定の列数: 5, 現在の列数: 4）」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "行エラーは「N行目:メッセージ」形式",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "シリアル必須／51文字",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行目 serial_cd 空、3行目 51文字",
+        "―"
+       ],
+       "expected": [
+        "「2行目:端末シリアルCDを入力してください」「3行目:端末シリアルCDは50文字以下で入力してください[値]」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "型番必須／41文字",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行目 model_number 空、3行目 41文字",
+        "―"
+       ],
+       "expected": [
+        "「…端末型番を入力してください」「…端末型番は40文字以下で入力してください[値]」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "型番がマスタに無い",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "model_number=XXX-NONE",
+        "device_types に無い"
+       ],
+       "expected": [
+        "「…端末型番が存在しません[XXX-NONE]」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "管理区分必須／2文字",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "division_cd 空 / 'AB'",
+        "―"
+       ],
+       "expected": [
+        "「管理区分CDを入力してください」「管理区分CDは1文字以下で入力してください[AB]」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK の2行目を空、3行目を AB にする",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCID形式不正",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "iccid=31桁 または記号入り",
+        "―"
+       ],
+       "expected": [
+        "「…{ICCID列名}は30桁以下の半角英数字で入力してください[値]」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "Z-9",
+       "should": "本番でも iccid 列としてチェックされること"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCIDファイル内重複",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行に同じ iccid",
+        "―"
+       ],
+       "expected": [
+        "「…{ICCID列名}[値]がファイル内で重複しています」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCIDがSIM未登録",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "iccid=sims に無い値",
+        "―"
+       ],
+       "expected": [
+        "「ICCID[値]がSIM管理画面で登録されていません。SIM登録を行ってください。」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "Z-9",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "登録済みシリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "serial_cd=DATA-DEV-NEW1",
+        "登録済み"
+       ],
+       "expected": [
+        "「端末シリアルCD[値]はすでに登録されています」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "削除：存在しないシリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "control_code=1、未登録シリアル",
+        "―"
+       ],
+       "expected": [
+        "「端末シリアルCD[値]が存在しません」",
+        "削除しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "削除：新品入庫以外",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "control_code=1、DATA-DEV-RW1",
+        "ステータス26"
+       ],
+       "expected": [
+        "「端末シリアルCD[値]は新品入庫ではないため、削除できません」",
+        "削除しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "削除フラグ=2",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "control_code=2",
+        "―"
+       ],
+       "expected": [
+        "「削除フラグは0、または、1で入力してください[2]」",
+        "登録しない"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "削除フラグが文字列",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "control_code=abc",
+        "シリアル未登録"
+       ],
+       "expected": [
+        "「登録しました」",
+        "登録として INSERT"
+       ],
+       "prep": "CSV-DEV-NEW-OK を基に該当行を変更",
+       "op": "",
+       "detail": "(int) 変換で0扱い",
+       "known": "03要確認-3",
+       "should": "0/1 以外の文字列はエラーにする"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "エラーと正常行の混在",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1行正常、1行型番エラー",
+        "未登録"
+       ],
+       "expected": [
+        "エラー行だけ表示",
+        "正常行も登録しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "1件でもエラーなら全件不登録",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu で登録",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "CSV-DEV-NEW-OK",
+        "未登録"
+       ],
+       "expected": [
+        "「登録しました」",
+        "center_cd=jimu の管轄CD"
+       ],
+       "prep": "",
+       "op": "DEV-01 を URL 直打ちで開きアップロード",
+       "detail": "",
+       "known": "03要確認-6",
+       "should": "登録先センターCDとして正しい値が入ること（jimu に使わせるか要判断）"
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "control_code",
+       "values": "0 / 1 / その他",
+       "meaning": "0=登録、1=削除"
+      },
+      {
+       "item": "4列目",
+       "values": "iccid",
+       "meaning": "任意。sims に存在すれば紐づけ"
+      }
+     ]
+    },
+    {
+     "id": "dev-03-move",
+     "title": "DEV-03〜05 管轄センター変更CSV（取込・直前ファイル・マスタCSV）",
+     "screens": [
+      "DEV-01",
+      "DEV-03",
+      "DEV-04",
+      "DEV-05"
+     ],
+     "purpose": "管轄センター変更CSV（div=25）の取込で serials.center_cd が変わり、出荷CSVが自動DLされること、エラーが原文どおり出ることを確認する。直前ファイルとマスタCSVの出力も確認する。",
+     "precondition": "ROLE-CEN でログインし DEV-01 を開く。DATA-DEV-NEW1（ステータス1）、DATA-DEV-RW1（26）、DATA-DEV-RET20（20）を用意。",
+     "conditionColumns": [
+      "操作・CSVの内容",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・出力"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "マスタCSVをDL",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "「最新のマスタCSVをDL」",
+        "NEW1/RW1/RET20/ダミー"
+       ],
+       "expected": [
+        "center_device_move.csv をDL",
+        "1/7/26 の端末のみ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "列: 型番, 端末シリアルCD, 管轄センターCD, 管轄センター名。ヘッダーあり、SJIS。ダミーシリアル・削除済みは除く。型番→シリアル昇順",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "センター変更（正常）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-DEV-MOVE-OK（NEW1→3511000101_01）",
+        "NEW1 は南港"
+       ],
+       "expected": [
+        "toast「登録しました」、s_*.csv 自動DL",
+        "center_cd 更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.center_cd=3511000101_01。uploaded_files(div=25, 自分) を upsert。出荷CSV（div=23）は serial_cd, unis2_cd, model_number, 出荷先管轄CD/名, 組織間移動日=当日 のみ値あり",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "現在値と同じセンター",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "NEW1→0100080000_01（変更なし）",
+        "NEW1 は南港"
+       ],
+       "expected": [
+        "「登録しました」",
+        "serials を更新しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "現在値と違う行だけ更新",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "直前ファイルをDL",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "「CSVをダウンロード」",
+        "直前に取込済み"
+       ],
+       "expected": [
+        "取込時のファイル名でDL",
+        "内容は取込ファイルと同じ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "CENTER_DEVICE_MOVE_CSV_PATH/{ユーザーID}.csv を SJIS で返す",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "直前ファイル名の表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DEV-01 表示",
+        "uploaded_files(div=25) あり"
+       ],
+       "expected": [
+        "直前ファイル名とリンクを表示（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "表示条件が MASTER_DEVICE_CSV_PATH/master_device.csv の存在になっている",
+       "known": "03要確認-4",
+       "should": "管轄センター変更の直前ファイルがあるときに表示する"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ファイルなし",
+        "―"
+       ],
+       "expected": [
+        "「ファイルを選択してください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "列数違い",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行目が3列",
+        "―"
+       ],
+       "expected": [
+        "「2行目:列数が不正です（指定の列数: 4, 現在の列数: 3）」",
+        "更新しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "シリアル必須／存在しない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行目 serial_cd 空、3行目 未登録値",
+        "―"
+       ],
+       "expected": [
+        "「…端末シリアルCDを入力してください」「…端末シリアルCDが存在しません[値]」",
+        "更新しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ダミーシリアルも存在しない扱い",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ステータス不一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "serial_cd=RET20",
+        "ステータス20"
+       ],
+       "expected": [
+        "「…端末シリアルCDは端末ステータスが新品入庫または、キャンセル再入庫または、リワーク再入庫ではない為、変更できません[値]」",
+        "更新しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "センターCD必須／定義外",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "2行目 空、3行目 9999999999_01",
+        "―"
+       ],
+       "expected": [
+        "「…管轄センターCDを入力してください」「…管轄センターCDが存在しません[9999999999_01]」",
+        "更新しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "出荷CSVが作れない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-DEV-MOVE-OK",
+        "出荷CSV出力先に書けない"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」（画面表示は要確認）",
+        "（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "render せず return している",
+       "known": "03要確認-5",
+       "should": "DEV-01 を再描画してエラーを表示する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-06-rework-csv",
+     "title": "DEV-06 リワーク再入庫（UNISⅡ登録）CSV出力",
+     "screens": [
+      "DEV-01",
+      "DEV-06"
+     ],
+     "purpose": "リワーク再入庫CSVの出力対象（選択行・検索条件）と、output_rework_at が初回だけ記録されることを確認する。",
+     "precondition": "ROLE-CEN でログイン。DATA-DEV-RW1（output_rework_at=NULL）、DATA-DEV-RW2（出力済み）を用意し、DEV-01 で検索済み。",
+     "conditionColumns": [
+      "選択・検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "CSV・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "選択なしで出力",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "選択なし、条件なしで検索済み",
+        "RW1/RW2"
+       ],
+       "expected": [
+        "DEV-01 に戻り自動DL",
+        "2行出力、RW1 だけ output_rework_at 設定"
+       ],
+       "prep": "",
+       "op": "「CSVダウンロード」を押す",
+       "detail": "CENTER_REWORK_CSV_PATH/YYYYmmddHHMMSS.csv（SJIS、ヘッダーあり）。列: 種別（固定「リワーク再入庫」）, UNISⅡ品目CD, シリアルNo., 型番, 品目CD, 品目名。RW2 の output_rework_at は変えない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行を選んで出力",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "RW1 のみ選択",
+        "RW1/RW2"
+       ],
+       "expected": [
+        "自動DL",
+        "RW1 の1行だけ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初回出力のみで検索して出力",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ino=ON で検索、選択なし",
+        "RW1 未出力・RW2 出力済み"
+       ],
+       "expected": [
+        "自動DL",
+        "RW1 の1行だけ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "選択行があっても検索条件 ino/rwf/rwt は付く",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同じ条件で2回目の出力",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ino=ON で再検索して出力",
+        "直前に RW1 を出力済み"
+       ],
+       "expected": [
+        "一覧は該当なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "1回目で RW1 の output_rework_at が入るため、ino=ON では出なくなる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "パラメータも選択も無い",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "検索前に POST",
+        "―"
+       ],
+       "expected": [
+        "自動DL",
+        "ヘッダーのみ"
+       ],
+       "prep": "",
+       "op": "クエリ無しで DEV-06 に POST する（ツール等で送信）",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "ファイル作成失敗",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "選択なし",
+        "出力先に書けない"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」",
+        "ロールバック（output_rework_at 変化なし）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "DEV-01 へリダイレクト",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-09-return-check",
+     "title": "DEV-07〜09 端末回収状況登録・回収済み端末チェック",
+     "screens": [
+      "DEV-07",
+      "DEV-07-D1",
+      "DEV-08",
+      "DEV-09"
+     ],
+     "purpose": "バーコード読取から回収済み端末チェック画面への遷移、表示内容、ステータスと返却先センターによるエラーを確認する。",
+     "precondition": "ROLE-CEN（管轄=センター南港）でログインし DEV-07 を開く。",
+     "conditionColumns": [
+      "読取値",
+      "端末の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "回収依頼の端末を読取",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-DEV-RET20 のシリアル",
+        "ステータス20、出荷依頼あり"
+       ],
+       "expected": [
+        "DEV-09 を表示",
+        "ダイアログが閉じる"
+       ],
+       "prep": "",
+       "op": "バーコード読み取り→読取値を送信",
+       "detail": "バッジ=依頼種別ラベル、出庫先・依頼ID（request_id_format）・依頼日・工事予定日・顧客CD・企業名・店舗名・型番・NeOS品目CD・シリアルNo.・端末ステータス・契約ステータス・回収報告を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "リサイクル廃棄ボタン",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "RET20",
+        "ステータス≠8"
+       ],
+       "expected": [
+        "「リサイクル廃棄」「リワーク再入庫」表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良廃棄ボタン",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-DEV-RET8",
+        "ステータス8"
+       ],
+       "expected": [
+        "「初期不良廃棄」「リワーク再入庫」表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "出荷依頼が無い端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-DEV-RET18N（契約なし）",
+        "ステータス18"
+       ],
+       "expected": [
+        "バッジ「回収済み端末チェック」",
+        "出庫先は serials.device_branch_name"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "依頼ID・契約ステータスは出ない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル登録ボタン",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "RET20",
+        "―"
+       ],
+       "expected": [
+        "ボタンは表示される",
+        "押しても何も起きない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-8",
+       "should": "不要なら削除、必要なら処理を実装"
+      },
+      {
+       "kind": "正常",
+       "name": "読み取りに戻る",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "RET20",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "DEV-07 に戻る"
+       ],
+       "prep": "",
+       "op": "「バーコードの読み取りに戻る」",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ZZZ-NOTEXIST",
+        "―"
+       ],
+       "expected": [
+        "toast「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」",
+        "DEV-07 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "対象外ステータス",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-DEV-NEW1",
+        "ステータス1"
+       ],
+       "expected": [
+        "toast「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "DEV-07 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "許可: 6,8,18,20,21,22,23,24,25",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "返却先センター違い",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-DEV-RET-HK",
+        "返却先=北海道"
+       ],
+       "expected": [
+        "toast「読み込んだ端末の返却先センターは北海道キッティングセンターのため、回収できません。」",
+        "DEV-07 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-10-11-rework-discard",
+     "title": "DEV-09-D1/D2・DEV-10/11 リワーク再入庫・廃棄",
+     "screens": [
+      "DEV-09-D1",
+      "DEV-09-D2",
+      "DEV-10",
+      "DEV-11",
+      "DEV-12"
+     ],
+     "purpose": "確認ダイアログの文言と、リワーク再入庫・廃棄による端末ステータス等の更新内容を確認する。",
+     "precondition": "ROLE-CEN でログインし、対象端末の DEV-09 を開いている。",
+     "conditionColumns": [
+      "操作",
+      "端末の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "リワーク再入庫確認でキャンセル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "リワーク再入庫→キャンセル",
+        "RET20"
+       ],
+       "expected": [
+        "「リワーク再入庫しますがよろしいですか？」→閉じる",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "リワーク再入庫（通常）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "リワーク再入庫する",
+        "RET20（rework_at NULL）"
+       ],
+       "expected": [
+        "DEV-07 に戻り toast「リワーク再入庫しました。」",
+        "status=26、service_status=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "unis2_cd 末尾を '1'、rework_at=現在日時、center_cd=ログインユーザー管轄CD、device_branch_cd=CENTER_CD、名='センター'。contract_cd・各日付を NULL。shipping_requests.center_collect_date=当日。変更ログ、支店在庫補充の判定",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル返却予定を戻す",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "リワーク再入庫する",
+        "DATA-DEV-RET18（rework_at NULL、出荷依頼あり）"
+       ],
+       "expected": [
+        "「リワーク再入庫しました。」",
+        "status=1（新品入庫）、service_status=NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "リサイクル廃棄",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "リサイクル廃棄→廃棄する",
+        "RET20"
+       ],
+       "expected": [
+        "確認「リサイクル用に在庫を廃棄してもよろしいですか？」→toast「リサイクル用に在庫を破棄しました。」",
+        "status=25、service_status=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "device_branch_cd=CENTER_CD、status_renewal_date=現在日時、center_collect_date=当日",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良廃棄",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良廃棄→廃棄する",
+        "RET8"
+       ],
+       "expected": [
+        "確認「初期不良廃棄してもよろしいですか？」→toast「初期不良廃棄しました。」",
+        "status=2（初期不良廃棄）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "URL直打ち：対象外ステータス",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/return/discard/NEW1",
+        "ステータス1"
+       ],
+       "expected": [
+        "「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "返却先センターは DEV-10/11 では再チェックしない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "出荷依頼が無い端末",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "リワーク再入庫する",
+        "RET18N（出荷依頼なし）"
+       ],
+       "expected": [
+        "（要確認）致命的エラーの可能性",
+        "（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-7",
+       "should": "出荷依頼が無くても処理を完了するか、明示的なエラーにする"
+      },
+      {
+       "kind": "異常",
+       "name": "保存失敗",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "リワーク再入庫する",
+        "DB 更新失敗を起こす"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」",
+        "ロールバック"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-13-lost-list",
+     "title": "DEV-13 紛失報告リスト：検索・一覧",
+     "screens": [
+      "DEV-13"
+     ],
+     "purpose": "回収不可（ステータス23）端末の検索条件、返却先センターの初期絞り込み、ソート、ページャを確認する。",
+     "precondition": "ROLE-CEN（管轄=センター南港）でログイン。DATA-DEV-LOST1（返却先南港）、DATA-DEV-LOST2（返却先北海道）、DATA-DEV-RET20 を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "一覧の表示",
+      "その他"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ナビから開く",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "cecd[]=南港のみ",
+        "―"
+       ],
+       "expected": [
+        "未検索表示",
+        "詳細検索は開いた状態"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "GET が cecd だけなので検索しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件なし検索（自センター）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "検索のみ",
+        "LOST1/LOST2/RET20"
+       ],
+       "expected": [
+        "LOST1 のみ",
+        "「1件」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ステータス23のみ。cecd 未指定でも自ユーザーの管轄CDで絞る",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "返却先センター複数",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "cecd[]=南港,北海道",
+        "LOST1/LOST2"
+       ],
+       "expected": [
+        "LOST1・LOST2",
+        "「2件」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "報告日 From/To",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "rdf/rdt=LOST1 の報告日",
+        "―"
+       ],
+       "expected": [
+        "LOST1 のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.lost_report_date",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番 部分一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn=型番の一部",
+        "―"
+       ],
+       "expected": [
+        "一致する端末",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "管轄",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "bcs[]=支店A",
+        "―"
+       ],
+       "expected": [
+        "依頼の管轄が支店Aの端末",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests.request_branch_cd IN",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "該当なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn=存在しない値",
+        "―"
+       ],
+       "expected": [
+        "該当なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "報告日→型番の見出し",
+        "2件以上"
+       ],
+       "expected": [
+        "初期は報告日昇順、押すと反転",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "rdo/mno/bro/cco/udo/uno",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ページャ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "表示件数を最小に",
+        "表示件数を超える件数"
+       ],
+       "expected": [
+        "ページャ表示",
+        "2ページ目に遷移"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "1ページの件数は Cookie",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "検索条件クリア",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "条件入力後クリア",
+        "―"
+       ],
+       "expected": [
+        "未検索表示",
+        "URL に cecd[] のみ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリック",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "LOST1 の行",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "DEV-14 へ（検索クエリ付き）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-14-lost-detail",
+     "title": "DEV-14〜17 回収不可情報詳細・差し戻し・紛失廃棄",
+     "screens": [
+      "DEV-14",
+      "DEV-14-D1",
+      "DEV-14-D2",
+      "DEV-15",
+      "DEV-16",
+      "DEV-17"
+     ],
+     "purpose": "回収不可情報詳細の表示、差し戻し（再回収依頼）と紛失廃棄の更新内容、エラー時の挙動を確認する。",
+     "precondition": "ROLE-CEN でログイン。DATA-DEV-LOST1（出荷依頼・契約・uncollect コメントあり）。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "詳細表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DEV-13 で LOST1 をクリック",
+        "LOST1"
+       ],
+       "expected": [
+        "ステータス「回収不可」、各項目表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "報告日=最新コメント日、回収種別=契約がキャンセル/解約なら契約ステータス名、それ以外は「交換」。回収不可理由は新しい順",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "差し戻しダイアログ表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "差し戻し(再回収依頼)",
+        "―"
+       ],
+       "expected": [
+        "説明文、理由欄が is-error「※入力してください」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "差し戻しするを押す",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "理由入力→差し戻しする",
+        "LOST1"
+       ],
+       "expected": [
+        "ボタンが押せない（要確認）",
+        "変化なし（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "is-disable を外す JS が無い",
+       "known": "Z-12",
+       "should": "理由を入力するとボタンが押せ、差し戻しできる"
+      },
+      {
+       "kind": "正常",
+       "name": "差し戻し実行（POST直接）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "send_back_comment=理由 を POST",
+        "LOST1"
+       ],
+       "expected": [
+        "DEV-13 に戻り「差し戻し(再回収依頼)しました。」",
+        "status=21、comments INSERT"
+       ],
+       "prep": "",
+       "op": "POST /manage/center/device/lost/send_back/{id} をツールで送る",
+       "detail": "comments.type=sendback、name=ログインユーザー名。service_status=2、status_renewal_date=現在日時。親画面URLにクエリは付かない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "差し戻し理由が空（POST直接）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "send_back_comment 空",
+        "LOST1"
+       ],
+       "expected": [
+        "「差し戻し(再回収依頼)しました。」",
+        "空コメントで登録"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "サーバー側に必須チェックなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "紛失廃棄",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "紛失廃棄→紛失廃棄する",
+        "LOST1"
+       ],
+       "expected": [
+        "確認「紛失廃棄してもよろしいですか？」→「紛失破棄しました。」",
+        "status=24、service_status=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "device_branch_cd=CENTER_CD、名='センター'",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "紛失廃棄を URL 直打ち（回収不可以外）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/lost/discard/{NEW1 の id}",
+        "ステータス1"
+       ],
+       "expected": [
+        "「紛失破棄しました。」",
+        "status=24 に変わる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "現在ステータスのチェックなし",
+       "known": "03-DEV-16",
+       "should": "回収不可（23）以外はエラーにする"
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない依頼ID",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "/lost/view/999999",
+        "―"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」（表示は要確認）",
+        "lost_complete へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-9",
+       "should": "通常画面でエラーを表示する"
+      },
+      {
+       "kind": "異常",
+       "name": "uncollect コメント0件",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "詳細表示",
+        "DATA-DEV-LOST-NOCMT"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」（表示は要確認）",
+        "lost_complete へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-9",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "エラーメッセージの引継ぎ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "差し戻しで保存失敗",
+        "―"
+       ],
+       "expected": [
+        "DEV-13 に 「システムエラーを検知したため、処理を中断しました。」 が出るか（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-10",
+       "should": "keep_flash を定数で指定し、メッセージを確実に引き継ぐ"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-18-search",
+     "title": "DEV-18 端末管理リスト：検索・一覧・ボタン表示",
+     "screens": [
+      "DEV-18"
+     ],
+     "purpose": "端末管理リストの各検索条件、ソート、ステータスによるボタンの表示、行選択を確認する。",
+     "precondition": "ROLE-CEN でログイン。DATA-DEV-NEW1、DATA-DEV-ASSIGN3、DATA-DEV-INST10、DATA-DEV-RET20、DATA-DEV-DUMMY を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "一覧の表示",
+      "その他"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "パラメータなし",
+        "―"
+       ],
+       "expected": [
+        "未検索表示（nosearch）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "管轄：センター",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "cecd[]=南港",
+        "―"
+       ],
+       "expected": [
+        "device_branch_cd=センターかつ center_cd=南港",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "管轄：支店",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "bcs[]=支店A",
+        "―"
+       ],
+       "expected": [
+        "device_branch_cd=支店A の端末",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "支店名で絞り込む検索ボックスあり",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番 部分一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn=型番の一部",
+        "―"
+       ],
+       "expected": [
+        "一致する端末",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアルNo. 部分一致",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "sc=DUMMY のシリアルの一部",
+        "DATA-DEV-DUMMY"
+       ],
+       "expected": [
+        "ダミーシリアルは出ない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "sc 指定時は dummy_serials を除く",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末ステータス複数",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "des[]=1,3",
+        "―"
+       ],
+       "expected": [
+        "NEW1・ASSIGN3",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "顧客CD（前後空白）",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ccd=' 123 '",
+        "―"
+       ],
+       "expected": [
+        "123 を含む端末",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "前後の空白は除く",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "該当なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn=存在しない値",
+        "―"
+       ],
+       "expected": [
+        "該当なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "見出しを押す",
+        "2件以上"
+       ],
+       "expected": [
+        "初期は型番昇順＋顧客CD昇順、押すと反転",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "bro/mno/sco/ccds/cpns/sso/dso/cso",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ステータス別のボタン表示",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "des[]=1,3,10,20",
+        "NEW1/ASSIGN3/INST10/RET20"
+       ],
+       "expected": [
+        "1:初期不良、3:初期不良・日時更新、10:修理依頼・日時更新、20:なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "初期不良=1,3,4,5,7,9,11,14,15,16,26、修理依頼=10,12,17,19、日時更新=3,4,5,10,12,14,15,16,17,19",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行内ボタンでの選択切替",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良を押す",
+        "NEW1"
+       ],
+       "expected": [
+        "ダイアログが開き、行の選択も切り替わる",
+        "件数表示が変わる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-11",
+       "should": "行内ボタンの押下では行選択を切り替えない"
+      },
+      {
+       "kind": "正常",
+       "name": "jimu でも同じボタン",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "des[]=1,10",
+        "NEW1/INST10"
+       ],
+       "expected": [
+        "初期不良・修理依頼・日時更新が表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ユーザー区分の判定なし",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-19-20-failure-repair",
+     "title": "DEV-18-D1/D2・DEV-19/20 初期不良登録・修理依頼",
+     "screens": [
+      "DEV-18-D1",
+      "DEV-18-D2",
+      "DEV-19",
+      "DEV-20"
+     ],
+     "purpose": "初期不良登録でステータスごとに正しい変更後ステータスと出荷依頼の更新が行われること、修理依頼で交換の出荷依頼が作られることを確認する。",
+     "precondition": "ROLE-CEN でログインし、DEV-18 で対象端末を表示している。",
+     "conditionColumns": [
+      "操作",
+      "端末の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期不良：新品入庫",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "NEW1（1）"
+       ],
+       "expected": [
+        "確認「初期不良の登録をしますか？」→一覧へ戻る",
+        "status=2（初期不良廃棄）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "device_branch_cd=CENTER_CD、名='センター'、service_status='2'。info メッセージなし。一覧は検索条件なしで戻る",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：通常新設引き当て済",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "ASSIGN3（3）"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=2、出荷依頼のシリアルを外す"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests: serial_cd/complete_allocation_date/complete_kitting_date=NULL、request_type_cd≠2 なら model_number=NULL",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：キッティング完了",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "DATA-DEV-KIT5（5）"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=2、device_check_histories 削除"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：交換引き当て済",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "DATA-DEV-ASSIGN15（15）"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=8（初期不良返品）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "device_branch は変えない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：支店在庫入庫",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "DATA-DEV-BRA11（11、最小配備数1）"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=8、支店在庫を1件作成"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：PPPoE 解除連携",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "DATA-DEV-PPPOE"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "SQS に request_type=delete 送信"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "初期不良：ダイアログ表示前に更新",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良を押す",
+        "別画面で NEW1 を20に変更済み"
+       ],
+       "expected": [
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "一覧へ戻る"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "初期不良：対応する出荷依頼なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "初期不良→OK",
+        "DATA-DEV-ASSIGN3-NOREQ"
+       ],
+       "expected": [
+        "「システムエラーを検知したため、処理を中断しました。」",
+        "ロールバックされない（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-12",
+       "should": "ロールバックしてエラーを表示する"
+      },
+      {
+       "kind": "正常",
+       "name": "修理依頼",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "修理依頼→OK",
+        "INST10"
+       ],
+       "expected": [
+        "確認「修理依頼をしますか？」→一覧へ戻る",
+        "交換依頼 INSERT、status=20"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests: request_type_cd='5'、construction_date=翌日、request_display_flg=1、center_cd は sets.center_allocation で決定。serials: device_branch=branch_replacement、collect_request_date=現在日時",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "修理依頼：直送あり",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "修理依頼→OK",
+        "DATA-DEV-INST10-DS"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "direct_shipments.shipping_request_id 更新（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-13",
+       "should": "作成した交換依頼の id が入る"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "修理依頼：対象外ステータス",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "修理依頼を押す",
+        "別画面で INST10 を変更済み"
+       ],
+       "expected": [
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "一覧へ戻る"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "修理依頼：管轄倉庫置換なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "修理依頼→OK",
+        "DATA-DEV-INST10-NOBR"
+       ],
+       "expected": [
+        "「管轄支店倉庫置換マスタにUNIS管轄支店CD(値)が存在しません。データを登録してください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "jimu で初期不良",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "初期不良→OK",
+        "NEW1"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "jimu でも実行できる（現行）",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-21-csv",
+     "title": "DEV-21 端末管理リストCSVダウンロード",
+     "screens": [
+      "DEV-18",
+      "DEV-21"
+     ],
+     "purpose": "serials.csv の出力対象（選択行／検索条件）と列内容を確認する。",
+     "precondition": "ROLE-CEN でログインし、DEV-18 で検索済み。",
+     "conditionColumns": [
+      "選択・検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "出力",
+      "CSVの中身"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "選択なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "mn で検索、選択なし",
+        "3件ヒット"
+       ],
+       "expected": [
+        "serials.csv（SJIS）",
+        "3行＋ヘッダー（42列）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "列: 管理区分, NeOS契品目CD, …, 返却先センターCD, 返却センター名。control_code は出力しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行を選択",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "1行選択",
+        "3件ヒット"
+       ],
+       "expected": [
+        "serials.csv",
+        "選択した1行のみ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "検索条件は無視",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ダミーシリアル",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DUMMY を選択",
+        "DATA-DEV-DUMMY"
+       ],
+       "expected": [
+        "serials.csv",
+        "シリアルNo. 空"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIM複数紐づけ",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "DATA-DEV-MULTISIM を選択",
+        "未削除SIMが2件"
+       ],
+       "expected": [
+        "serials.csv",
+        "同じ端末が2行"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "sc 指定時のダミー",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "sc=DUMMY の一部で検索、選択なし",
+        "DATA-DEV-DUMMY"
+       ],
+       "expected": [
+        "serials.csv",
+        "ダミー端末も出る（シリアル空）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "CSV 側は sc 指定時にダミーを除かない（画面とは差異）",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "dev-22-ajax",
+     "title": "DEV-22 日時更新（Ajax）",
+     "screens": [
+      "DEV-18",
+      "DEV-22"
+     ],
+     "purpose": "日時更新ボタンでの updated_at 更新、ユーザー区分・ステータスによるエラーを確認する。",
+     "precondition": "DEV-18 で対象端末を表示している。",
+     "conditionColumns": [
+      "ロール",
+      "端末の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "center で日時更新",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "ASSIGN3（3、契約あり）"
+       ],
+       "expected": [
+        "ボタンにチェックマーク",
+        "serials・contracts 等の updated_at 更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "押下時にボタンを is-disable。応答 {\"error\": false}。ステータス3/4/14/16 は serials も更新",
+       "known": "03要確認-21",
+       "should": "（業務目的を確認）"
+      },
+      {
+       "kind": "異常",
+       "name": "jimu で日時更新",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "jimu",
+        "ASSIGN3"
+       ],
+       "expected": [
+        "アラート「システムエラーを検知したため、処理を中断しました。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ボタンは表示される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "対象外ステータス",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "別画面で20に変更済み"
+       ],
+       "expected": [
+        "アラート「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "契約なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "契約が削除された端末"
+       ],
+       "expected": [
+        "アラート「契約情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインで URL",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "未ログイン",
+        "―"
+       ],
+       "expected": [
+        "（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "Auth::check のみ。未ログイン時の応答形式は定義書に記載なし",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  },
+  {
+   "id": "center-sim",
+   "title": "センター SIM管理",
+   "lead": "admin の SIM情報登録・変更、center の SIM登録更新、SIM管理リスト・詳細が現行どおり動くことを確認する。admin と center の画面の振り分けと、center が POST で admin 用処理を実行できる既知の問題も確認する。",
+   "concepts": [
+    {
+     "id": "sim-auth",
+     "title": "SIM 権限・ユーザー区分による画面の振り分け",
+     "screens": [
+      "SIM-01",
+      "SIM-02",
+      "SIM-08",
+      "SIM-16"
+     ],
+     "purpose": "admin と center で開ける画面・リダイレクト先・ナビが分かれること、他ロールは 403 になることを確認する。",
+     "precondition": "各ロールでログイン済み（ROLE-GUEST を除く）。",
+     "conditionColumns": [
+      "ロール",
+      "アクセス先"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "admin：ヘッダー「SIM管理」",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "admin",
+        "ヘッダー"
+       ],
+       "expected": [
+        "SIM情報登録（SIM-02）",
+        "ナビ: 登録／変更／リスト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center：ヘッダー「SIM管理」",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "ヘッダー"
+       ],
+       "expected": [
+        "SIM登録更新（SIM-16）",
+        "ナビ: 登録更新／リスト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "/register から /update へリダイレクト",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center：/index",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "/manage/center/sim"
+       ],
+       "expected": [
+        "―",
+        "SIM-16 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center：/modify",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "/manage/center/sim/modify"
+       ],
+       "expected": [
+        "―",
+        "SIM-16 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "admin：/update",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "admin",
+        "/manage/center/sim/update"
+       ],
+       "expected": [
+        "―",
+        "SIM-02 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center：SIM管理リスト",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "/manage/center/sim/list"
+       ],
+       "expected": [
+        "SIM-17 表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "jimu：SIM管理",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "jimu",
+        "/manage/center/sim/list"
+       ],
+       "expected": [
+        "403エラー画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログイン",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "未ログイン",
+        "/manage/center/sim/list"
+       ],
+       "expected": [
+        "―",
+        "/manage/login へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "center が UQ SIM登録を POST",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "POST /upload_uq_file"
+       ],
+       "expected": [
+        "処理が実行される",
+        "SIM-02 へ（→SIM-16）"
+       ],
+       "prep": "CSV-SIM-NST-OK",
+       "op": "ツールで直接 POST",
+       "detail": "action にユーザー区分チェックが無い",
+       "known": "Z-4",
+       "should": "admin 以外（center）が POST した場合は 403 などで拒否する"
+      },
+      {
+       "kind": "異常",
+       "name": "center が解約登録を POST",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "center",
+        "POST /upload_cancellation"
+       ],
+       "expected": [
+        "解約が実行される",
+        "sims.status=4"
+       ],
+       "prep": "DATA-SIM-UQ-ACT",
+       "op": "ツールで iccid_list を POST",
+       "detail": "",
+       "known": "Z-4",
+       "should": "admin 以外（center）が POST した場合は 403 などで拒否する"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-03-general",
+     "title": "SIM-03 UQ以外SIM登録（CSV取込）",
+     "screens": [
+      "SIM-02",
+      "SIM-16",
+      "SIM-02-D1",
+      "SIM-03"
+     ],
+     "purpose": "UQ以外SIM CSV（csv_formats div=51）の取込で sims に登録・上書きされること、ヘッダー・行のエラーがモーダルに原文どおり出ることを確認する。admin と center で戻り先が違うことも確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-02 を開く（center のケースは SIM-16）。csv_formats div=51 が登録済み。",
+     "conditionColumns": [
+      "CSVの内容",
+      "DBの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "新規登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-GEN-OK（2行）",
+        "iccid 未登録"
+       ],
+       "expected": [
+        "toast「登録完了: 新規2件」",
+        "sims INSERT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "sim_status_cd=2（利用中）、network_change_flg=0、sim_status_name 自動設定",
+       "known": "Z-10",
+       "should": "本番にも div=51 が登録され同じ動きになる"
+      },
+      {
+       "kind": "正常",
+       "name": "上書きを含む",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "1行新規、1行既存 iccid",
+        "DATA-SIM-OTH-ACT あり"
+       ],
+       "expected": [
+        "「登録完了: 新規1件、上書き1件」",
+        "既存はステータスを変えずに上書き"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center で登録",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-SIM-GEN-OK",
+        "未登録"
+       ],
+       "expected": [
+        "SIM-16 に戻り「登録完了: 新規2件」",
+        "INSERT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ファイルなし",
+        "―"
+       ],
+       "expected": [
+        "toast「ファイルのアップロードに失敗しました」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "拡張子違い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "sim.txt",
+        "―"
+       ],
+       "expected": [
+        "toast「ファイルのアップロードに失敗しました」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ヘッダー不一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ヘッダー列名を変更",
+        "―"
+       ],
+       "expected": [
+        "モーダル「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "モーダル title「ファイルアップロードエラー」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "行の列数違い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2行目が4列",
+        "―"
+       ],
+       "expected": [
+        "モーダル「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "0行（ヘッダーのみ）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ヘッダーのみ",
+        "―"
+       ],
+       "expected": [
+        "モーダル「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "記号を含む",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "sim_number=0201234#567",
+        "―"
+       ],
+       "expected": [
+        "「SIM番号に使用できない記号が含まれています[値]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "対象行: N で表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "SIM番号：必須／21桁／数字以外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空・21桁・'02012A'",
+        "―"
+       ],
+       "expected": [
+        "「SIM番号を入力してください」「SIM番号は20文字以下で入力してください[値]」「SIM番号は数字のみで入力してください（ハイフン等は使用不可）[値]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK の3行をそれぞれ変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCID：必須／英数字以外／31桁",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空・全角・31桁",
+        "―"
+       ],
+       "expected": [
+        "「ICCIDを入力してください」「ICCIDは英数字で入力してください[値]」「ICCIDは30桁以内で入力してください[値]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "キャリアCD：UQ(1)",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "carrier_cd=1",
+        "―"
+       ],
+       "expected": [
+        "「キャリアCDにUQ(1)は指定できません」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "キャリアCD：必須／数値／存在",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空・'A'・99",
+        "―"
+       ],
+       "expected": [
+        "「キャリアCDを入力してください」「キャリアCDは数値で入力してください[A]」「キャリアCDが存在しません[99]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "事業者CD：必須／数値／存在",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空・'A'・99",
+        "―"
+       ],
+       "expected": [
+        "「事業者CDを入力してください」「事業者CDは数値で入力してください[A]」「事業者CDが存在しません[99]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "利用開始日：必須／形式／実在",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空・20261001・2026-02-30",
+        "―"
+       ],
+       "expected": [
+        "「利用開始日を入力してください」「利用開始日は日付形式(YYYY-MM-DD or YYYY/MM/DD)で入力してください[値]」「利用開始日が実在しない日付です[値]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-GEN-OK を基に変更",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCIDファイル内重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2行に同じ iccid",
+        "―"
+       ],
+       "expected": [
+        "「ICCID[値]がファイル内で重複しています」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "SIM番号ファイル内重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2行に同じ sim_number",
+        "―"
+       ],
+       "expected": [
+        "「SIM番号[値]がファイル内で重複しています」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "利用中の別ICCIDと同じ番号",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "sim_number=OTH-ACT の番号、別 iccid",
+        "OTH-ACT 利用中"
+       ],
+       "expected": [
+        "「SIM番号[値]は利用中のICCID[既存]に既に登録されています。既存のICCIDを解約にしてから登録してください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "エラーのまとめ表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2行・3行が同じ型のエラー",
+        "―"
+       ],
+       "expected": [
+        "同じ文言を1つにまとめ「対象行: 2, 3」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "×・閉じる・オーバーレイで閉じる。再描画時アクティベート前件数は「0件」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "csv_formats div=51 なし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-GEN-OK",
+        "div=51 未登録"
+       ],
+       "expected": [
+        "サーバーエラー（500）",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-10",
+       "should": "本番に div=51〜55 を反映しておく"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-04-uq-nst",
+     "title": "SIM-04 UQ SIM登録（NSTファイル）",
+     "screens": [
+      "SIM-02",
+      "SIM-04"
+     ],
+     "purpose": "UQ の NST 固定長ファイルの取込で sims がアクティベート前で登録されること、レコードのエラーを確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-02 を開く。",
+     "conditionColumns": [
+      "ファイルの内容",
+      "DBの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "新規登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-NST-OK（2レコード）",
+        "iccid 未登録"
+       ],
+       "expected": [
+        "「登録完了: 新規2件、上書き0件」",
+        "sims INSERT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "sim_status_cd=1、carrier_cd=1、provider_cd=1、sim_number='020'+電話番号",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "既存 ICCID を上書き",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "既存 iccid を含む",
+        "DATA-SIM-UQ-BEF あり"
+       ],
+       "expected": [
+        "「登録完了: 新規1件、上書き1件」",
+        "sim_number のみ更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "有効行0件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "D を含む行なし",
+        "―"
+       ],
+       "expected": [
+        "「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "レコード長不足",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "D 位置から45文字",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: 正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "全件登録しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCID不正",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ICCID が18桁＋空白",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: ICCID不正（19桁の数字が必要）(値)」",
+        "全件登録しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "電話番号不正",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "電話番号に英字",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: 電話番号不正(値)」",
+        "全件登録しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル内重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じ ICCID／同じ電話番号",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: ICCID[値]がファイル内で重複しています」「レコードN: SIM番号[値]がファイル内で重複しています」",
+        "全件登録しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "利用中の別ICCIDと重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "電話番号が OTH-ACT と同じ",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: SIM番号[値]は利用中のICCID[既存]に既に登録されています」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "N は有効行の中の順番",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-05-activation",
+     "title": "SIM-05 アクティベーションCSV生成",
+     "screens": [
+      "SIM-02",
+      "SIM-05"
+     ],
+     "purpose": "アクティベート前の UQ SIM の件数表示と、CUI 採番・ファイル分割を含む CSV 出力を確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-02 を開く。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "出力・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "件数表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "SIM-02 表示",
+        "DATA-SIM-UQ-BEF 1件"
+       ],
+       "expected": [
+        "「1件のアクティベート前SIMがあります」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "1ファイル出力",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSVダウンロード",
+        "UQ-BEF（cui 空）1件"
+       ],
+       "expected": [
+        "activation_YYYYmmddHHMMSS.csv",
+        "cui=FP817+当日+0000001"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SJIS、全項目ダブルクォート、CRLF、ヘッダーなし、74列。17列='UQ001'、25列=ICCID、31列=1年後 等。ステータスは変えない",
+       "known": "03要確認-18",
+       "should": "（ステータス変更の要否を確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "101件で ZIP",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSVダウンロード",
+        "アクティベート前 101件"
+       ],
+       "expected": [
+        "activation_*.zip",
+        "activation_1.csv（100件）, _2.csv（1件）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "対象0件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSVダウンロード",
+        "アクティベート前0件"
+       ],
+       "expected": [
+        "toast「アクティベーション対象のSIMがありません」",
+        "SIM-02 へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "GET で開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "GET /download_activation",
+        "―"
+       ],
+       "expected": [
+        "「不正なリクエストです」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "CUI 一意制約違反",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2人が同時に実行",
+        "―"
+       ],
+       "expected": [
+        "「アクティベーションCSVの生成に失敗しました。他のユーザーが同時に処理を実行した可能性があります。時間を置いて再実行してください。」",
+        "SIM-02 へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-06-subscriber",
+     "title": "SIM-06 UQ 加入者コード登録",
+     "screens": [
+      "SIM-02",
+      "SIM-06"
+     ],
+     "purpose": "UQ 加入者CSV（84列）の取込で加入者CD・利用開始日が登録され、ステータスが1→5になることと、行エラーを確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-02 を開く。DATA-SIM-UQ-CUI（status=1、cui あり）。",
+     "conditionColumns": [
+      "CSVの内容",
+      "DBの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "加入者コード登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-SUB-OK（UQ-CUI の CUI）",
+        "status=1"
+       ],
+       "expected": [
+        "「加入者CD登録完了: 1件」",
+        "subscriber_cd 設定、status=5"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "service_start_date=受付日時の日付",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "列数が84でない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "83列",
+        "―"
+       ],
+       "expected": [
+        "「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」（行番号なし）",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CUI・加入者コード・受付日時が空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "各列を空",
+        "―"
+       ],
+       "expected": [
+        "「行N: CUIが空です」「行N: 加入者コードが空です」「行N: 受付日時が空です」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "受付日時の形式不正",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "受付日時=abc",
+        "―"
+       ],
+       "expected": [
+        "「行N: 受付日時の形式が不正です[abc]」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CUI 19桁",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CUI 19桁",
+        "―"
+       ],
+       "expected": [
+        "「行N: CUIは20桁で入力してください[値](19桁)」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "加入者コード 7桁",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "加入者コード 7桁",
+        "―"
+       ],
+       "expected": [
+        "「行N: 加入者コードは8桁で入力してください[値](7桁)」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CUI ファイル内重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じ CUI 2行",
+        "―"
+       ],
+       "expected": [
+        "「行N: CUI[値]がファイル内で重複しています」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CUI の SIM が無い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "存在しない CUI",
+        "―"
+       ],
+       "expected": [
+        "「行N: CUIを持つSIMが見つかりません: 値」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "UQ以外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ以外 SIM の CUI",
+        "carrier_cd=2"
+       ],
+       "expected": [
+        "「行N: UQ以外のSIMです（carrier_cd=2）: 値」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "有効行0件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ヘッダーのみ",
+        "―"
+       ],
+       "expected": [
+        "「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-07-billing",
+     "title": "SIM-07 UQ 課金開始日登録",
+     "screens": [
+      "SIM-02",
+      "SIM-07"
+     ],
+     "purpose": "NST 固定長ファイルから課金開始日が登録され、ステータスが利用中になることを確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-02 を開く。DATA-SIM-UQ-SUBED（status=5、subscriber_cd あり）。",
+     "conditionColumns": [
+      "ファイルの内容",
+      "DBの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "課金開始日登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-BILL-OK",
+        "status=5"
+       ],
+       "expected": [
+        "「課金開始日登録完了: 1件」",
+        "billing_start_date 設定、status=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "利用停止中の SIM",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-SUSP の加入者CD",
+        "status=3"
+       ],
+       "expected": [
+        "「課金開始日登録完了: 1件」",
+        "status=2 に変わる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-15",
+       "should": "利用停止・解約の SIM はステータスを変えない（仕様確認）"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "有効行0件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "D を含まない",
+        "―"
+       ],
+       "expected": [
+        "「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "18文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "D 位置から18文字",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: 正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "加入者CD空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "加入者CD部分が空白",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: 加入者CDが空です」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "日付不正／実在しない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2026AB01 / 20260230",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: 課金開始日が不正です(値)」「レコードN: 課金開始日が実在しない日付です(値)」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "加入者CDの SIM が無い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "未登録の加入者CD",
+        "―"
+       ],
+       "expected": [
+        "「レコードN: 加入者CDを持つSIMが見つかりません: 値」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "UQ以外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ以外 SIM の加入者CD",
+        "carrier_cd=2"
+       ],
+       "expected": [
+        "「レコードN: UQ以外のSIMです（carrier_cd=2）: 値」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-08-09-5g",
+     "title": "SIM-08 ICCID一覧の共通チェック・SIM-09 4G→5G 変更登録",
+     "screens": [
+      "SIM-08",
+      "SIM-09"
+     ],
+     "purpose": "ICCID一覧テキストエリアの共通チェックと、U-NEXT 5G切替 API 呼び出しの事前チェック・一部失敗時の動きを確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-08 を開く。DATA-SIM-OTH-ACT（事業者 U-NEXT、network_change_flg=0）。",
+     "conditionColumns": [
+      "入力（ICCID一覧）",
+      "データ・API状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "5G切替 全件成功",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "OTH-ACT の ICCID 1件",
+        "API 200"
+       ],
+       "expected": [
+        "toast「登録しました（1件）」",
+        "network_change_flg='1'"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-16",
+       "should": "API の引数順（msisdn / sim_serial_no）が正しいこと"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未入力",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空",
+        "―"
+       ],
+       "expected": [
+        "モーダル「ICCIDが入力されていません。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "対象行は表示しない。入力値はそのセクションに戻る",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "英数字以外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "8981-0000",
+        "―"
+       ],
+       "expected": [
+        "「iccid[8981-0000]は英数字で入力してください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "31桁",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "31桁",
+        "―"
+       ],
+       "expected": [
+        "「iccid[値]は30桁以内で入力してください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "入力内重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じ ICCID 2行",
+        "―"
+       ],
+       "expected": [
+        "「ICCID[値]がファイル内で重複しています。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "存在しない ICCID",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "未登録 ICCID",
+        "―"
+       ],
+       "expected": [
+        "「iccid:値がsimsテーブルに存在しません。入力された全件について、APIは呼び出されませんでした。」",
+        "API 呼ばない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "事業者が U-NEXT でない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DATA-SIM-OTH-NU",
+        "―"
+       ],
+       "expected": [
+        "「iccid:値の事業者はU-NEXTではありません。（現在: 事業者名）入力された全件について、APIは呼び出されませんでした。」",
+        "API 呼ばない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "5G切替済み",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DATA-SIM-OTH-5G",
+        "flg=1"
+       ],
+       "expected": [
+        "「iccid:値は既に5G切替済みのため処理対象外です。入力された全件について、APIは呼び出されませんでした。」",
+        "API 呼ばない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "API 一部失敗",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2件（1件は API エラー）",
+        "1件 HTTP 400"
+       ],
+       "expected": [
+        "モーダル「※ 2件中1件の5G切替が完了しました」「iccid:値はAPIでエラーになりました。{message}」",
+        "成功分のみ flg=1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-10-13-status",
+     "title": "SIM-10〜13・15 解約・利用停止・利用再開・解約撤回とファイルDL",
+     "screens": [
+      "SIM-08",
+      "SIM-10",
+      "SIM-11",
+      "SIM-12",
+      "SIM-13",
+      "SIM-15"
+     ],
+     "purpose": "ICCID一覧による解約・停止・再開・撤回のステータス遷移、生成ファイルの自動DL、対象外エラーを確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-08 を開く。",
+     "conditionColumns": [
+      "処理・入力",
+      "SIMの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・ファイル"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "解約（UQ と UQ以外）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "解約登録：UQ-ACT と OTH-ACT",
+        "どちらも status=2"
+       ],
+       "expected": [
+        "「解約処理が完了しました（2件）」、ZIP 自動DL",
+        "status=4、service_end_date=当日"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "cancellation_*.zip: cancellation_uq_1.csv（17列='UQ003'、20列=加入者コード、70列='900'）、cancellation_other.csv（ヘッダー iccid,sim_number）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "解約：対象外ステータス",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "解約登録：UQ-BEF",
+        "status=1"
+       ],
+       "expected": [
+        "「iccid:値は利用中・停止中のいずれでもないため解約できません（現在: アクティベート前）。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "解約：UQ で CUI／加入者コード未登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DATA-SIM-UQ-NOCUI / UQ-NOSUB",
+        "status=2"
+       ],
+       "expected": [
+        "「iccid:値はCUI未登録のため解約ファイル生成の対象外です。」／「…加入者コード未登録のため解約ファイル生成の対象外です。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "解約：存在しない ICCID",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "未登録 ICCID",
+        "―"
+       ],
+       "expected": [
+        "「iccid:値がsimsテーブルに存在しません。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "利用停止",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "利用停止：UQ-ACT",
+        "status=2"
+       ],
+       "expected": [
+        "「利用停止処理が完了しました（1件）」、uq_suspension_*.csv 自動DL",
+        "status=3、suspension_date=当日"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "17列='UQ004'",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "利用停止：利用中でない／UQ以外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-SUSP と OTH-ACT",
+        "status=3 / 2"
+       ],
+       "expected": [
+        "「iccid:値は利用中ではないため停止できません。（現在: 利用停止）」「iccid:値はUQ以外のため利用停止ファイル生成の対象外です。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "CUI・加入者コード未登録も同様に「…利用停止ファイル生成の対象外です。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "利用再開",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "利用再開：UQ-SUSP",
+        "status=3"
+       ],
+       "expected": [
+        "「利用再開処理が完了しました（1件）」、uq_resumption_*.csv 自動DL",
+        "status=2、suspension_date=NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "17列='UQ005'",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "利用再開：停止中でない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-ACT",
+        "status=2"
+       ],
+       "expected": [
+        "「iccid:値は利用停止中ではないため再開できません。（現在: 利用中）」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "撤回：UQ以外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "解約撤回：DATA-SIM-OTH-CAN",
+        "status=4"
+       ],
+       "expected": [
+        "「ステータス変更完了: 1件」",
+        "status=2、service_end_date=NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "撤回：UQ（停止日あり／課金日のみ）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-CAN-SUSP / UQ-CAN-BILL",
+        "status=4"
+       ],
+       "expected": [
+        "「ステータス変更完了: 2件」",
+        "前者 status=3、後者 status=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "撤回：判定不能を含む",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "OTH-CAN, UQ-CAN-NONE の順",
+        "UQ-CAN-NONE は日付なし"
+       ],
+       "expected": [
+        "「iccid[値]は解約撤回後のステータスが判定できません。」（表示形式は要確認）",
+        "OTH-CAN は status=2 のまま残る"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "03要確認-17",
+       "should": "トランザクションで全件ロールバックする"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "撤回：解約でない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-ACT",
+        "status=2"
+       ],
+       "expected": [
+        "「iccid:値は解約ステータスではないため撤回できません。（現在: 利用中）」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "一時ファイルは1回だけ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "自動DL後に同じ URL を開く",
+        "―"
+       ],
+       "expected": [
+        "404",
+        "ファイル削除済み"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-14-bind",
+     "title": "SIM-14 SIMと端末の紐づけ登録変更（Ajax）",
+     "screens": [
+      "SIM-08",
+      "SIM-16",
+      "SIM-14",
+      "SIM-14-D1"
+     ],
+     "purpose": "紐づけCSV（div=52）の事前チェック・確認モーダル・実行の流れと、bind_serial による sims の更新、エラーの alert を確認する。",
+     "precondition": "ROLE-ADM は SIM-08、ROLE-CEN は SIM-16 を開く。DATA-SIM-SER-A（端末）、DATA-SIM-BOUND（SER-B に紐づくSIM）。",
+     "conditionColumns": [
+      "CSVの内容",
+      "DBの状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "既存紐づけなし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-BIND-OK（UQ-ACT→SER-A）",
+        "SER-A に紐づくSIMなし"
+       ],
+       "expected": [
+        "確認なしで実行し SIM-08 に戻る、toast「紐づけ変更完了: 1件」",
+        "sims.serial_cd=SER-A、bound_at=現在"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "型番が sim_sync_devices に無ければ INSERT",
+       "known": "Z-10",
+       "should": "本番に div=52 が反映済みであること"
+      },
+      {
+       "kind": "正常",
+       "name": "既存紐づけあり→OK",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-ACT→SER-B",
+        "BOUND が SER-B に紐づく"
+       ],
+       "expected": [
+        "モーダル「以下のシリアルNo.は既に別のSIMに紐づいています。」→OK→完了",
+        "BOUND.serial_cd=NULL、unbound_at=現在"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "一覧: シリアルNo.／現在のICCID／SIM番号。注意文「変更すると既存の紐づけが解除されます。全 1 件の紐づけ変更を実行してよろしいですか？」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "既存紐づけあり→キャンセル",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同上",
+        "同上"
+       ],
+       "expected": [
+        "モーダルが閉じる",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル空で解除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "BOUND, serial_cd 空",
+        "BOUND 紐づけあり"
+       ],
+       "expected": [
+        "「紐づけ変更完了: 1件」",
+        "serial_cd=NULL、unbound_at=現在"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "center で実行",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "CSV-SIM-BIND-OK",
+        "―"
+       ],
+       "expected": [
+        "SIM-16 に戻り「紐づけ変更完了: 1件」",
+        "更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ファイルなし",
+        "―"
+       ],
+       "expected": [
+        "alert「ファイルのアップロードに失敗しました」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ヘッダー不一致・列数違い",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ヘッダー変更／3列",
+        "―"
+       ],
+       "expected": [
+        "alert「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "0行",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ヘッダーのみ",
+        "―"
+       ],
+       "expected": [
+        "alert「正しいファイル形式で投入してください。わからない場合は運用マニュアルを参照ください。」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCID 必須・形式・桁",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空／全角／31桁",
+        "―"
+       ],
+       "expected": [
+        "alert「ICCIDを入力してください」「ICCIDは英数字で入力してください[値]」「ICCIDは30桁以内で入力してください[値]」",
+        "変化なし"
+       ],
+       "prep": "CSV-SIM-BIND-OK を基に変更",
+       "op": "",
+       "detail": "複数エラーは改行でつなぐ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ICCID 重複／未登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じ iccid 2行／未登録 iccid",
+        "―"
+       ],
+       "expected": [
+        "alert「ICCID[値]がファイル内で重複しています」／「ICCID[値]がSIMテーブルに存在しません」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "シリアル未登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd=未登録値",
+        "―"
+       ],
+       "expected": [
+        "alert「シリアルCD[値]がserialsテーブルに存在しません」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "シリアル重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2行に同じ serial_cd",
+        "―"
+       ],
+       "expected": [
+        "alert「シリアルNo.が重複しています: 値」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "execute 時にセッション切れ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "モーダル表示中にセッション切れ→OK",
+        "―"
+       ],
+       "expected": [
+        "alert「セッションが切れました。再度ファイルをアップロードしてください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "execute 例外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-SIM-BIND-OK",
+        "DB 更新失敗"
+       ],
+       "expected": [
+        "alert「紐づけ変更処理でエラーが発生しました」",
+        "ロールバック"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-17-list",
+     "title": "SIM-17 SIM管理リスト：検索・一覧・ページャ",
+     "screens": [
+      "SIM-17"
+     ],
+     "purpose": "SIM管理リストの各検索条件（完全一致・部分一致）、初期表示、件数表示、ページャ、詳細への遷移を確認する。",
+     "precondition": "ROLE-ADM でログイン（center でも同じ）。DATA-SIM-* を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "一覧の表示",
+      "その他"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "パラメータなし",
+        "―"
+       ],
+       "expected": [
+        "該当なし（nodata）",
+        "CSVバーなし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "未検索表示ではなく nodata",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件なし検索",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "検索のみ",
+        "SIM 5件"
+       ],
+       "expected": [
+        "5件、updated_at 降順",
+        "「1-5件 / 5件」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIM番号 完全一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "sn=番号の一部",
+        "―"
+       ],
+       "expected": [
+        "該当なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "完全一致のため一部では出ない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ICCID 完全一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ic=UQ-ACT の ICCID",
+        "―"
+       ],
+       "expected": [
+        "UQ-ACT のみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャリア・事業者",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "cr[]=UQ、pv[]=UQ",
+        "―"
+       ],
+       "expected": [
+        "UQ の SIM",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIMステータス",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ss[]=3,4",
+        "―"
+       ],
+       "expected": [
+        "利用停止・解約",
+        "色クラス付き"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末ステータス",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ds[]=1",
+        "SER-A が新品入庫"
+       ],
+       "expected": [
+        "SER-A に紐づく SIM",
+        "件数は DISTINCT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番 部分一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "mn=型番の一部",
+        "―"
+       ],
+       "expected": [
+        "一致する端末の SIM",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ページャ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なし",
+        "SIM 250件"
+       ],
+       "expected": [
+        "100件ずつ",
+        "「101-200件 / 250件」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "前後2ページと省略記号",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリック",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-ACT の行",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "SIM-19 へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "検索で例外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なし",
+        "DB 障害"
+       ],
+       "expected": [
+        "空表示（エラー表示なし）",
+        "ログ出力"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-18-csv",
+     "title": "SIM-18 SIM管理リストCSVダウンロード",
+     "screens": [
+      "SIM-17",
+      "SIM-18"
+     ],
+     "purpose": "検索結果の CSV 出力と、0件・上限超過時のエラーを確認する。",
+     "precondition": "ROLE-ADM でログインし SIM-17 で検索済み。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "CSVの中身"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "CSV出力",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ss[]=2",
+        "利用中3件"
+       ],
+       "expected": [
+        "sim_list_YYYYmmddHHMMSS.csv",
+        "3行＋ヘッダー、id 昇順"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SJIS。列: SIM番号, ICCID, SIMステータス, キャリア, 事業者, シリアルNo., 変更前シリアルNo., 型番, 端末ステータス, CUI, 加入者CD, 利用開始日, 課金開始日, 解約日",
+       "known": "Z-10",
+       "should": "本番に div=55 が反映済みで列が出る"
+      },
+      {
+       "kind": "正常",
+       "name": "変更前シリアルの特殊値",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ic=対象",
+        "previous_serial_cd='__NO_SERIAL__'"
+       ],
+       "expected": [
+        "CSV",
+        "変更前シリアルNo. 空"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "CSVバー表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なし",
+        "5件"
+       ],
+       "expected": [
+        "「5件CSVをダウンロードする」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "0件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "該当なしの条件で POST",
+        "―"
+       ],
+       "expected": [
+        "toast「ダウンロード対象データがありません」",
+        "SIM-17 へ"
+       ],
+       "prep": "",
+       "op": "ツールで直接 POST（画面では0件時にバーが出ない）",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "上限超過",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なし",
+        "1,000,001件"
+       ],
+       "expected": [
+        "toast「検索結果が上限件数を超えています（上限: 1,000,000件 / 検索結果: 1000001件）」",
+        "SIM-17 へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "div=55 なし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ss[]=2",
+        "csv_formats div=55 未登録"
+       ],
+       "expected": [
+        "CSV",
+        "列が0（要確認）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-10",
+       "should": "本番に div=55 を反映"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "sim-19-detail",
+     "title": "SIM-19〜21 SIM詳細・シリアル更新",
+     "screens": [
+      "SIM-19",
+      "SIM-20",
+      "SIM-21",
+      "SIM-14-D1"
+     ],
+     "purpose": "SIM詳細の表示（UQ固有情報の出し分け）と、シリアルNo. の更新・解除、既存紐づけ確認、サーバー側チェックを確認する。",
+     "precondition": "ROLE-ADM でログイン（center も同じ）。",
+     "conditionColumns": [
+      "操作・入力",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "UQ SIM の表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "UQ-ACT の詳細",
+        "キャリア・事業者 UQ"
+       ],
+       "expected": [
+        "「アクティベート日」表示、UQ固有情報あり",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "CUI／加入者CD／課金開始日。空の日付は '-'",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "UQ以外の表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "OTH-ACT の詳細",
+        "―"
+       ],
+       "expected": [
+        "「利用開始日」表示、UQ固有情報なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル更新（紐づけなし）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "シリアルNo.=SER-A→更新",
+        "SER-A 未紐づけ"
+       ],
+       "expected": [
+        "toast「シリアルを更新しました: SER-A」",
+        "serial_cd=SER-A"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SIM-21 で確認後、そのまま submit",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル更新（既存紐づけ→OK）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "SER-B→更新→OK",
+        "BOUND が SER-B"
+       ],
+       "expected": [
+        "確認「変更すると既存の紐づけが解除されます。よろしいですか？」→更新",
+        "BOUND の紐づけ解除"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "空欄で解除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "シリアルNo. 空→更新",
+        "BOUND"
+       ],
+       "expected": [
+        "確認なしで「シリアルの紐づけを解除しました」",
+        "serial_cd=NULL、unbound_at=現在"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "記号",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "AB#12",
+        "―"
+       ],
+       "expected": [
+        "「シリアルNo.に使用できない記号が含まれています」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "51文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "51文字",
+        "―"
+       ],
+       "expected": [
+        "「シリアルNo.は50文字以内で入力してください」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "NOTEXIST",
+        "―"
+       ],
+       "expected": [
+        "「シリアルNo.[NOTEXIST]がserialsテーブルに存在しません」",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない id",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/detail/999999",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "SIM-17 へリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "SIM-21 を GET",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "GET /check_existing_bindings",
+        "―"
+       ],
+       "expected": [
+        "405 {\"error\":\"method not allowed\"}",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  }
+ ],
+ "prepData": [
+  {
+   "id": "DATA-DEV-NEW1",
+   "content": "新品入庫の端末",
+   "value": "device_status_cd=1、center_cd=0100080000_01、unis2_cd 末尾≠1、契約なし、model_numbers.return_center_cd=南港"
+  },
+  {
+   "id": "DATA-DEV-RW1",
+   "content": "リワーク再入庫・未出力",
+   "value": "device_status_cd=26、unis2_cd 末尾=1、rework_at=2026-10-01、output_rework_at=NULL"
+  },
+  {
+   "id": "DATA-DEV-RW2",
+   "content": "リワーク再入庫・出力済み",
+   "value": "device_status_cd=26、unis2_cd 末尾=1、rework_at=2026-10-10、output_rework_at=2026-10-11"
+  },
+  {
+   "id": "DATA-DEV-ASSIGN3",
+   "content": "通常新設引き当て済",
+   "value": "device_status_cd=3、契約あり、出荷依頼（serial_cd・contract_cd 一致、引当日あり、キッティング完了日なし）"
+  },
+  {
+   "id": "DATA-DEV-ASSIGN3-NOREQ",
+   "content": "引き当て済だが出荷依頼なし",
+   "value": "device_status_cd=3、対応する shipping_requests なし"
+  },
+  {
+   "id": "DATA-DEV-KIT5",
+   "content": "通常新設キッティング完了",
+   "value": "device_status_cd=5、出荷依頼（引当日・キッティング完了日あり、依頼完了日なし）、device_check_histories あり"
+  },
+  {
+   "id": "DATA-DEV-ASSIGN15",
+   "content": "交換引き当て済",
+   "value": "device_status_cd=15、出荷依頼（引当日あり、キッティング完了日なし）"
+  },
+  {
+   "id": "DATA-DEV-ASSIGN4",
+   "content": "支店在庫引き当て済",
+   "value": "device_status_cd=4、出荷依頼（contract_cd NULL、引当日あり、依頼完了日なし）"
+  },
+  {
+   "id": "DATA-DEV-BRA11",
+   "content": "支店在庫入庫",
+   "value": "device_status_cd=11、支店Aの最小配備数=1"
+  },
+  {
+   "id": "DATA-DEV-PPPOE",
+   "content": "PPPoE 連携対象",
+   "value": "device_status_cd=3、契約の device_types.com_plan_cd='US01'、pppoe_request_contracts に regist のみ"
+  },
+  {
+   "id": "DATA-DEV-INST10",
+   "content": "修理依頼可能な端末",
+   "value": "device_status_cd=10、契約あり、branch_replacement（customer_branch_cd）あり、device_types/sets あり（center_allocation=0）"
+  },
+  {
+   "id": "DATA-DEV-INST10-DS",
+   "content": "直送ありの修理依頼対象",
+   "value": "DATA-DEV-INST10 と同じ＋direct_shipments（contract_cd 一致）あり"
+  },
+  {
+   "id": "DATA-DEV-INST10-NOBR",
+   "content": "管轄倉庫置換なし",
+   "value": "device_status_cd=10、契約の customer_branch_cd が branch_replacement に無い"
+  },
+  {
+   "id": "DATA-DEV-RET20",
+   "content": "回収依頼の端末",
+   "value": "device_status_cd=20、契約・出荷依頼あり、comments(type=collect) 1件、return_center_cd=0100080000_01"
+  },
+  {
+   "id": "DATA-DEV-RET8",
+   "content": "初期不良返品の端末",
+   "value": "device_status_cd=8、出荷依頼あり、return_center_cd=南港"
+  },
+  {
+   "id": "DATA-DEV-RET18",
+   "content": "キャンセル返却予定",
+   "value": "device_status_cd=18、rework_at=NULL、出荷依頼あり、return_center_cd=南港"
+  },
+  {
+   "id": "DATA-DEV-RET18N",
+   "content": "出荷依頼なしの返却端末",
+   "value": "device_status_cd=18、contract_cd=NULL、出荷依頼なし、return_center_cd=南港"
+  },
+  {
+   "id": "DATA-DEV-RET-HK",
+   "content": "返却先が北海道の端末",
+   "value": "device_status_cd=20、return_center_cd=0500011200_01"
+  },
+  {
+   "id": "DATA-DEV-LOST1",
+   "content": "回収不可（南港）",
+   "value": "device_status_cd=23、lost_report_date あり、出荷依頼（request_branch=支店A）・契約・comments(type=uncollect) 2件、return_center_cd=南港"
+  },
+  {
+   "id": "DATA-DEV-LOST2",
+   "content": "回収不可（北海道）",
+   "value": "device_status_cd=23、return_center_cd=0500011200_01"
+  },
+  {
+   "id": "DATA-DEV-LOST-NOCMT",
+   "content": "回収不可・理由コメントなし",
+   "value": "device_status_cd=23、comments(type=uncollect) 0件"
+  },
+  {
+   "id": "DATA-DEV-DUMMY",
+   "content": "ダミーシリアルの端末",
+   "value": "dummy_serials に未削除の行がある serial_cd"
+  },
+  {
+   "id": "DATA-DEV-MULTISIM",
+   "content": "SIM 2件紐づき端末",
+   "value": "sims に serial_cd 一致・未削除の行が2件"
+  },
+  {
+   "id": "DATA-DEV-SIM1",
+   "content": "未紐づけ SIM",
+   "value": "sims.iccid=8981000000000000001、serial_cd=NULL"
+  },
+  {
+   "id": "CSV-DEV-NEW-OK",
+   "content": "新規端末CSV（正常）",
+   "value": "SJIS、ヘッダー＋2行。serial_cd=TEST-0001/0002、model_number=device_types にある型番、division_cd=1、4列目空、control_code=0"
+  },
+  {
+   "id": "CSV-DEV-NEW-ICCID",
+   "content": "新規端末CSV（ICCID付き）",
+   "value": "CSV-DEV-NEW-OK の1行目4列目に DATA-DEV-SIM1 の ICCID"
+  },
+  {
+   "id": "CSV-DEV-NEW-DEL",
+   "content": "新規端末CSV（削除）",
+   "value": "1行。serial_cd=DATA-DEV-NEW1、control_code=1"
+  },
+  {
+   "id": "CSV-DEV-MOVE-OK",
+   "content": "管轄センター変更CSV（正常）",
+   "value": "ヘッダー＋1行。型番, NEW1 のシリアル, 3511000101_01, IoT PLATFORMセンター"
+  },
+  {
+   "id": "DATA-SIM-UQ-BEF",
+   "content": "UQ アクティベート前",
+   "value": "carrier_cd=1、provider_cd=1、sim_status_cd=1、cui=NULL"
+  },
+  {
+   "id": "DATA-SIM-UQ-CUI",
+   "content": "UQ CUI 採番済み",
+   "value": "carrier_cd=1、sim_status_cd=1、cui=20桁"
+  },
+  {
+   "id": "DATA-SIM-UQ-SUBED",
+   "content": "UQ 加入者CD登録済み",
+   "value": "carrier_cd=1、sim_status_cd=5、subscriber_cd=8桁"
+  },
+  {
+   "id": "DATA-SIM-UQ-ACT",
+   "content": "UQ 利用中",
+   "value": "carrier_cd=1、sim_status_cd=2、cui・subscriber_cd・billing_start_date あり"
+  },
+  {
+   "id": "DATA-SIM-UQ-NOCUI",
+   "content": "UQ 利用中・CUI なし",
+   "value": "carrier_cd=1、sim_status_cd=2、cui=NULL"
+  },
+  {
+   "id": "DATA-SIM-UQ-NOSUB",
+   "content": "UQ 利用中・加入者CDなし",
+   "value": "carrier_cd=1、sim_status_cd=2、subscriber_cd=NULL"
+  },
+  {
+   "id": "DATA-SIM-UQ-SUSP",
+   "content": "UQ 利用停止",
+   "value": "carrier_cd=1、sim_status_cd=3、suspension_date あり、cui・subscriber_cd あり"
+  },
+  {
+   "id": "DATA-SIM-UQ-CAN-SUSP",
+   "content": "UQ 解約（停止日あり）",
+   "value": "sim_status_cd=4、suspension_date あり"
+  },
+  {
+   "id": "DATA-SIM-UQ-CAN-BILL",
+   "content": "UQ 解約（課金日のみ）",
+   "value": "sim_status_cd=4、suspension_date=NULL、billing_start_date あり"
+  },
+  {
+   "id": "DATA-SIM-UQ-CAN-NONE",
+   "content": "UQ 解約（日付なし）",
+   "value": "sim_status_cd=4、suspension_date・billing_start_date=NULL"
+  },
+  {
+   "id": "DATA-SIM-OTH-ACT",
+   "content": "UQ以外 利用中（U-NEXT）",
+   "value": "carrier_cd=2、provider=U-NEXT、sim_status_cd=2、network_change_flg=0"
+  },
+  {
+   "id": "DATA-SIM-OTH-NU",
+   "content": "UQ以外・U-NEXT 以外",
+   "value": "carrier_cd=2、provider_name≠'U-NEXT'"
+  },
+  {
+   "id": "DATA-SIM-OTH-5G",
+   "content": "5G切替済み",
+   "value": "provider=U-NEXT、network_change_flg='1'"
+  },
+  {
+   "id": "DATA-SIM-OTH-CAN",
+   "content": "UQ以外 解約",
+   "value": "carrier_cd=2、sim_status_cd=4"
+  },
+  {
+   "id": "DATA-SIM-SER-A",
+   "content": "紐づけ先端末（未紐づけ）",
+   "value": "serials に存在、device_status_cd=1、どの SIM にも紐づかない"
+  },
+  {
+   "id": "DATA-SIM-SER-B",
+   "content": "紐づけ先端末（紐づけ済み）",
+   "value": "serials に存在、DATA-SIM-BOUND が紐づく"
+  },
+  {
+   "id": "DATA-SIM-BOUND",
+   "content": "SER-B に紐づく SIM",
+   "value": "sims.serial_cd=SER-B、sim_status_cd=2"
+  },
+  {
+   "id": "CSV-SIM-GEN-OK",
+   "content": "UQ以外SIM CSV（正常）",
+   "value": "ヘッダー「SIM番号,ICCID,キャリアCD,事業者CD,利用開始日」＋2行。carrier_cd=2、provider_cd=存在する値、2026-10-01"
+  },
+  {
+   "id": "CSV-SIM-NST-OK",
+   "content": "UQ NST ファイル（正常）",
+   "value": "固定長2レコード。D の後に ICCID 19桁、D+35 から電話番号11桁"
+  },
+  {
+   "id": "CSV-SIM-SUB-OK",
+   "content": "UQ 加入者CSV（正常）",
+   "value": "SJIS、84列、1行。2列目=受付日時、10列目=DATA-SIM-UQ-CUI の CUI、14列目=加入者コード8桁"
+  },
+  {
+   "id": "CSV-SIM-BILL-OK",
+   "content": "UQ 課金開始日ファイル（正常）",
+   "value": "固定長1レコード。D+加入者CD8桁+'49'+20261001"
+  },
+  {
+   "id": "CSV-SIM-BIND-OK",
+   "content": "紐づけCSV（正常）",
+   "value": "ヘッダー「ICCID,シリアルCD」＋1行（DATA-SIM-UQ-ACT の ICCID, DATA-SIM-SER-A）"
+  }
+ ],
+ "openQuestions": [
+  "DEV-22 日時更新を未ログインで呼んだときの応答（リダイレクトか JSON か）が定義書に無い。",
+  "DEV-16 紛失廃棄の現在ステータス未チェックは定義書の要確認表に番号が無いため、known を「03-DEV-16」とした。",
+  "SIM-13 で途中例外が起きたときの画面表示（toast かモーダルか）が定義書に無い。",
+  "端末ステータス10の名称が定義書に無いため「ステータス10」と記載した。"
+ ]
+}

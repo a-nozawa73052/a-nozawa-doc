@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>各種書類 申込書 | USEN MEMBERS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #3a8bd6;
+    --navy: #1f4c99;
+    --text: #333;
+    --bg: #f1f1f1;
+    --border: #d9d9d9;
+    --th-bg: #dfe2e7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    letter-spacing: .05em;
+  }
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; }
+
+  /* ---------- グローバルバー ---------- */
+  .global-bar {
+    background: #000; color: #fff; height: 34px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0 0 4px;
+  }
+  .global-bar .logo { display: flex; align-items: center; gap: 8px; }
+  .global-bar .logo .usen { font-weight: 700; font-size: 22px; letter-spacing: .08em; }
+  .global-bar .logo .unext { font-size: 8px; font-weight: 700; line-height: 1; border-left: 1px solid #666; padding-left: 6px; }
+  .global-bar .right { display: flex; align-items: center; font-size: 12px; height: 100%; }
+  .global-bar .help {
+    background: #555; height: 100%; display: flex; align-items: center;
+    padding: 0 34px; border-radius: 16px 0 0 16px;
+  }
+  .global-bar .catch { padding: 0 16px; }
+
+  /* ---------- ヘッダー ---------- */
+  header.site-header { background: #fff; border-bottom: 1px solid var(--border); }
+  .header-top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 40px 0 20px;
+  }
+  .brand { font-size: 24px; letter-spacing: .12em; }
+  .brand b { font-weight: 700; }
+  .header-user { display: flex; align-items: center; gap: 36px; font-size: 16px; font-weight: 500; }
+  .header-user .caret::after { content: "▼"; font-size: 10px; margin-left: 6px; }
+  .service-link { display: flex; align-items: center; gap: 10px; color: var(--blue); font-size: 16px; }
+  .grid-icon { display: grid; grid-template-columns: repeat(3, 7px); gap: 3px; }
+  .grid-icon span { width: 7px; height: 7px; background: var(--blue); }
+
+  .header-nav { position: relative; display: flex; justify-content: center; padding: 16px 0 12px; }
+  .hamburger { position: absolute; left: 58px; top: 50%; transform: translateY(-50%); color: var(--blue); font-size: 26px; }
+  .nav-list { display: flex; gap: 8px; }
+  .nav-list a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 24px; border-radius: 30px; font-size: 19px; font-weight: 700;
+  }
+  .nav-list a svg { width: 34px; height: 34px; fill: #555; }
+  .nav-list a.active { background: var(--blue); color: #fff; padding: 14px 36px; }
+  .nav-list a.active svg { fill: #fff; }
+
+  /* ---------- メイン ---------- */
+  main { max-width: 1224px; margin: 0 auto; padding: 42px 0 120px; }
+  .store-select-label { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .store-select { position: relative; }
+  .store-select select {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    background: #fff; border: 1px solid var(--border);
+    padding: 10px 16px; font-size: 21px; font-weight: 700; font-family: inherit; color: var(--text);
+    letter-spacing: .05em;
+  }
+  .store-select::after {
+    content: ""; position: absolute; right: 16px; bottom: 12px;
+    border: 6px solid transparent; border-top: 8px solid #222;
+  }
+
+  .doc-tabs {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    background: #fff; margin-top: 30px; padding: 9px 8px;
+  }
+  .doc-tabs a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 30px; font-size: 20px;
+  }
+  .doc-tabs a::before {
+    content: ""; width: 10px; height: 10px;
+    border-top: 3px solid var(--navy); border-right: 3px solid var(--navy);
+    transform: rotate(45deg); margin-right: 6px;
+  }
+  .doc-tabs a.current { background: var(--bg); }
+
+  h1.page-title { font-size: 30px; font-weight: 700; margin: 70px 0 38px; letter-spacing: .08em; }
+
+  table.doc-table { width: 100%; border-collapse: collapse; background: #fff; border-bottom: 1px solid var(--border); }
+  .doc-table th {
+    background: var(--th-bg); text-align: left; font-size: 18px; font-weight: 700;
+    padding: 14px 36px;
+  }
+  .doc-table td { padding: 30px 36px; font-size: 18px; }
+  .doc-table th + th, .doc-table td + td { border-left: 1px dashed #c8c8c8; }
+  .doc-table .col-date { display: flex; justify-content: space-between; align-items: center; }
+  .btn-detail {
+    display: inline-flex; justify-content: space-between; align-items: center;
+    width: 240px; padding: 15px 22px 15px 20px; margin-right: 0;
+    border: 1px solid var(--navy); border-radius: 3px;
+    color: var(--navy); font-size: 18px; font-weight: 500; background: #fff;
+  }
+  .btn-detail::after {
+    content: ""; width: 7px; height: 7px;
+    border-top: 2px solid var(--navy); border-right: 2px solid var(--navy);
+    transform: rotate(45deg);
+  }
+  .btn-detail:hover { background: #f3f6fb; }
+
+  /* ---------- フッター ---------- */
+  footer { background: #000; color: #fff; }
+  .footer-inner { max-width: 1224px; margin: 0 auto; padding: 48px 0 40px; }
+  .footer-head { display: flex; justify-content: space-between; align-items: center; }
+  .footer-logo { display: flex; align-items: center; gap: 14px; }
+  .footer-logo .usen { font-size: 46px; font-weight: 700; letter-spacing: .08em; }
+  .footer-logo .unext { border-left: 1px solid #666; padding-left: 14px; font-size: 13px; font-weight: 700; line-height: 1.1; }
+  .footer-logo .unext small { display: block; font-size: 9px; font-weight: 400; }
+  .facebook { display: flex; align-items: center; gap: 12px; font-size: 22px; }
+  .facebook .icon {
+    width: 48px; height: 48px; border-radius: 50%; background: #1877f2;
+    display: flex; align-items: flex-end; justify-content: center;
+    font-weight: 700; font-size: 38px; font-family: Arial, sans-serif; overflow: hidden;
+  }
+  .footer-body { display: grid; grid-template-columns: 294px 1fr; margin-top: 50px; }
+  .footer-links li { font-size: 15px; line-height: 2; }
+  .footer-services .industry-label { text-align: right; color: #666; font-size: 15px; }
+  .footer-services .row {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #555; padding: 6px 0 20px; font-size: 15px;
+  }
+  .footer-services .industries { display: flex; gap: 26px; font-size: 17px; }
+  .footer-services .cats { display: flex; gap: 0; margin-top: 18px; font-size: 15px; font-weight: 700; }
+  .footer-services .cats li:nth-child(1) { width: 210px; }
+  .footer-services .cats li:nth-child(2) { width: 188px; }
+  .footer-services .cats li:nth-child(3) { width: 268px; }
+  .footer-services .cats li:nth-child(4) { font-weight: 400; }
+  /* ---------- 列・行の編集 ---------- */
+  .edit-toolbar {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: flex; gap: 8px; padding: 10px; background: #fff;
+    border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  .edit-toolbar button {
+    padding: 8px 16px; border: 1px solid var(--navy); border-radius: 3px;
+    background: #fff; color: var(--navy); font-family: inherit; font-size: 14px; cursor: pointer;
+  }
+  .edit-toolbar button.on { background: var(--navy); color: #fff; }
+  body.editing [data-edit] { outline: 2px dashed var(--blue); outline-offset: 4px; cursor: text; min-width: 1em; display: inline-block; }
+  body.editing [data-edit]:focus { outline-style: solid; background: #fffbe6; }
+
+  .ctrl { display: none; gap: 4px; }
+  body.editing .ctrl { display: inline-flex; }
+  .doc-table th .ctrl { margin-left: 14px; vertical-align: middle; }
+  .ctrl button {
+    width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--navy);
+    background: #fff; color: var(--navy); font-size: 16px; line-height: 1; cursor: pointer;
+  }
+  .ctrl button.minus { border-color: #c0392b; color: #c0392b; }
+  .ctrl button:disabled { opacity: .3; cursor: default; }
+  .doc-table .ctrl-cell { display: none; width: 1%; white-space: nowrap; padding-left: 0; padding-right: 20px; }
+  body.editing .doc-table .ctrl-cell { display: table-cell; }
+  .doc-table th.ctrl-cell, .doc-table td.ctrl-cell { border-left: none; }
+</style>
+</head>
+<body>
+
+<div class="global-bar">
+  <div class="logo"><span class="usen">USEN</span><span class="unext">U-NEXT<br><small>HOLDINGS</small></span></div>
+  <div class="right">
+    <a class="help" href="#">ヘルプ・サポート</a>
+    <span class="catch">お店の未来を創造する</span>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="header-top">
+    <div class="brand"><b>USEN</b> MEMBERS</div>
+    <div class="header-user">
+      <span class="caret">ようこそ USEN MEMBERSデモ用 さま</span>
+      <a class="service-link" href="#">
+        <span class="grid-icon"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+        サービス
+      </a>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a class="hamburger" href="#" aria-label="メニュー">☰</a>
+    <ul class="nav-list">
+      <li><a href="#">
+        <svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v9h5v-6h4v6h5v-9h3z"/></svg>トップ</a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24"><path d="M5 2h14v20H5zM7 4v3h4V4zm0 6v2h10v-2zm0 4v2h10v-2zm0 4v2h10v-2z"/></svg>ご請求情報</a></li>
+      <li><a class="active" href="#">
+        <svg viewBox="0 0 24 24"><path d="M5 2h14v20H5zm3 5v2h8V7zm0 4v2h8v-2zm0 4v2h8v-2z"/></svg>各種書類</a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="5"/><path d="M3 22c0-5 4-8 9-8s9 3 9 8z"/></svg>アカウント管理</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <p class="store-select-label">確認したい店舗を選択してください</p>
+  <div class="store-select">
+    <select>
+      <option>UMデモ店舗　渋谷店様 490008357</option>
+    </select>
+  </div>
+
+  <nav class="doc-tabs">
+    <a href="application.html" class="current">申込書</a>
+    <a href="delivery.html">納品書兼作業完了報告書</a>
+    <a href="contractconfirm.html">ご契約内容確認書</a>
+  </nav>
+
+  <h1 class="page-title">申込書</h1>
+
+  <table class="doc-table" id="doc-table"></table>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-head">
+      <div class="footer-logo"><span class="usen">USEN</span><span class="unext">U-NEXT<small>HOLDINGS</small></span></div>
+      <a class="facebook" href="#"><span class="icon">f</span>Facebook</a>
+    </div>
+    <div class="footer-body">
+      <ul class="footer-links">
+        <li><a href="#">会社概要</a></li>
+        <li><a href="#">ミッション</a></li>
+        <li><a href="#">社長メッセージ</a></li>
+        <li><a href="#">役員一覧</a></li>
+      </ul>
+      <div class="footer-services">
+        <p class="industry-label">業種別サービス一覧</p>
+        <div class="row">
+          <span>USENのサービス一覧</span>
+          <ul class="industries">
+            <li>飲食店</li><li>理美容</li><li>小売店</li><li>オフィス</li><li>病院</li><li>ホテル</li>
+          </ul>
+        </div>
+        <ul class="cats">
+          <li>BGM・映像</li><li>POSレジ 他</li><li>開業サポート</li><li>WEBメディア</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="edit-toolbar">
+  <button type="button" id="edit-toggle">列・行を編集</button>
+  <button type="button" id="edit-reset">元に戻す</button>
+</div>
+
+<script>
+  // 列・行の追加/削除と文字の編集。内容はブラウザ(localStorage)に保存する
+  (function () {
+    var KEY = 'ace-after-application-table-v2';
+    var INITIAL = {
+      cols: ['年月日', '申込み名称'],
+      rows: [
+      ['2026年6月', 'USEN_{契約先名称}_{申込み内容}'],
+      ['2026年5月', 'USEN_コーポレーション_{契約内容}']
+    ]
+    };
+    var table = document.getElementById('doc-table');
+    var toggle = document.getElementById('edit-toggle');
+    var editing = false;
+    var state = load();
+
+    function load() {
+      try {
+        var d = JSON.parse(localStorage.getItem(KEY));
+        if (d && d.cols && d.cols.length && d.rows) return d;
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(INITIAL));
+    }
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    }
+    function ctrl(onPlus, onMinus, minusDisabled, label) {
+      var box = el('span', 'ctrl');
+      var plus = el('button', 'plus', '+');
+      var minus = el('button', 'minus', '−');
+      plus.type = minus.type = 'button';
+      plus.title = label + 'を追加';
+      minus.title = label + 'を削除';
+      minus.disabled = minusDisabled;
+      plus.addEventListener('click', onPlus);
+      minus.addEventListener('click', onMinus);
+      box.appendChild(plus);
+      box.appendChild(minus);
+      return box;
+    }
+    function editable(text, onChange) {
+      var span = el('span', null, text);
+      span.setAttribute('data-edit', '');
+      if (editing) span.contentEditable = 'plaintext-only';
+      span.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+      });
+      span.addEventListener('blur', function () { onChange(span.textContent.trim()); save(); });
+      return span;
+    }
+
+    function render() {
+      table.innerHTML = '';
+      var last = state.cols.length - 1;
+
+      var thead = el('thead');
+      var htr = el('tr');
+      state.cols.forEach(function (name, c) {
+        var th = el('th');
+        th.appendChild(editable(name, function (v) { state.cols[c] = v; }));
+        th.appendChild(ctrl(
+          function () { addCol(c); },
+          function () { removeCol(c); },
+          state.cols.length <= 1, '列'));
+        htr.appendChild(th);
+      });
+      htr.appendChild(el('th', 'ctrl-cell'));
+      thead.appendChild(htr);
+      table.appendChild(thead);
+
+      var tbody = el('tbody');
+      state.rows.forEach(function (row, r) {
+        var tr = el('tr');
+        state.cols.forEach(function (_, c) {
+          var td = el('td');
+          var text = editable(row[c] || '', function (v) { state.rows[r][c] = v; });
+          if (c === last) {
+            // 最終列には「詳細を見る」ボタンを並べる
+            var wrap = el('div', 'col-date');
+            var btn = el('a', 'btn-detail', '詳細を見る');
+            btn.href = '#';
+            wrap.appendChild(text);
+            wrap.appendChild(btn);
+            td.appendChild(wrap);
+          } else {
+            td.appendChild(text);
+          }
+          tr.appendChild(td);
+        });
+        var ctd = el('td', 'ctrl-cell');
+        ctd.appendChild(ctrl(
+          function () { addRow(r); },
+          function () { removeRow(r); },
+          state.rows.length <= 1, '行'));
+        tr.appendChild(ctd);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+    }
+
+    // 追加は押した列/行のすぐ後ろに入れる
+    function addCol(c) {
+      state.cols.splice(c + 1, 0, '新しい列');
+      state.rows.forEach(function (row) { row.splice(c + 1, 0, ''); });
+      save(); render();
+    }
+    function removeCol(c) {
+      state.cols.splice(c, 1);
+      state.rows.forEach(function (row) { row.splice(c, 1); });
+      save(); render();
+    }
+    function addRow(r) {
+      state.rows.splice(r + 1, 0, state.cols.map(function () { return ''; }));
+      save(); render();
+    }
+    function removeRow(r) {
+      state.rows.splice(r, 1);
+      save(); render();
+    }
+
+    toggle.addEventListener('click', function () {
+      editing = document.body.classList.toggle('editing');
+      toggle.classList.toggle('on', editing);
+      toggle.textContent = editing ? '編集を終了' : '列・行を編集';
+      render();
+    });
+
+    document.getElementById('edit-reset').addEventListener('click', function () {
+      state = JSON.parse(JSON.stringify(INITIAL));
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      render();
+    });
+
+    render();
+  })();
+</script>
+</body>
+</html>

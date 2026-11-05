@@ -1,0 +1,4985 @@
+{
+ "source": "05_CP検証機_事務_マスター.md",
+ "groups": [
+  {
+   "id": "mirroring",
+   "title": "CP検証機管理",
+   "lead": "CP検証機の検索から契約へのひも付け変更までと、認可チェックがない現行の動き（Z-1）を確認する。",
+   "concepts": [
+    {
+     "id": "mir-00-auth",
+     "title": "MIR-01〜04 CP検証機管理：アクセス権限",
+     "screens": [
+      "MIR-01",
+      "MIR-02",
+      "MIR-03",
+      "MIR-04"
+     ],
+     "purpose": "CP検証機管理を開けるロールと、ヘッダーメニューの表示を確認する。4コントローラは認可チェックがないため、権限外・未ログインでも開けてしまう現行の動き（Z-1）を記録する。",
+     "precondition": "DATA-MIR-DEV1 登録済み。URL は /manage/cp/mirroring/device を直接入力して開く。",
+     "conditionColumns": [
+      "ロール",
+      "アクセス方法"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "メニュー"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "Admin で検証機リストを開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ROLE-ADM",
+        "ヘッダー「CP検証機管理」"
+       ],
+       "expected": [
+        "MIR-01 が表示される",
+        "メニュー表示あり"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "ヘッダーの「CP検証機管理」を押す",
+       "detail": "タイトル「CP検証機リスト」、未検索表示（parts/nosearch）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "CP で検証機リストを開く",
+       "role": "ROLE-CP",
+       "conditions": [
+        "ROLE-CP",
+        "ヘッダー「CP検証機管理」"
+       ],
+       "expected": [
+        "MIR-01 が表示される",
+        "メニュー表示あり"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "ヘッダーの「CP検証機管理」を押す",
+       "detail": "views/parts/side.php で user_div=1/5 にだけメニューを表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "センターにはメニューが出ない",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "ヘッダーを確認"
+       ],
+       "expected": [
+        "―",
+        "「CP検証機管理」なし"
+       ],
+       "prep": "",
+       "op": "ログイン後のヘッダーを確認する",
+       "detail": "メニューは Admin・CP のみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインで URL 直打ち",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-GUEST",
+        "URL直打ち"
+       ],
+       "expected": [
+        "MIR-01 が表示される（ログイン画面へ行かない）",
+        "―"
+       ],
+       "prep": "ログアウトした状態",
+       "op": "/manage/cp/mirroring/device を開く",
+       "detail": "Controller_Hybrid 直接継承のため Auth::check() が動かない",
+       "known": "Z-1",
+       "should": "ログイン画面 /manage/login へリダイレクトされる"
+      },
+      {
+       "kind": "異常",
+       "name": "現地ロールで URL 直打ち",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "URL直打ち"
+       ],
+       "expected": [
+        "MIR-01 が表示される（403にならない）",
+        "メニュー表示なし"
+       ],
+       "prep": "",
+       "op": "/manage/cp/mirroring/device を開く",
+       "detail": "has_access が実行されない",
+       "known": "Z-1",
+       "should": "403画面（COM-04）になる"
+      },
+      {
+       "kind": "異常",
+       "name": "事務ロールで URL 直打ち",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ROLE-JIM",
+        "URL直打ち"
+       ],
+       "expected": [
+        "MIR-01 が表示される（403にならない）",
+        "メニュー表示なし"
+       ],
+       "prep": "",
+       "op": "/manage/cp/mirroring/device を開く",
+       "detail": "",
+       "known": "Z-1",
+       "should": "403画面になる"
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインで適用（MIR-04）に直接POST",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-GUEST",
+        "POST serial_cd / contract_cd"
+       ],
+       "expected": [
+        "MIR-01 へ戻る",
+        "―"
+       ],
+       "prep": "DATA-MIR-DEV1、DATA-MIR-CON1",
+       "op": "ツール等で /manage/cp/mirroring/comp に serial_cd=DATA-MIR-DEV1、contract_cd=DATA-MIR-CON1 を POST",
+       "detail": "mirroring_devices_mapping が INSERT/UPDATE される（ログイン・権限チェックなし）。mosauth に Cp_Mirroring_Comp の定義もない",
+       "known": "Z-1",
+       "should": "ログイン画面へリダイレクトされ、DB は更新されない"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mir-01-search",
+     "title": "MIR-01 CP検証機リスト：検索条件",
+     "screens": [
+      "MIR-01"
+     ],
+     "purpose": "検索条件それぞれの部分一致と、連携状況の絞り込み、未検索・0件表示を確認する。",
+     "precondition": "ROLE-ADM でログイン。DATA-MIR-DEV1〜DEV3 を登録済み。ページングはなく全件表示。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "一覧の表示",
+      "件数・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示は検索しない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "GETパラメータなし",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "一覧なし（未検索表示）",
+        "件数非表示"
+       ],
+       "prep": "",
+       "op": "/manage/cp/mirroring/device を開く",
+       "detail": "parts/nosearch を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "CP検証機名の部分一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "mirroring_devices_name_s=名称の一部",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "名称を含む検証機だけ",
+        "n件"
+       ],
+       "prep": "DATA-MIR-DEV1（名称「検証機A-01」）",
+       "op": "CP検証機名に「A-0」を入れて検索",
+       "detail": "LIKE '%値%'。入力値は再表示される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番の部分一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "model_number_s=型番の一部",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "型番を含む検証機だけ",
+        "n件"
+       ],
+       "prep": "DATA-MIR-DEV1/DEV2（型番 MDL-CP1）",
+       "op": "型番に「CP1」を入れて検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末シリアルの部分一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd_s=シリアルの一部",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "該当シリアルの検証機だけ",
+        "1件"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "端末シリアルに DEV1 のシリアルの一部を入れて検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "顧客CD・顧客名の部分一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "unis_customer_cd_s / customer_name_s",
+        "DEV1 にひも付けあり"
+       ],
+       "expected": [
+        "DEV1 だけ表示",
+        "1件"
+       ],
+       "prep": "DATA-MIR-DEV1（DATA-MIR-CON1 にひも付け済み）",
+       "op": "顧客CD、続けて顧客名で検索",
+       "detail": "contracts を LEFT JOIN（deleted_at IS NULL）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "契約CDの部分一致",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "customer_contract_cd_s",
+        "DEV1 にひも付けあり"
+       ],
+       "expected": [
+        "DEV1 だけ表示",
+        "1件"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "契約CDの一部で検索",
+       "detail": "mirroring_devices_mapping.customer_contract_cd を LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "連携状況：完了のみ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "linkage_complete_s=1",
+        "DEV1=完了、DEV2=未完了"
+       ],
+       "expected": [
+        "DEV1 だけ表示（緑「完了」）",
+        "1件"
+       ],
+       "prep": "DATA-MIR-DEV1、DATA-MIR-DEV2",
+       "op": "「完了」だけチェックして検索",
+       "detail": "mapping.updated_at < serials.uradio_dl_complete_date",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "連携状況：未完了のみ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "linkage_incomplete_s=2",
+        "DEV2=未完了、DEV3=ひも付けなし"
+       ],
+       "expected": [
+        "DEV2・DEV3 を表示（赤「未完了」）",
+        "2件"
+       ],
+       "prep": "DATA-MIR-DEV2、DATA-MIR-DEV3",
+       "op": "「未完了」だけチェックして検索",
+       "detail": "updated_at >= dl日 OR updated_at IS NULL OR dl日 IS NULL",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "連携状況：未完了＋型番を同時指定",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "linkage_incomplete_s=2＋model_number_s=MDL-CP1",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "型番条件が効かず、未完了の行が混ざる可能性（要確認）",
+        "―"
+       ],
+       "prep": "DATA-MIR-DEV1〜DEV3（DEV3 は型番 MDL-CP2）",
+       "op": "型番「MDL-CP1」と「未完了」で検索",
+       "detail": "未完了条件が or_where で連結される（要確認）",
+       "known": "05要確認-M-4",
+       "should": "型番条件と未完了条件が AND で効き、MDL-CP1 の未完了だけ表示される"
+      },
+      {
+       "kind": "正常",
+       "name": "連携状況：両方チェック",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "完了・未完了の両方ON",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "全件表示（絞り込みなし）",
+        "3件"
+       ],
+       "prep": "",
+       "op": "両方チェックして検索",
+       "detail": "両方チェック／両方未チェックは絞り込まない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "該当0件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "存在しない名称",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "該当なし表示（nodata）",
+        "件数非表示"
+       ],
+       "prep": "",
+       "op": "CP検証機名に「ZZZ」を入れて検索",
+       "detail": "件数ラベルは1件以上のときだけ表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "検索条件クリア",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件入力済みの状態",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "未検索表示に戻る",
+        "入力値が消える"
+       ],
+       "prep": "",
+       "op": "「検索条件クリア」を押す",
+       "detail": "/manage/cp/mirroring/device（GETなし）へ遷移",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "連携状況",
+       "values": "完了(1) / 未完了(2)",
+       "meaning": "mapping.updated_at と serials.uradio_dl_complete_date の比較で判定"
+      }
+     ]
+    },
+    {
+     "id": "mir-01-list",
+     "title": "MIR-01 CP検証機リスト：一覧・ソート・行選択",
+     "screens": [
+      "MIR-01"
+     ],
+     "purpose": "一覧の並び順、列見出しのソート、行選択と変更画面への遷移、戻ってきたときのフラッシュ表示を確認する。",
+     "precondition": "ROLE-ADM でログインし、全件が出る条件（両方チェック等）で検索済み。DATA-MIR-DEV1〜DEV3。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期ソートは端末シリアル昇順",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "検索のみ",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "serial_cd 昇順で表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "検索する",
+       "detail": "ソート指定なしは serial_cd ASC",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "列見出しで昇順・降順切替",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「顧客名」見出しを2回クリック",
+        "DEV1〜3"
+       ],
+       "expected": [
+        "asc→desc で並びが変わる",
+        "MIR-01 再表示（GET）"
+       ],
+       "prep": "",
+       "op": "顧客名の見出しを2回押す",
+       "detail": "customer_name_o が asc/desc で切り替わる。検索条件は保持",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ひも付けなしの検証機",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "検索",
+        "DEV3（mapping なし）"
+       ],
+       "expected": [
+        "顧客CD・顧客名・契約CDが空、連携状況「未完了」",
+        "―"
+       ],
+       "prep": "DATA-MIR-DEV3",
+       "op": "検索して DEV3 の行を確認",
+       "detail": "LEFT JOIN のため空欄で表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行を選択すると選択ボックスを表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DEV1 の行をクリック",
+        "DEV1"
+       ],
+       "expected": [
+        "行が選択状態、「ミラーリング内容を変更する」表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "DEV1 の行をクリック",
+       "detail": "選んだ行のテキストが hidden 6項目に設定される",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同じ行の再クリックで選択解除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "選択中の行をもう一度クリック",
+        "DEV1"
+       ],
+       "expected": [
+        "選択解除、ボックスが閉じる",
+        "―"
+       ],
+       "prep": "",
+       "op": "DEV1 の行を2回クリック",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "別の行を選ぶと選択が移る",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DEV1→DEV2 の順にクリック",
+        "DEV1・DEV2"
+       ],
+       "expected": [
+        "DEV2 だけ選択状態",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "1件だけ選択できる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "変更画面に進む",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DEV1 選択→「変更画面に進む」",
+        "DEV1"
+       ],
+       "expected": [
+        "MIR-02 が初期表示",
+        "POST で MIR-02 へ"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "DEV1 を選んで「変更画面に進む」",
+       "detail": "hidden 6項目（名称・型番・シリアル・顧客CD・顧客名・契約CD）を POST",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "パラメータエラーで戻ったときのフラッシュ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "MIR-02/03/04 から redirect",
+        "―"
+       ],
+       "expected": [
+        "画面上部に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "MIR-01"
+       ],
+       "prep": "",
+       "op": "MIR-02 に present_* なしで GET アクセスする",
+       "detail": "M-2 によりブラウザがリダイレクトしない場合あり（要確認）",
+       "known": "05要確認-M-2",
+       "should": "302 で MIR-01 に戻りメッセージが出る"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mir-02-contract",
+     "title": "MIR-02 契約の検索",
+     "screens": [
+      "MIR-02"
+     ],
+     "purpose": "選んだ検証機の型番に対応する契約だけを検索できること、検索条件・ソート・ページャ、パラメータ不正時の戻りを確認する。",
+     "precondition": "ROLE-ADM。MIR-01 で DATA-MIR-DEV1（型番 MDL-CP1）を選んで遷移。DATA-MIR-DTYPE で MDL-CP1 と NeOS品目 MIRITEM1 がひも付く。契約 DATA-MIR-CON1〜CON3。",
+     "conditionColumns": [
+      "入力・操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初回表示は検索しない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "MIR-01 から POST",
+        "CON1〜3"
+       ],
+       "expected": [
+        "一覧は「該当なし（nodata）」",
+        "―"
+       ],
+       "prep": "",
+       "op": "MIR-01 から「変更画面に進む」",
+       "detail": "is_initial_display。未検索表示ではなく nodata を表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件なしで検索：型番対応の契約だけ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なしで検索",
+        "CON1/CON2=MIRITEM1、CON3=別品目"
+       ],
+       "expected": [
+        "CON1・CON2 だけ表示",
+        "n件"
+       ],
+       "prep": "DATA-MIR-CON1〜CON3",
+       "op": "何も入れずに「検索」",
+       "detail": "device_types 経由で mirroring_devices.model_number = present_model_number が必須条件。削除済み契約は除外",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "顧客CD・顧客名で検索",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "unis_customer_cd_s / customer_name_s",
+        "CON1〜2"
+       ],
+       "expected": [
+        "部分一致する契約だけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "顧客CD の一部で検索",
+       "detail": "LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "NeOS品目CD・品目名で検索",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "neos_item_cd_s / neos_item_name_s",
+        "CON1〜2"
+       ],
+       "expected": [
+        "部分一致する契約だけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "契約ステータスの複数選択",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "contract_status_cd_s[]=受注・確定",
+        "CON1=受注、CON2=解約"
+       ],
+       "expected": [
+        "CON1 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "契約ステータスで受注・確定を選んで検索",
+       "detail": "IN 条件。一覧では名称（受注/確定/キャンセル/解約）で表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "契約CDで検索",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "contract_cd_s",
+        "CON1〜2"
+       ],
+       "expected": [
+        "部分一致する契約だけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "GROUP BY contract_cd",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期ソートと列ソート",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "検索→「契約CD」見出しクリック",
+        "CON1〜2"
+       ],
+       "expected": [
+        "初期は NeOS品目CD 昇順、クリックで契約CD順",
+        "GET で再表示（present_* 保持）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ページャー（80件/頁）",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件なしで検索",
+        "DATA-MIR-CON-MANY（81件）"
+       ],
+       "expected": [
+        "1頁目80件、2頁目1件",
+        "ページ移動しても present_* を保持"
+       ],
+       "prep": "DATA-MIR-CON-MANY",
+       "op": "2ページ目へ移動",
+       "detail": "num_link 5、先頭/末尾あり",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "検索条件クリア",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "条件入力済み",
+        "―"
+       ],
+       "expected": [
+        "条件が消え、一覧は nodata",
+        "is_remove=1 付き GET"
+       ],
+       "prep": "",
+       "op": "「検索条件クリア」を押す",
+       "detail": "現在値（present_*）は引き継ぐ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行選択して確認画面へ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CON2 を選択→「変更内容の確認画面に進む」",
+        "CON2"
+       ],
+       "expected": [
+        "「ミラーリング内容を確認する」表示→MIR-03",
+        "POST で MIR-03"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "present_* と変更後6項目を POST",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "present_* がない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "present_* なしで GET",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（ステータス400）"
+       ],
+       "prep": "",
+       "op": "/manage/cp/mirroring/contract を直接開く",
+       "detail": "ログ「【CP検証機管理_契約の検索画面処理】パラメータにpresent_xxxまたはxxxが設定されていません。」。400 で Location を返すためブラウザが遷移しない可能性（要確認）",
+       "known": "05要確認-M-2",
+       "should": "3xx で MIR-01 へリダイレクトする"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "present_model_number が空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "present_model_number=空",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）"
+       ],
+       "prep": "",
+       "op": "URL の present_model_number を空にして開く",
+       "detail": "ログ「…の値が設定されていません。」",
+       "known": "05要確認-M-2",
+       "should": "3xx でリダイレクトする"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "present_model_number が15文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "present_model_number=15文字",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "14文字以下。ログ「…の値が不正な値です。」",
+       "known": "05要確認-M-2",
+       "should": "3xx でリダイレクトする"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "present_serial_cd が51文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "present_serial_cd=51文字",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "50文字以下。ログ「…の値が不正な値です。」",
+       "known": "05要確認-M-2",
+       "should": "3xx でリダイレクトする"
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "現在値",
+       "values": "present_*（初回は POST の旧名）",
+       "meaning": "MIR-01 で選んだ検証機の情報。型番が契約検索の必須条件になる"
+      }
+     ]
+    },
+    {
+     "id": "mir-03-conf-comp",
+     "title": "MIR-03 変更内容の確認／MIR-04 適用",
+     "screens": [
+      "MIR-03",
+      "MIR-04"
+     ],
+     "purpose": "確認画面の表示内容、適用時の mirroring_devices_mapping の INSERT/UPDATE、連携状況の変化、パラメータ不正時の動きを確認する。",
+     "precondition": "ROLE-ADM。MIR-02 で変更後の契約を選んで MIR-03 を表示する。",
+     "conditionColumns": [
+      "入力・操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "現在と変更後を並べて表示",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "MIR-02 から POST",
+        "DEV1（現在 CON1）→CON2"
+       ],
+       "expected": [
+        "検証機名・型番・シリアル、現在の顧客/契約、変更後の顧客/契約",
+        "DB 参照なし"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "MIR-02 で CON2 を選んで確認画面へ",
+       "detail": "POST 値をそのまま表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "お客様の端末検索へ戻る",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "戻るリンク",
+        "―"
+       ],
+       "expected": [
+        "MIR-02 が初期表示（nodata）",
+        "GET is_remove=1"
+       ],
+       "prep": "",
+       "op": "「お客様の端末検索へ戻る」を押す",
+       "detail": "present_* を引き継ぐ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "適用：ひも付けなし→INSERT",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「適用」",
+        "DEV3（mapping なし）→CON2"
+       ],
+       "expected": [
+        "MIR-01 に戻る（成功メッセージなし）",
+        "mapping に1行 INSERT"
+       ],
+       "prep": "DATA-MIR-DEV3",
+       "op": "DEV3 を選び CON2 で適用",
+       "detail": "mirroring_devices_serial_cd=DEV3、customer_contract_cd=CON2、created_at/updated_at=現在。redirect のステータスは200（要確認）",
+       "known": "05要確認-M-2",
+       "should": "3xx で MIR-01 へリダイレクトする"
+      },
+      {
+       "kind": "正常",
+       "name": "適用：ひも付けあり→UPDATE",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「適用」",
+        "DEV1（CON1）→CON2"
+       ],
+       "expected": [
+        "MIR-01 に戻る",
+        "customer_contract_cd=CON2、updated_at 更新"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "",
+       "detail": "トランザクションなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "適用後は連携状況が未完了になる",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "適用後に MIR-01 で検索",
+        "DEV1（適用前は完了）"
+       ],
+       "expected": [
+        "DEV1 の連携状況「未完了」",
+        "―"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "",
+       "detail": "updated_at が uradio_dl_complete_date より新しくなるため",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "適用ボタンの二重送信防止",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「適用」を連打",
+        "DEV1"
+       ],
+       "expected": [
+        "押下後ボタンが無効",
+        "UPDATE は1回"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "js-prevent-double-submit",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-03：present_serial_cd なし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "POST から present_serial_cd を除く",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ログ「【CP検証機管理_変更内容の確認画面処理】POSTデータにpresent_serial_cdが設定されていません。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-03：present_serial_cd が空文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "present_serial_cd=空",
+        "―"
+       ],
+       "expected": [
+        "エラーにならず確認画面を表示する可能性（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "空文字チェックが serial_cd キーを見ている",
+       "known": "05要確認-M-5",
+       "should": "PARAMETER_ERROR_MSG で MIR-01 へ戻る"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-03：contract_cd が空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "contract_cd=空",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ログ「…POSTデータにcontract_cdが設定されていません。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-03：present_serial_cd が51文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "present_serial_cd=51文字",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ログ「…POSTデータのpresent_serial_cdが不正な値です。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-04：serial_cd が空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd=空で POST",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）、DB 更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ログ「【CP検証機管理_検証機紐づけ変更適用処理】POSTデータにserial_cdが設定されていません。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-04：contract_cd が空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "contract_cd=空で POST",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "redirect（400）、DB 更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "contract_cd 版のログ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "MIR-04：serial_cd が51文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd=51文字",
+        "―"
+       ],
+       "expected": [
+        "MIR-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "DB 更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ログ「…POSTデータのserial_cdが不正な値です。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "MIR-04：更新件数0",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "INSERT/UPDATE が0件になる状態",
+        "DB を読み取り専用等にする"
+       ],
+       "expected": [
+        "MIR-01 に 「システムエラーを検知したため、処理を中断しました。」",
+        "redirect（500）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ログ「CP検証機紐づけ情報のDB登録・変更処理に失敗」",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  },
+  {
+   "id": "jimu",
+   "title": "事務・受付C",
+   "lead": "直送案件の検索・CSV取込・ファイル出力・詳細編集と、出力履歴の再ダウンロードを確認する。",
+   "concepts": [
+    {
+     "id": "jim-00-auth",
+     "title": "JIM 事務・受付C：アクセス権限",
+     "screens": [
+      "JIM-01",
+      "JIM-08"
+     ],
+     "purpose": "直送案件・出力履歴を開けるロール（administrator / center / jimu）と、それ以外が403になることを確認する。",
+     "precondition": "DATA-JIM-DS1 登録済み。",
+     "conditionColumns": [
+      "ロール",
+      "アクセス先"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "メニュー"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "Admin で直送案件を開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ROLE-ADM",
+        "/manage/jimu/shipment/list"
+       ],
+       "expected": [
+        "JIM-01（未検索表示）",
+        "「直送案件」「出力履歴」あり"
+       ],
+       "prep": "",
+       "op": "ヘッダー「直送案件」",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "センターで直送案件を開く",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "/manage/jimu/shipment/list"
+       ],
+       "expected": [
+        "JIM-01（未検索表示）",
+        "「直送案件」「出力履歴」あり"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "事務で直送案件・出力履歴を開く",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ROLE-JIM",
+        "JIM-01 / JIM-08"
+       ],
+       "expected": [
+        "両方表示される",
+        "「直送案件」「出力履歴」あり"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "現地は403",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "URL直打ち"
+       ],
+       "expected": [
+        "403画面（「アクセスが禁止されています」）",
+        "メニューなし"
+       ],
+       "prep": "",
+       "op": "/manage/jimu/shipment/list を開く",
+       "detail": "Exception_403",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "CP・外部委託・保守委託は403",
+       "role": "ROLE-CP",
+       "conditions": [
+        "ROLE-CP / ROLE-EXT / ROLE-HSU",
+        "JIM-01 / JIM-08"
+       ],
+       "expected": [
+        "403画面",
+        "メニューなし"
+       ],
+       "prep": "",
+       "op": "各ロールで両URLを開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインはログイン画面へ",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-GUEST",
+        "JIM-01"
+       ],
+       "expected": [
+        "/manage/login へリダイレクト",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "Jimu_Shipment_Return の実装なし",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "/manage/jimu/shipment/return"
+       ],
+       "expected": [
+        "403画面になる（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "URL を直接開く",
+       "detail": "権限定義だけがあり、コントローラが存在しない。存在しないURLはログイン済みなら403画面と読める",
+       "known": "05要確認-J-1",
+       "should": "不要な権限定義を削除する（または機能を実装する）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-01-search",
+     "title": "JIM-01 直送案件：検索条件",
+     "screens": [
+      "JIM-01"
+     ],
+     "purpose": "基本条件・詳細条件それぞれの効き方、期間条件の境界、未検索・0件表示、詳細エリアの開閉を確認する。",
+     "precondition": "ROLE-JIM でログイン。DATA-JIM-DS1〜DS4 を登録済み（依頼日・ステータス等が異なる）。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "一覧の表示",
+      "件数・補足"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示は検索しない",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "GETなし",
+        "DS1〜4"
+       ],
+       "expected": [
+        "未検索表示",
+        "件数・顧客数なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "条件なし検索は依頼日<明日",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "条件なしで検索",
+        "DS4=依頼日が明日以降"
+       ],
+       "expected": [
+        "DS1〜3 を表示（DS4 は出ない）",
+        "n件 / n顧客"
+       ],
+       "prep": "DATA-JIM-DS4",
+       "op": "",
+       "detail": "依頼日が両方空なら request_date < 明日",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼日の範囲（境界含む）",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "rdf=DS1の依頼日、rdt=DS2の依頼日",
+        "DS1〜3"
+       ],
+       "expected": [
+        "DS1・DS2 を表示",
+        "「まで」は < まで日+1日"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": ">= から日 AND < まで日+1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "着荷日の範囲",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "adf / adt",
+        "DS1 のみ着荷日あり"
+       ],
+       "expected": [
+        "DS1 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "arrival_date",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "NeOS契約CD の部分一致",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ncd=契約CDの一部",
+        "DS1〜3"
+       ],
+       "expected": [
+        "該当契約だけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "contracts.contract_cd LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "NP審査の複数選択",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "nsn[]=未申請・審査中",
+        "DS1=未申請、DS2=完了"
+       ],
+       "expected": [
+        "DS1 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "IN。1未申請/2審査中/3完了/4不可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "明細ステータスの複数選択",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "dsn[]=確定",
+        "DS1=受注、DS2=確定"
+       ],
+       "expected": [
+        "DS2 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：配送業者・送り状番号",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "scn[]=佐川急便、sn=番号の一部",
+        "DS1=佐川"
+       ],
+       "expected": [
+        "DS1 だけ表示",
+        "詳細エリアが開いた状態"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "sn は shipping_number LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：後続依頼",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "fr[]=取替",
+        "DS3=取替"
+       ],
+       "expected": [
+        "DS3 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：顧客CD・企業名/店舗名",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ccd / cpn",
+        "DS1"
+       ],
+       "expected": [
+        "該当だけ表示",
+        "cpn は企業名 OR 店舗名"
+       ],
+       "prep": "",
+       "op": "店舗名の一部を cpn に入れて検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：型番・シリアルNo.",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "mn / sc",
+        "DS1"
+       ],
+       "expected": [
+        "該当だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.model_number / serial_cd LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：営業担当社員番号",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "spc",
+        "DS1"
+       ],
+       "expected": [
+        "該当だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "contracts.sales_person_cd LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：確定処理日・センター回収日の範囲",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "cdf/cdt、ccf/cct",
+        "DS2"
+       ],
+       "expected": [
+        "該当だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "confirmation_date / center_collect_date",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：明細課金月の範囲",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "bmf=2026/04、bmt=2026/05",
+        "DS1=2026/05"
+       ],
+       "expected": [
+        "DS1 を表示（bmt と一致しても含む）",
+        "―"
+       ],
+       "prep": "DATA-JIM-DS1",
+       "op": "",
+       "detail": ">= bmf AND <= bmt（文字列比較）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：明細課金月「まで」のみ",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "bmt=2026/05 のみ",
+        "DS1=2026/05"
+       ],
+       "expected": [
+        "DS1 は表示されない",
+        "―"
+       ],
+       "prep": "DATA-JIM-DS1",
+       "op": "",
+       "detail": "「まで」のみは < bmt",
+       "known": "05要確認-J-5",
+       "should": "範囲指定と同じく <= で DS1 も表示される"
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：営業所属部署 IS課",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "sb[]=1",
+        "DS1=2105000000、DS2='0'"
+       ],
+       "expected": [
+        "DS1 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "IS課は 2105000000, 2108000200, 2105010000 に展開",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：営業所属部署 アライアンス課",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "sb[]=2",
+        "DS2='0'"
+       ],
+       "expected": [
+        "DS2 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "'0' に展開",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：NeOS品目CD/名",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "nicm",
+        "DS1"
+       ],
+       "expected": [
+        "該当だけ表示",
+        "CD OR 名称"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：直送カテゴリ名",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "dcn[]=DATA-JIM-CAT1",
+        "CAT1 に DS1 の品目"
+       ],
+       "expected": [
+        "DS1 だけ表示",
+        "―"
+       ],
+       "prep": "DATA-JIM-CAT1",
+       "op": "",
+       "detail": "direct_shipment_items から品目CDを取得して IN",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細：品目のない直送カテゴリ",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "dcn[]=DATA-JIM-CAT2",
+        "CAT2 の品目0件"
+       ],
+       "expected": [
+        "0件（nodata）",
+        "―"
+       ],
+       "prep": "DATA-JIM-CAT2",
+       "op": "",
+       "detail": "該当品目が0件なら結果も0件",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "詳細エリアの開閉状態",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "詳細キー（例 ccd）に値あり",
+        "―"
+       ],
+       "expected": [
+        "検索後も詳細エリアが開いている",
+        "「詳細検索」で開閉"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "scn, sn, fr, ccd, cpn, mn, sc, cd, bm, spc, ncd, sb, nicm, dcn のどれか",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "該当0件",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "存在しない顧客CD",
+        "―"
+       ],
+       "expected": [
+        "該当なし表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル情報のない直送案件は出ない",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "条件なしで検索",
+        "DATA-JIM-DS-NOSERIAL"
+       ],
+       "expected": [
+        "その案件は一覧に出ない",
+        "―"
+       ],
+       "prep": "DATA-JIM-DS-NOSERIAL",
+       "op": "",
+       "detail": "結合先の deleted_at 条件が WHERE にあり実質 INNER JOIN",
+       "known": "05要確認-J-6",
+       "should": "LEFT JOIN として表示される（仕様確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "検索条件クリア",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "条件入力済み",
+        "―"
+       ],
+       "expected": [
+        "未検索表示に戻る",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-01-list",
+     "title": "JIM-01 直送案件：一覧・ソート・選択",
+     "screens": [
+      "JIM-01"
+     ],
+     "purpose": "件数・顧客数、並び順、ページャ、行クリックの遷移、チェックと出力ボックスの表示を確認する。",
+     "precondition": "ROLE-JIM。条件なしで検索済み。DATA-JIM-DS1〜DS3、ページャ確認は DATA-JIM-DS-MANY。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "操作・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "件数と顧客数",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "検索",
+        "DS1・DS2 が同じ顧客"
+       ],
+       "expected": [
+        "「3件」「2顧客」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "count(distinct unis_customer_cd)",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期ソート",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "検索",
+        "DS1〜3"
+       ],
+       "expected": [
+        "依頼日 desc、同日は顧客CD asc",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "date(request_date) desc, unis_customer_cd asc",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "列ソート",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "「着荷日」見出しクリック",
+        "DS1〜3"
+       ],
+       "expected": [
+        "着荷日順＋顧客CD asc",
+        "GET 再表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "顧客CD・企業名ソート時は2次キーなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ページャー500件/頁",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "検索",
+        "DS-MANY（501件）"
+       ],
+       "expected": [
+        "1頁目500件、2頁目1件",
+        "―"
+       ],
+       "prep": "DATA-JIM-DS-MANY",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリックで内容詳細へ",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "チェック以外のセルをクリック",
+        "DS1"
+       ],
+       "expected": [
+        "JIM-05 が表示",
+        "検索クエリを引き継ぐ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "/manage/jimu/shipment/detail/view/{shipping_requests.id}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "チェックで出力ボックス表示",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "2行チェック",
+        "DS1〜3"
+       ],
+       "expected": [
+        "「2件選択中」と出力ボタン3つ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": ".js-info",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全選択・全解除",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "全選択チェックを2回",
+        "DS1〜3"
+       ],
+       "expected": [
+        "全行チェック→全解除、ボックス非表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "js-data-item-all-chk",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-02-bulk-csv",
+     "title": "JIM-01-D1／JIM-02 一括更新CSV取込",
+     "screens": [
+      "JIM-01-D1",
+      "JIM-02"
+     ],
+     "purpose": "全項目CSV形式の一括更新で、定義書に書かれた各チェックと更新内容を確認する。列構成は csv_formats(div=40) 次第（Z-15）。",
+     "precondition": "ROLE-JIM。JIM-01 の「ファイルアップロード」でダイアログを開く。CSV は全項目CSV（JIM-04）を出力して編集したもの（SJIS-win、ヘッダーあり）。DATA-JIM-DS1。",
+     "conditionColumns": [
+      "CSVの内容",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "ダイアログ表示",
+      "DB更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ダイアログを開く・キャンセル",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "「ファイルアップロード」→「キャンセル」",
+        "―"
+       ],
+       "expected": [
+        "一括更新csv・送り状csv の2フォーム→閉じる",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "colorbox iframe（/manage/dialog/file_upload）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全項目を変更して取込",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "CSV-JIM-BULK-OK",
+        "DS1"
+       ],
+       "expected": [
+        "「更新しました」（dialog/complete）",
+        "direct_shipments の11項目と updated_at を更新"
+       ],
+       "prep": "CSV-JIM-BULK-OK",
+       "op": "アップロード",
+       "detail": "shipping_date は direct_shipments 側を更新。shipping_requests.updated_at も更新。名称列は CD から再設定",
+       "known": "Z-15",
+       "should": "csv_formats(div=40) の列構成が確定していること"
+      },
+      {
+       "kind": "正常",
+       "name": "差分のない行は更新しない",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "出力したままの CSV",
+        "DS1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "updated_at は変わらない"
+       ],
+       "prep": "CSV-JIM-BULK-NODIFF",
+       "op": "",
+       "detail": "11項目のどれかが DB と違う行だけ UPDATE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同じ直送台帳IDが2行",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "DS1 の行を2行（備考が異なる）",
+        "DS1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "後の行の備考で更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "一意キー direct_shipments_id、後勝ち",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "時間枠名は CD から再設定",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "時間枠CD=2、名称=でたらめ",
+        "DS1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "delivery_request_time_name=define.request_time[2]"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "配送業者CD・送り状番号を空に",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_company_cd・shipping_number 空",
+        "DS1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "空で更新（要確認：NULL/空文字）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "空は可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ファイルなしでアップロード",
+        "―"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "dialog/error",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "列数が違う",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "2行目の列が1つ少ない",
+        "―"
+       ],
+       "expected": [
+        "「2行目の列数が不正です（指定の列数: n, 現在の列数: m）」",
+        "全件更新なし"
+       ],
+       "prep": "CSV-JIM-BULK-COLS",
+       "op": "",
+       "detail": "{行}行目の{メッセージ}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "NP審査ステータスが空",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "np_status_name 空",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}は、未申請、審査中、完了、不可で入力してください。[]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "必須",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "NP審査ステータスが不正",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "np_status_name=済",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}は、未申請、審査中、完了、不可で入力してください。[済]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "日付の形式不正",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "arrival_date=2026-05-01",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}を、正しい形式(Y/m/d)で入力してください。[2026-05-01]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "delivery_request_date・shipping_date も同じ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "存在しない日付",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_date=2026/02/30",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}を、存在する日付で入力してください。[2026/02/30]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "時間枠CDが範囲外",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "delivery_request_time_cd=6",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}を、正しい値（半角1～5）で入力してください。[6]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "後続依頼が不正",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "following_request_name=返品",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}を正しい値で入力してください。[返品]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "define.following_request の名称のみ可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "配送業者CDが0",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_company_cd=0",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}を、正しい値（半角1～4）で入力してください。[0]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "'0' は値として扱う",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "送り状番号に「+」",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_number=1234+5678",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}を正しい形式で入力してください[1234+5678]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "Excel の指数表記対策",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "送り状番号が13バイト",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_number=13桁",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}は12桁以下で入力してください[値]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "12バイト以下",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "複数行にエラー",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "3行目と5行目にエラー",
+        "―"
+       ],
+       "expected": [
+        "3行目の最初のメッセージだけ表示",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "最初のエラー行の最初のメッセージのみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない直送台帳ID",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "direct_shipments_id=999999",
+        "ほかの行は正常"
+       ],
+       "expected": [
+        "「不正なパラメータを検知したため、処理を中断しました。」",
+        "全件ロールバック"
+       ],
+       "prep": "CSV-JIM-BULK-NOID",
+       "op": "",
+       "detail": "save_line が false",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-03-invoice-csv",
+     "title": "JIM-03 送り状CSV取込",
+     "screens": [
+      "JIM-01-D1",
+      "JIM-03"
+     ],
+     "purpose": "出荷日と顧客CD（品名2）で依頼を特定して送り状番号を更新すること、各チェックを確認する。列構成は csv_formats(div=44) 次第（Z-15）。",
+     "precondition": "ROLE-JIM。ダイアログの「送り状csv」から取り込む。DATA-JIM-DS1（出荷日 2026/05/10、顧客CD JIMCUST01）。",
+     "conditionColumns": [
+      "CSVの内容",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "ダイアログ表示",
+      "DB更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "送り状番号を更新",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "CSV-JIM-INV-OK",
+        "DS1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "shipping_number 設定、配送業者=1 佐川急便固定"
+       ],
+       "prep": "CSV-JIM-INV-OK",
+       "op": "",
+       "detail": "shipping_company_cd=1、shipping_company_name、updated_at を UPDATE",
+       "known": "Z-15",
+       "should": "csv_formats(div=44) の列構成が確定していること"
+      },
+      {
+       "kind": "正常",
+       "name": "同じ出荷日・顧客の依頼が複数",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "1行",
+        "DS1・DS2 が同じ出荷日・顧客"
+       ],
+       "expected": [
+        "「更新しました」",
+        "両方の直送台帳を更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "該当依頼すべてが対象",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "削除済み依頼が含まれる",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "1行",
+        "DS1 と削除済み DS-DEL が同条件"
+       ],
+       "expected": [
+        "「更新しました」",
+        "DS1 だけ更新"
+       ],
+       "prep": "DATA-JIM-DS-DEL",
+       "op": "",
+       "detail": "検索に deleted_at 条件なし、更新対象は deleted_at IS NULL のみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "出荷日が空",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_date 空",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}は必ず入力してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "出荷日の形式・実在",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "2026-05-10 / 2026/02/30",
+        "―"
+       ],
+       "expected": [
+        "「…正しい形式(Y/m/d)で入力してください。[値]」／「…存在する日付で入力してください。[値]」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "送り状番号が空",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "shipping_number 空",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}は必ず入力してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "送り状番号に「+」・13桁",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "1.2E+11 / 13桁",
+        "―"
+       ],
+       "expected": [
+        "「…正しい形式で入力してください[値]」／「…12桁以下で入力してください」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "品名2（顧客CD）が空",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "item_name2 空",
+        "―"
+       ],
+       "expected": [
+        "「n行目の{項目名}は必ず入力してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "該当する依頼がない",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "出荷日・顧客CDが一致しない",
+        "―"
+       ],
+       "expected": [
+        "「n行目の依頼が存在しません」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ファイルなし",
+        "―"
+       ],
+       "expected": [
+        "「CSVファイルを選択してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-04-output",
+     "title": "JIM-04 ファイル出力（全項目CSV／NP審査CSV／UNIS確定Excel）",
+     "screens": [
+      "JIM-01",
+      "JIM-04"
+     ],
+     "purpose": "チェックした案件の出力内容、S3保存と export_lists への記録、NP審査CSVのZIP化とNPステータス更新を確認する。",
+     "precondition": "ROLE-JIM（ユーザー名 jimu01）。JIM-01 で検索し、出力したい行をチェックしておく。",
+     "conditionColumns": [
+      "出力種類・選択",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "出力ファイル",
+      "DB・S3"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "全項目CSV",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "data-type=1、DS1・DS2",
+        "DS1〜2"
+       ],
+       "expected": [
+        "CSV（cp932）がダウンロードされる",
+        "S3 data_all/data_all_jimu01_{YmdHis}{ms}.csv、export_lists に1行"
+       ],
+       "prep": "",
+       "op": "2行チェックして「全項目CSV出力」",
+       "detail": "署名付きURLへリダイレクト。列はcsv_formats(div=40)。依頼日・日付列は Y/m/d、明細課金月はスラッシュ除去、アライアンス課の部署CDは空欄",
+       "known": "Z-15",
+       "should": "列名・列順が本番 csv_formats で確定していること"
+      },
+      {
+       "kind": "正常",
+       "name": "NP審査CSV（1ファイル）",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "data-type=2、DS1",
+        "DS1・DS5（同顧客・同部署、未チェック）"
+       ],
+       "expected": [
+        "CSV 1ファイル",
+        "S3保存、export_lists 記録"
+       ],
+       "prep": "DATA-JIM-DS5",
+       "op": "DS1 だけチェックして「NP審査CSV出力」",
+       "detail": "1行=顧客CD×営業所属部署。DS5 も np_status=3（完了）に更新される",
+       "known": "Z-6",
+       "should": "チェックした行だけ NP審査完了にする（仕様確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "NP審査CSV（顧客101件→ZIP）",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "data-type=2、101顧客分",
+        "DS-MANY"
+       ],
+       "expected": [
+        "np.zip（CSV 2ファイル）を直接ダウンロード",
+        "np_status=3 に更新"
+       ],
+       "prep": "DATA-JIM-DS-MANY",
+       "op": "",
+       "detail": "顧客CD 100件ごとにファイル分割",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "UNIS確定Excel",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "data-type=3、DS1・DS2",
+        "DS1〜2"
+       ],
+       "expected": [
+        "xlsx。A顧客番号〜J後続情報の10列",
+        "S3 unis_all/…xlsx、export_lists 記録"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "1行=顧客CD×契約番号×明細番号、id 降順。シリアルNoは文字列、明細開始年月はスラッシュ除去",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "UNIS確定Excel：着荷日が未設定",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "data-type=3",
+        "DS2（着荷日 NULL）"
+       ],
+       "expected": [
+        "着荷日に 1970/01/01 が出る可能性（要確認）",
+        "―"
+       ],
+       "prep": "DATA-JIM-DS2",
+       "op": "",
+       "detail": "date('Y/m/d', strtotime(null))",
+       "known": "05要確認-J-8",
+       "should": "着荷日は空欄で出力する"
+      },
+      {
+       "kind": "正常",
+       "name": "出力後に選択がリセットされる",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "出力ボタン押下",
+        "―"
+       ],
+       "expected": [
+        "チェックが外れ、出力ボックスが閉じる（要確認：送信前に外れないか）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": ".js-download と js-submit-with-data が同時に動く",
+       "known": "05要確認-J-7",
+       "should": "選択した id が確実に送信される"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "id なしで出力",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "id[] 空で POST",
+        "―"
+       ],
+       "expected": [
+        "JIM-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "出力なし"
+       ],
+       "prep": "",
+       "op": "ツールで id[] を空にして POST",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "file_type が不正",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "file_type=9",
+        "―"
+       ],
+       "expected": [
+        "JIM-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "出力なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "export_lists 登録失敗",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "INSERT 失敗を起こす",
+        "―"
+       ],
+       "expected": [
+        "JIM-01 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "S3 のファイルを削除"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "例外はログを出し PARAMETER_ERROR_MSG",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-05-07-detail",
+     "title": "JIM-05 内容詳細／JIM-06 作業情報編集／JIM-07 更新",
+     "screens": [
+      "JIM-05",
+      "JIM-06",
+      "JIM-07"
+     ],
+     "purpose": "直送案件1件の表示、作業情報7項目の編集と更新先テーブル、エラー時の戻り先を確認する。",
+     "precondition": "ROLE-JIM。DATA-JIM-DS1（shipping_requests.id=JIM-SR1、通常新設）。",
+     "conditionColumns": [
+      "入力・操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "内容詳細の表示",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "/detail/view/{JIM-SR1}",
+        "DS1"
+       ],
+       "expected": [
+        "依頼ID「N00000000001」形式、契約・明細・作業情報を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "JIM-01 で DS1 をクリック",
+       "detail": "依頼ID は request_type_cd ごとに N/S/D/E/C＋11桁。出荷日は shipping_requests 側",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼検索に戻る",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "「依頼検索に戻る」",
+        "―"
+       ],
+       "expected": [
+        "JIM-01（検索条件は引き継がない＝未検索表示）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "編集画面の初期値",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "「作業情報を編集する」",
+        "DS1"
+       ],
+       "expected": [
+        "7項目に現在値。NP審査に空の選択肢なし",
+        "JIM-06"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "「キャンセル」",
+        "―"
+       ],
+       "expected": [
+        "JIM-05 に戻る",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "作業情報を更新",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "7項目を変更して「編集を完了する」",
+        "DS1"
+       ],
+       "expected": [
+        "JIM-05 に「作業情報を更新しました。」",
+        "direct_shipments 6項目＋shipping_requests.shipping_date を UPDATE"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "配送業者・NP審査・後続依頼の名称は define から設定",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "値を空にして更新",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "配送業者・備考・後続依頼を空",
+        "DS1"
+       ],
+       "expected": [
+        "「作業情報を更新しました。」",
+        "各列 NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "空は NULL（'0' も NULL）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "送り状番号13文字",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "sn=13文字",
+        "DS1"
+       ],
+       "expected": [
+        "JIM-06 に戻り「12桁以下で入力してください [値]」、送り状欄が is-error",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "フラッシュ val_error",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "値を変えずに編集完了",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "変更なしで「編集を完了する」",
+        "DS1"
+       ],
+       "expected": [
+        "JIM-05 に 「システムエラーを検知したため、処理を中断しました。」 が出る可能性（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "影響件数0でエラー扱い。2つの UPDATE はトランザクション外",
+       "known": "05要確認-J-2",
+       "should": "変更なしでも成功扱いにする"
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない依頼ID",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "/detail/view/999999",
+        "―"
+       ],
+       "expected": [
+        "エラーにならず空の値で表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "該当なしのエラー処理なし",
+       "known": "05要確認-J-9",
+       "should": "エラー表示または一覧へ戻す"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "jim-08-09-export",
+     "title": "JIM-08 出力履歴／JIM-09 再ダウンロード",
+     "screens": [
+      "JIM-08",
+      "JIM-09"
+     ],
+     "purpose": "自分の出力履歴だけが検索できること、検索条件・ソート、再ダウンロードの成功とエラーを確認する。",
+     "precondition": "ROLE-JIM（jimu01）。DATA-JIM-EXP1〜EXP3（jimu01 の履歴）、DATA-JIM-EXP-OTHER（別ユーザーの履歴）。",
+     "conditionColumns": [
+      "入力・操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "自分の履歴だけ表示",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "条件なしで検索",
+        "EXP1〜3、EXP-OTHER"
+       ],
+       "expected": [
+        "EXP1〜3 だけ表示（日付 desc）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "export_lists.user_id = ログインユーザー",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "日時の範囲",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "df / dt",
+        "EXP1〜3"
+       ],
+       "expected": [
+        "範囲内だけ表示",
+        "両方空なら < 明日"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "created_at",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "出力の種類",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ft[]=NP審査CSV",
+        "EXP2=NP"
+       ],
+       "expected": [
+        "EXP2 だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "1〜7（出荷CSV・送り状Excel 等を含む）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ファイル名の部分一致",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "fn=ファイル名の一部",
+        "―"
+       ],
+       "expected": [
+        "該当だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート・ページャー",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "「ファイル名」見出しクリック",
+        "DATA-JIM-EXP-MANY（81件）"
+       ],
+       "expected": [
+        "ファイル名順、80件/頁",
+        "―"
+       ],
+       "prep": "DATA-JIM-EXP-MANY",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "再ダウンロード",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "EXP1 を選択→「再ダウンロード」",
+        "S3 にファイルあり"
+       ],
+       "expected": [
+        "ファイルがダウンロードされる",
+        "S3 署名付きURLへリダイレクト"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "キー {uds_file_type}/{file_name}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未選択で再ダウンロード",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "id 空",
+        "―"
+       ],
+       "expected": [
+        "JIM-08 に 「不正なパラメータを検知したため、処理を中断しました。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "S3 にファイルがない",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "EXP3 を選択",
+        "S3 から削除済み"
+       ],
+       "expected": [
+        "JIM-08 に「S3にファイルが存在しません」",
+        "―"
+       ],
+       "prep": "DATA-JIM-EXP3",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーの履歴IDを指定",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "id=EXP-OTHER を POST",
+        "EXP-OTHER"
+       ],
+       "expected": [
+        "他ユーザーのファイルがダウンロードできてしまう",
+        "―"
+       ],
+       "prep": "DATA-JIM-EXP-OTHER",
+       "op": "ツールで id を書き換えて POST",
+       "detail": "get_file_name_by_id が user_id で絞り込まない",
+       "known": "Z-3",
+       "should": "自分の履歴以外は PARAMETER_ERROR_MSG で拒否する"
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  },
+  {
+   "id": "master",
+   "title": "マスター管理",
+   "lead": "各マスタの CSV 取込・出力、デバイス種別の編集、メンテ機能が Admin だけで動くことを確認する。",
+   "concepts": [
+    {
+     "id": "mst-00-auth",
+     "title": "MST マスター管理：アクセス権限",
+     "screens": [
+      "MST-01",
+      "MST-11",
+      "MST-14",
+      "MST-17"
+     ],
+     "purpose": "マスター管理は administrator だけが使えること、メンテはメニューから辿れないことを確認する。",
+     "precondition": "―",
+     "conditionColumns": [
+      "ロール",
+      "アクセス先"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "メニュー・タブ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "Admin のログイン後画面",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ROLE-ADM",
+        "ログイン直後"
+       ],
+       "expected": [
+        "MST-01（U∞デバイス種別登録）",
+        "「マスター管理」とナビタブ3つ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "タブ: U∞デバイス種別登録／U∞DSユーザー登録／その他マスター更新",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ナビタブで画面を切り替え",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "タブ「U∞DSユーザー登録」「その他マスター更新」",
+        "―"
+       ],
+       "expected": [
+        "MST-11・MST-14 が表示",
+        "選択中タブが切り替わる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "メンテは URL 直打ちで開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/manage/master/mainte",
+        "―"
+       ],
+       "expected": [
+        "MST-17 が表示",
+        "メンテのタブなし、ヘッダー選択状態なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "メニュー・ナビにリンクなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "センターは403",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "/manage/master/device"
+       ],
+       "expected": [
+        "403画面",
+        "メニューなし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "事務・CP・現地は403",
+       "role": "ROLE-JIM",
+       "conditions": [
+        "ROLE-JIM / ROLE-CP / ROLE-BRA",
+        "MST-01 / 11 / 14 / 17"
+       ],
+       "expected": [
+        "403画面",
+        "メニューなし"
+       ],
+       "prep": "",
+       "op": "各ロールで4URLを開く",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインはログイン画面へ",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "ROLE-GUEST",
+        "/manage/master/user"
+       ],
+       "expected": [
+        "/manage/login へリダイレクト",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mst-01-device-csv",
+     "title": "MST-01〜07 デバイス種別登録：セット・型番・連携対象NeOS品目CSV",
+     "screens": [
+      "MST-01",
+      "MST-02",
+      "MST-03",
+      "MST-04",
+      "MST-05",
+      "MST-06",
+      "MST-07"
+     ],
+     "purpose": "3つのマスタCSVの取込（チェックごと）と、最新CSV・直前ファイルのダウンロードを確認する。",
+     "precondition": "ROLE-ADM で MST-01 を開く。CSV は SJIS-win・ヘッダーあり、列は csv_formats（div=36/37/31。本番の列構成は要確認）。DATA-MST-SET1、DATA-MST-MODEL1、DATA-MST-DTYPE1 登録済み。",
+     "conditionColumns": [
+      "CSVの内容",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・ファイル"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "セットマスタ：新規・更新",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-SET-OK",
+        "SET1 あり"
+       ],
+       "expected": [
+        "「更新しました」、直前ファイル名が表示",
+        "sets を UPSERT、uploaded_files 更新"
+       ],
+       "prep": "CSV-MST-SET-OK",
+       "op": "セットマスタでアップロード",
+       "detail": "URL は upload_set_csv のまま render",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セットマスタ：削除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "SET1 を control_code=1",
+        "SET1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "sets.deleted_at 設定（論理削除）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "セット：set_cd 必須・14文字超",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "set_cd 空 / 15文字",
+        "―"
+       ],
+       "expected": [
+        "セットセクションに「n行目:…」エラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "行エラーは upload_error_messages に n行目:msg",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "セット：set_name 101文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "set_name 101文字",
+        "―"
+       ],
+       "expected": [
+        "「n行目:…」エラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "100文字以下",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "セット：振り分け方法が11",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "center_allocation=11",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}は0から10で入力してください」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "max_center_allocation=10",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "セット：振り分け1で出荷センター不在",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "center_allocation=1、center_cd=存在しない",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}が存在しません」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "振り分け1のとき必須＋存在チェック",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "セット：振り分け0で出荷センター入力",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "center_allocation=0、center_cd あり",
+        "―"
+       ],
+       "expected": [
+        "「n行目:出荷センター振り分け方法が0と2～10の行は{項目}を空文字にしてください」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番マスタ：取込",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-MODEL-OK",
+        "―"
+       ],
+       "expected": [
+        "「更新しました」",
+        "model_numbers を UPSERT"
+       ],
+       "prep": "CSV-MST-MODEL-OK",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "型番：model_number 41文字・返却センター不在",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "model_number 41文字 / return_center_cd 不在",
+        "―"
+       ],
+       "expected": [
+        "型番セクションに「n行目:…」エラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "return_center_cd 必須・存在チェック",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "連携対象NeOS品目：新規",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-DTYPE-NEW",
+        "―"
+       ],
+       "expected": [
+        "「更新しました」、「編集中の項目があります。登録を完了させてください。」",
+        "device_types INSERT（completed_date NULL）"
+       ],
+       "prep": "CSV-MST-DTYPE-NEW",
+       "op": "",
+       "detail": "一覧で状態「編集中」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "品目：UNISⅡCD 末尾が0でない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "unis2_cd=1234561",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}の末尾が0ではありません」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "7文字以下・末尾0",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "品目：型番が型番マスタにない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "device_type=未登録型番",
+        "―"
+       ],
+       "expected": [
+        "品目セクションにエラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "device_type は model_numbers に存在すること",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "品目：Wi-Fiチャネル・帯域・フラグ範囲外",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "com_wifi_channel=5 / com_wifi_band=3 / uds_non_target_flg=3",
+        "―"
+       ],
+       "expected": [
+        "品目セクションにエラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "channel 0〜4、band 0〜2、各flg 0/1/2、sales_flg 0/1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "品目：UNIS品目CD×バンドCDの重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じ組み合わせが2行",
+        "―"
+       ],
+       "expected": [
+        "「n行目:UNIS品目CD[x]とUNISバンドCD[y]の組み合わせが重複しています。」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択・拡張子不正",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ファイルなし / .txt",
+        "―"
+       ],
+       "expected": [
+        "対象セクションにファイルエラー（validate_error_field）",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "20MB以下・csv",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "列数が違う",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "列が1つ多い",
+        "―"
+       ],
+       "expected": [
+        "「n行目:列数が不正です（指定の列数: n, 現在の列数: m）」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "最新のマスタCSVをDL",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "3セクションのリンク",
+        "―"
+       ],
+       "expected": [
+        "set.csv / master_model_number.csv / device_type.csv",
+        "DB の現在値（SJIS-win）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "直前ファイルの再ダウンロード",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「CSVをダウンロード」",
+        "直前にアップロード済み"
+       ],
+       "expected": [
+        "アップロードした元ファイル",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "uploaded_files があり実体もある場合だけリンク表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "連携対象NeOS品目のヘルプ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "品目セクションの「ヘルプ」",
+        "―"
+       ],
+       "expected": [
+        "ユーザーマスタの説明（id=4）が開く",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "help_dialog/4",
+       "known": "05要確認-MS-6",
+       "should": "連携対象NeOS品目の説明（id=3）が開く"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mst-08-device-edit",
+     "title": "MST-01・08〜10 デバイス種別一覧・編集・登録",
+     "screens": [
+      "MST-01",
+      "MST-08",
+      "MST-09",
+      "MST-10"
+     ],
+     "purpose": "デバイス種別一覧の表示、キッティングチェック項目と画像の編集、確認・登録・削除の流れと DB 更新を確認する。",
+     "precondition": "ROLE-ADM。DATA-MST-DTYPE1（completed_date 設定済み、画像あり）、DATA-MST-DTYPE2（編集中、画像なし）、DATA-MST-DTYPE3（UDS対象外）。",
+     "conditionColumns": [
+      "入力・操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "一覧は「一覧を表示」で出す",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "MST-01 を開く→「一覧を表示」",
+        "DTYPE1〜3"
+       ],
+       "expected": [
+        "初期は一覧なし、押すと品目CD昇順で表示",
+        "?show=1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "状態列は completed_date NULL で「編集中」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "編集画面の初期値",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DTYPE2 の行をクリック",
+        "device_checks なし"
+       ],
+       "expected": [
+        "「同梱物チェック」（表示ON）1行、「画像をアップロードしてください」",
+        "MST-08"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "登録ボタンは画像なしで無効",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "チェック項目の追加・削除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「チェック項目追加」→行削除",
+        "DTYPE1"
+       ],
+       "expected": [
+        "追加直後は登録無効、1行だけなら削除リンク非表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "登録ボタンの無効条件",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "内容空の行あり / 表示チェック0件",
+        "DTYPE1"
+       ],
+       "expected": [
+        "「登録」が無効",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "内容欄は「入力してください」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "UDS管理対象外の品目",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DTYPE3 を開く",
+        "uds_non_target_flg=1"
+       ],
+       "expected": [
+        "チェック項目エリアと画像必須を表示しない、登録は常に可",
+        "―"
+       ],
+       "prep": "DATA-MST-DTYPE3",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "サムネイル画像アップロード",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "画像クリック→png 選択",
+        "DTYPE2、入力中の項目あり"
+       ],
+       "expected": [
+        "ダイアログ完了→画像表示、入力中の項目を引き継ぐ",
+        "画像保存"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "jpg/jpeg/png、2MB以下。フラッシュ kitting_data",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "確認画面の表示と修正",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「登録」→「修正する」",
+        "DTYPE2"
+       ],
+       "expected": [
+        "「以下の内容で登録します。…」、非表示項目に「（※非表示）」→編集画面に入力値で戻る",
+        "MST-09→MST-08"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "未完了の種別を登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "確認画面で「登録」",
+        "DTYPE2"
+       ],
+       "expected": [
+        "MST-01 に「登録が完了しました。」",
+        "device_checks 全削除→INSERT、completed_date 設定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "トランザクションなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "完了済みの種別は上書き確認",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「登録」→「変更」",
+        "DTYPE1"
+       ],
+       "expected": [
+        "「内容が上書きされますがよろしいですか？」→確認画面",
+        "MST-08-D2→MST-09"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "未完了の種別を削除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「削除」→「削除」",
+        "DTYPE2"
+       ],
+       "expected": [
+        "「削除した内容は復元できません。削除しますか？」→「削除しました。」→MST-01",
+        "device_checks DELETE、画像削除、device_types 論理削除"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "完了済みは削除ボタン無効",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DTYPE1 を開く",
+        "completed_date あり"
+       ],
+       "expected": [
+        "「削除」が is-disable",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "チェック項目にカンマ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "内容「電源,ケーブル」で登録",
+        "DTYPE2"
+       ],
+       "expected": [
+        "2つの項目に分かれて登録される",
+        "device_checks 2行"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "カンマ連結の hidden で受け渡し",
+       "known": "05要確認-MS-7",
+       "should": "1項目として登録される"
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない id で編集",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "/master/device/edit/999999",
+        "―"
+       ],
+       "expected": [
+        "MST-01 に 「システムエラーを検知したため、処理を中断しました。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mst-11-user-csv",
+     "title": "MST-11〜13 U∞DSユーザー登録（CSV）",
+     "screens": [
+      "MST-11",
+      "MST-12",
+      "MST-13"
+     ],
+     "purpose": "ユーザーマスタCSVの登録・更新・削除、各チェック、最新CSVの出力内容を確認する。",
+     "precondition": "ROLE-ADM で MST-11 を開く。CSV は8列（div=32）。DATA-MST-USER1（既存、branch）、DATA-MST-USER-DEL（論理削除済み）。",
+     "conditionColumns": [
+      "CSVの内容",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・ファイル"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "新規ユーザー登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "新しい username の行",
+        "―"
+       ],
+       "expected": [
+        "「更新しました」、直前ファイル名表示",
+        "users INSERT（status=1）"
+       ],
+       "prep": "CSV-MST-USER-NEW",
+       "op": "",
+       "detail": "uploaded_files（div=32）更新、master_user.csv 保存",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "登録したユーザーでログイン",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "登録した ID・パスワード",
+        "上の新規ユーザー"
+       ],
+       "expected": [
+        "区分別の初期画面へ",
+        "―"
+       ],
+       "prep": "",
+       "op": "ログイン画面で入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "既存ユーザーの更新",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "USER1 の管轄CD・権限を変更",
+        "USER1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "users UPDATE（同じ id）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "7項目に差分がある場合のみ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "差分なしの行",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "USER1 を変更なし",
+        "USER1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "updated_at は変わらない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "無効ユーザーは有効に戻る",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "USER-OFF を更新する行",
+        "status=2"
+       ],
+       "expected": [
+        "「更新しました」",
+        "status=1 になる"
+       ],
+       "prep": "DATA-MST-USER-OFF",
+       "op": "",
+       "detail": "set_default_values が常に status=1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ユーザー削除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "USER1 を control_code=1",
+        "USER1"
+       ],
+       "expected": [
+        "「更新しました」",
+        "deleted_at 設定、ログイン不可"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "control_code=1 の行はほかの列をチェックしない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "存在しない username の削除行",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "未登録 username、control_code=1",
+        "―"
+       ],
+       "expected": [
+        "「更新しました」（エラーなし）",
+        "変化なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "論理削除済み username の再登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "USER-DEL の username",
+        "deleted_at あり"
+       ],
+       "expected": [
+        "「更新しました」",
+        "新しい id で INSERT"
+       ],
+       "prep": "DATA-MST-USER-DEL",
+       "op": "",
+       "detail": "一意制約の有無は要確認",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "必須項目が空",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "username / password / 管轄CD / user_div 空",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目名}を入力してください」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "エラーが1件でもあれば保存しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "桁超過",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "name 41文字 / 管轄CD 14文字",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目名}は{n}文字以下で入力してください[値]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "username/password 255、name 40、管轄CD 13、管轄名 50、権限 30",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "パスワードに記号",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "password=pass@123",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目名}は半角英数字で入力してください[pass@123]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "Admin の管轄CDがセンターでない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "user_div=1、管轄CD=支店CD",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目名}が存在しません[値]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "user_div 1・2 は define.center_cd のみ。3〜7 は存在チェックなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "user_div が8",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "user_div=8",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目名}は1～7で入力してください[8]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "control_code が2",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "control_code=2",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{論理削除フラグ}は0、または、1で入力してください[2]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "列数が違う",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "7列",
+        "―"
+       ],
+       "expected": [
+        "「n行目:列数が不正です（指定の列数: 8, 現在の列数: 7）」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ファイル未選択",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ファイルなしでアップロード",
+        "―"
+       ],
+       "expected": [
+        "エラーが表示されない",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "表示キーが master_device_csv になっている",
+       "known": "05要確認-MS-2",
+       "should": "「ファイルを選択してください」等が表示される"
+      },
+      {
+       "kind": "正常",
+       "name": "最新のマスタCSVをDL",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「最新のマスタCSVをDL」",
+        "USER1 ほか"
+       ],
+       "expected": [
+        "user.csv（SJIS-win、ヘッダーあり）。password 列が平文",
+        "control_code は常に0、削除済みは出ない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "パスワードが平文で保存・出力される",
+       "known": "Z-2",
+       "should": "パスワードはハッシュ化して保存し、CSVに出力しない"
+      },
+      {
+       "kind": "正常",
+       "name": "直前のアップロードファイルをDL",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "「CSVをダウンロード」",
+        "直前にアップロード済み"
+       ],
+       "expected": [
+        "元のファイル名で元ファイル",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mst-14-other-csv",
+     "title": "MST-14〜16 その他マスター更新（8種）",
+     "screens": [
+      "MST-14",
+      "MST-15",
+      "MST-16"
+     ],
+     "purpose": "支店在庫・管轄倉庫置換・修理交換引き当て・CP検証機・直送カテゴリ・直送案件対象品目・キャリア・事業者の CSV 取込と出力を確認する。",
+     "precondition": "ROLE-ADM で MST-14 を開く。各 CSV は SJIS-win・ヘッダーあり。列構成は csv_formats 次第（38/39/43/53/54 はテストデータにない）。",
+     "conditionColumns": [
+      "セクション・CSV",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・ファイル"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "画面構成",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "MST-14 を開く",
+        "―"
+       ],
+       "expected": [
+        "タイトル「その他マスター登録」、8セクション（CP検証機は Admin のときのみ）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "キャリア・事業者には直前ファイル関連なし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫：在庫種別1を登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-BSTOCK-OK（stock_type=1）",
+        "型番 MODEL1 あり"
+       ],
+       "expected": [
+        "「登録しました」",
+        "head_branch_stocks UPSERT"
+       ],
+       "prep": "CSV-MST-BSTOCK-OK",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫：在庫種別2で強制支店在庫依頼",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "stock_type=2、min_quantity=2",
+        "管轄倉庫置換あり"
+       ],
+       "expected": [
+        "「登録しました」",
+        "支店在庫依頼を作成、一時行は soft_delete"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "Common_Stock::force_create_branch_stock",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫：在庫種別が3",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "stock_type=3",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}は1、または、2で入力してください」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫：型番マスタにない型番",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "device_type=未登録",
+        "―"
+       ],
+       "expected": [
+        "支店在庫セクションに行エラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "min_quantity 必須・0〜999999 も確認",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫：種別2の重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "stock_type=2 で管轄CD×型番が2行",
+        "―"
+       ],
+       "expected": [
+        "「n行目:管轄CDと端末型番の組み合わせが重複してます」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "支店在庫：管轄倉庫置換なし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "種別1と種別2の行、種別2の管轄は置換なし",
+        "―"
+       ],
+       "expected": [
+        "NO_BRANCH_REPLACEMENT_MSG を表示",
+        "種別1の行は保存されたまま"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "save() のコミット後に別トランザクション",
+       "known": "05要確認-MS-5",
+       "should": "全行がロールバックされる"
+      },
+      {
+       "kind": "正常",
+       "name": "管轄倉庫置換：取込",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-BREP-OK",
+        "―"
+       ],
+       "expected": [
+        "「登録しました」",
+        "branch_replacement UPSERT"
+       ],
+       "prep": "CSV-MST-BREP-OK",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "管轄倉庫置換：エリアCD・重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "branch_area_cd=3 / unis_branch_cd 重複",
+        "―"
+       ],
+       "expected": [
+        "「…1または2で入力してください。」／「UNIS管轄支店CDが重複してます」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "修理交換引き当て：品目不在・世代",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "neos_item_cd 不在 / generation=-1",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}が存在しません」ほか",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ref_neos_item_cd・neos_item_cd は device_types に存在、generation 0〜999999999",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "CP検証機：登録",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-CPDEV-OK",
+        "―"
+       ],
+       "expected": [
+        "「登録しました」",
+        "mirroring_devices UPSERT"
+       ],
+       "prep": "CSV-MST-CPDEV-OK",
+       "op": "",
+       "detail": "MIR-01 に表示されることも確認",
+       "known": "Z-15",
+       "should": "csv_formats(div=38) の列構成が確定していること"
+      },
+      {
+       "kind": "正常",
+       "name": "CP検証機：削除",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "DATA-MIR-DEV1 を control_code=1",
+        "ひも付けあり"
+       ],
+       "expected": [
+        "「登録しました」",
+        "mirroring_devices 物理削除、mapping も DELETE"
+       ],
+       "prep": "DATA-MIR-DEV1",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CP検証機：名称21文字",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "mirroring_devices_name 21文字",
+        "―"
+       ],
+       "expected": [
+        "行エラー",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "model_number 40、serial_cd 50、名称 20",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "直送カテゴリ：削除済みCDの復活",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "削除済み category_cd の行",
+        "deleted_at あり"
+       ],
+       "expected": [
+        "「登録しました」",
+        "deleted_at が NULL に戻る"
+       ],
+       "prep": "DATA-JIM-CAT-DEL",
+       "op": "",
+       "detail": "",
+       "known": "Z-15",
+       "should": "csv_formats(div=39) の列構成が確定していること"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "直送案件対象品目：カテゴリ・品目不在",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "category_cd 不在 / neos_item_cd 不在",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}が直送カテゴリマスタに存在しません[値]」／「…がデバイス種別マスタに存在しません[値]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "直送案件対象品目：CSV内重複",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じ neos_item_cd が2行",
+        "―"
+       ],
+       "expected": [
+        "「n行目:{項目}がCSV内で重複しています[値]」",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャリアマスタ・事業者マスタ",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "CSV-MST-CARRIER-OK / CSV-MST-PROVIDER-OK",
+        "―"
+       ],
+       "expected": [
+        "「キャリアマスタを登録しました。」／「事業者マスタを登録しました。」",
+        "SIM 側クラスで登録"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "キャリアマスタ：空ファイル",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "0行の CSV",
+        "―"
+       ],
+       "expected": [
+        "SIM_FILE_FORMAT_ERROR_MSG",
+        "保存なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "未選択・空ファイル・0行",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "各マスタの最新CSV出力",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "各「最新のマスタCSVをDL」",
+        "―"
+       ],
+       "expected": [
+        "branch_stock.csv / branch_replacement.csv / assign_enable_device.csv / cp_device.csv / direct_shipment_category.csv / direct_shipment_item.csv / carrier_master_YmdHis.csv / provider_master_YmdHis.csv",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "mst-17-mainte",
+     "title": "MST-17・18 メンテ（URL直打ち）",
+     "screens": [
+      "MST-17",
+      "MST-18"
+     ],
+     "purpose": "運用メンテの各補正機能の DB 更新内容とメッセージを確認する。確認ダイアログはなく、結果はフラッシュで MST-17 に表示される。",
+     "precondition": "ROLE-ADM で /manage/master/mainte を直接開く。DATA-MST-SR-BRANCH（支店在庫依頼）、DATA-MST-SERIAL1（端末）。",
+     "conditionColumns": [
+      "入力",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "メッセージ",
+      "DB更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "CAF番号で契約検索",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "caf_number=該当あり",
+        "DATA-MST-CAF1"
+       ],
+       "expected": [
+        "「n件の契約情報が見つかりました（CAF番号: x）」と結果表",
+        "―"
+       ],
+       "prep": "DATA-MST-CAF1",
+       "op": "",
+       "detail": "契約コード / 契約ステータス / 契約品目CD / 顧客CD / 顧客名",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "CAF番号：空・禁止文字・該当なし",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空 / a';-- / 該当なし",
+        "―"
+       ],
+       "expected": [
+        "「CAF番号を入力してください」／「CAF番号に使用できない文字が含まれています」／「該当する契約情報が見つかりません（CAF番号: x）」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫ID削除と戻し",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "id=SR-BRANCH で削除→戻し",
+        "request_type_cd=2、serial_cd NULL"
+       ],
+       "expected": [
+        "「支店在庫id:x を論理削除しました。」→「論理削除された支店在庫id:x を復活しました。」（エラー枠で表示）",
+        "deleted_at 設定→NULL"
+       ],
+       "prep": "DATA-MST-SR-BRANCH",
+       "op": "",
+       "detail": "成功時もエラーメッセージ枠",
+       "known": "05要確認-MS-8",
+       "should": "成功メッセージは通常のお知らせ枠で表示する"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫ID：空・存在しない",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "空 / 999999",
+        "―"
+       ],
+       "expected": [
+        "「idを入力してください」／「存在しないidもしくは、既に論理削除されています」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末CD登録年月日を更新",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd=SERIAL1",
+        "SERIAL1"
+       ],
+       "expected": [
+        "「端末のserial_signup_dateを更新しました。」",
+        "serial_signup_date=現在"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "未登録シリアルは「入力されたシリアルコードにはシステムに登録されていないため、使用できません。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末を回収済みに変更",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd=SERIAL1（改行区切り）",
+        "未完了依頼あり、US01 PPPoE 登録済み"
+       ],
+       "expected": [
+        "「回収済みに変更しました。」",
+        "device_status 22・service_status 2、依頼の complete_cancel_date、SQS へ delete 送信"
+       ],
+       "prep": "DATA-MST-SERIAL-PPPOE",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "回収済み：重複・件数超過",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "同じシリアル2行 / 301件",
+        "―"
+       ],
+       "expected": [
+        "「同一のシリアルコードが入力されています。該当シリアル:…」／「シリアルコードの件数は1件以上300件以内で入力してください」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末を新品入庫に変更",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "center_cd=南港、serial_cd=SERIAL1",
+        "―"
+       ],
+       "expected": [
+        "「新品入庫に変更しました。」",
+        "center_cd 設定、unis2_cd・contract_cd NULL、status 1、rework_at NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "トランザクションなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "新品入庫：センター未選択",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "center_cd なし",
+        "―"
+       ],
+       "expected": [
+        "「管轄センターを選択してください。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末をリワーク再入庫に変更",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd=rework_at あり / なし",
+        "―"
+       ],
+       "expected": [
+        "「リワーク再入庫に変更しました。」",
+        "あり→status 26、なし→unis2_cd 末尾1・rework_at 設定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "501件は「シリアルコードは500件以内で入力してください」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "端末を支店在庫入庫に変更",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "serial_cd、reflect_stock=ON",
+        "管轄が支店、支店在庫マスタあり"
+       ],
+       "expected": [
+        "「支店在庫入庫に変更しました。」",
+        "status 11、latest_quantity +1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫入庫：管轄がセンター",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "device_branch_cd=0000000001 の端末",
+        "―"
+       ],
+       "expected": [
+        "「…端末管理管轄が支店ではないため更新できません…」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼日を一括変更",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "id 2件、request_date=2026/05/26",
+        "依頼日が異なる"
+       ],
+       "expected": [
+        "「依頼日を更新しました。」",
+        "shipping_requests.request_date 更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "依頼日変更：日付不正・同じ日付・存在しないID",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "2026/13/01 / 現在と同じ / 999999",
+        "―"
+       ],
+       "expected": [
+        "「正しい日付を入力してください（例：2026/05/26）」／「ID: x はすでに同じ依頼日が設定されています。」／「ID: x は存在しません。」",
+        "更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  }
+ ],
+ "prepData": [
+  {
+   "id": "DATA-MIR-DEV1",
+   "content": "ひも付け済み・連携完了の検証機",
+   "value": "mirroring_devices: 名称「検証機A-01」、model_number=MDL-CP1、serial_cd=MIRSER0001。mapping: customer_contract_cd=DATA-MIR-CON1、updated_at < serials.uradio_dl_complete_date"
+  },
+  {
+   "id": "DATA-MIR-DEV2",
+   "content": "ひも付け済み・連携未完了の検証機",
+   "value": "model_number=MDL-CP1、serial_cd=MIRSER0002。mapping.updated_at >= uradio_dl_complete_date"
+  },
+  {
+   "id": "DATA-MIR-DEV3",
+   "content": "ひも付けなしの検証機",
+   "value": "model_number=MDL-CP2、serial_cd=MIRSER0003。mapping 行なし"
+  },
+  {
+   "id": "DATA-MIR-DTYPE",
+   "content": "型番と NeOS品目のひも付け",
+   "value": "device_types: device_type=MDL-CP1、neos_item_cd=MIRITEM1（deleted_at NULL）"
+  },
+  {
+   "id": "DATA-MIR-CON1",
+   "content": "MIRITEM1 の契約（受注）",
+   "value": "contracts: contract_cd=MIRCON01、neos_item_cd=MIRITEM1、contract_status_cd=1"
+  },
+  {
+   "id": "DATA-MIR-CON2",
+   "content": "MIRITEM1 の契約（解約）",
+   "value": "contract_cd=MIRCON02、neos_item_cd=MIRITEM1、contract_status_cd=4"
+  },
+  {
+   "id": "DATA-MIR-CON3",
+   "content": "別品目の契約",
+   "value": "contract_cd=MIRCON03、neos_item_cd=別品目（MDL-CP1 とひも付かない）"
+  },
+  {
+   "id": "DATA-MIR-CON-MANY",
+   "content": "ページャ確認用契約",
+   "value": "MIRITEM1 の契約を81件"
+  },
+  {
+   "id": "DATA-JIM-DS1",
+   "content": "直送案件（基本）",
+   "value": "direct_shipments: np_status_cd=1、detail_status_cd=1、配送業者=1、detail_billing_month=2026/05、following_request_cd なし、arrival_date あり。shipping_requests: id=JIM-SR1、request_type_cd=1、shipping_date=2026/05/10、unis_customer_cd=JIMCUST01。contracts.sales_branch_cd=2105000000。serials あり"
+  },
+  {
+   "id": "DATA-JIM-DS2",
+   "content": "直送案件（確定・NP完了・着荷日なし）",
+   "value": "np_status_cd=3、detail_status_cd=2、arrival_date=NULL、顧客 JIMCUST01、sales_branch_cd='0'"
+  },
+  {
+   "id": "DATA-JIM-DS3",
+   "content": "直送案件（後続依頼=取替）",
+   "value": "following_request_cd=7、顧客 JIMCUST02"
+  },
+  {
+   "id": "DATA-JIM-DS4",
+   "content": "依頼日が明日以降の直送案件",
+   "value": "shipping_requests.request_date=明日"
+  },
+  {
+   "id": "DATA-JIM-DS5",
+   "content": "DS1 と同顧客・同部署の直送案件",
+   "value": "unis_customer_cd=JIMCUST01、sales_branch_cd=2105000000、np_status_cd=1"
+  },
+  {
+   "id": "DATA-JIM-DS-NOSERIAL",
+   "content": "シリアルがない直送案件",
+   "value": "shipping_requests.serial_cd が serials に存在しない"
+  },
+  {
+   "id": "DATA-JIM-DS-DEL",
+   "content": "削除済みの依頼",
+   "value": "DS1 と同じ出荷日・顧客CD、shipping_requests.deleted_at 設定"
+  },
+  {
+   "id": "DATA-JIM-DS-MANY",
+   "content": "大量の直送案件",
+   "value": "501件（101顧客以上）"
+  },
+  {
+   "id": "DATA-JIM-CAT1",
+   "content": "品目ありの直送カテゴリ",
+   "value": "direct_shipment_categories 1件、direct_shipment_items に DS1 の neos_item_cd"
+  },
+  {
+   "id": "DATA-JIM-CAT2",
+   "content": "品目なしの直送カテゴリ",
+   "value": "direct_shipment_items 0件"
+  },
+  {
+   "id": "DATA-JIM-CAT-DEL",
+   "content": "論理削除済みの直送カテゴリ",
+   "value": "deleted_at 設定済み"
+  },
+  {
+   "id": "DATA-JIM-EXP1",
+   "content": "出力履歴（全項目CSV）",
+   "value": "export_lists: user_id=ROLE-JIM、file_type=1、S3 にファイルあり"
+  },
+  {
+   "id": "DATA-JIM-EXP2",
+   "content": "出力履歴（NP審査CSV）",
+   "value": "file_type=2"
+  },
+  {
+   "id": "DATA-JIM-EXP3",
+   "content": "出力履歴（S3から削除済み）",
+   "value": "file_type=3、S3 にファイルなし"
+  },
+  {
+   "id": "DATA-JIM-EXP-OTHER",
+   "content": "他ユーザーの出力履歴",
+   "value": "user_id=ROLE-CEN のユーザー、S3 にファイルあり"
+  },
+  {
+   "id": "DATA-JIM-EXP-MANY",
+   "content": "大量の出力履歴",
+   "value": "ROLE-JIM の履歴81件"
+  },
+  {
+   "id": "CSV-JIM-BULK-OK",
+   "content": "一括更新CSV（正常）",
+   "value": "全項目CSVを出力し、DS1 の11項目を変更（NP審査=審査中、時間枠CD=2、配送業者CD=2、送り状番号12桁 等）"
+  },
+  {
+   "id": "CSV-JIM-BULK-NODIFF",
+   "content": "一括更新CSV（差分なし）",
+   "value": "出力したままの全項目CSV"
+  },
+  {
+   "id": "CSV-JIM-BULK-COLS",
+   "content": "一括更新CSV（列数不足）",
+   "value": "2行目の列を1つ削除"
+  },
+  {
+   "id": "CSV-JIM-BULK-NOID",
+   "content": "一括更新CSV（存在しないID）",
+   "value": "direct_shipments_id=999999 の行を含む"
+  },
+  {
+   "id": "CSV-JIM-INV-OK",
+   "content": "送り状CSV（正常）",
+   "value": "shipping_date=2026/05/10、shipping_number=123456789012、item_name2=JIMCUST01"
+  },
+  {
+   "id": "DATA-MST-SET1",
+   "content": "既存セット",
+   "value": "sets: set_cd=SET001"
+  },
+  {
+   "id": "DATA-MST-MODEL1",
+   "content": "既存型番",
+   "value": "model_numbers: model_number=MODEL1、return_center_cd=0100080000_01"
+  },
+  {
+   "id": "DATA-MST-DTYPE1",
+   "content": "登録完了済みのデバイス種別",
+   "value": "device_types: completed_date あり、画像あり、device_checks 2件"
+  },
+  {
+   "id": "DATA-MST-DTYPE2",
+   "content": "編集中のデバイス種別",
+   "value": "completed_date NULL、画像なし、device_checks なし"
+  },
+  {
+   "id": "DATA-MST-DTYPE3",
+   "content": "UDS対象外のデバイス種別",
+   "value": "uds_non_target_flg=1"
+  },
+  {
+   "id": "CSV-MST-SET-OK",
+   "content": "セットマスタCSV（正常）",
+   "value": "SET001 更新＋新規 SET002（center_allocation=1、center_cd=0100080000_01）"
+  },
+  {
+   "id": "CSV-MST-MODEL-OK",
+   "content": "型番マスタCSV（正常）",
+   "value": "新規 MODEL2、return_center_cd=0100080000_01"
+  },
+  {
+   "id": "CSV-MST-DTYPE-NEW",
+   "content": "連携対象NeOS品目CSV（新規）",
+   "value": "neos_item_cd=MSTITEM9、device_type=MODEL1、unis2_cd=1234560"
+  },
+  {
+   "id": "DATA-MST-USER1",
+   "content": "既存ユーザー",
+   "value": "users: username=mst-user1@example.com、user_div=3、status=1"
+  },
+  {
+   "id": "DATA-MST-USER-OFF",
+   "content": "無効ユーザー",
+   "value": "status=2"
+  },
+  {
+   "id": "DATA-MST-USER-DEL",
+   "content": "論理削除済みユーザー",
+   "value": "deleted_at 設定済み"
+  },
+  {
+   "id": "CSV-MST-USER-NEW",
+   "content": "ユーザーCSV（新規）",
+   "value": "username=mst-new@example.com、password=Pass1234、管轄CD=支店A、user_div=3"
+  },
+  {
+   "id": "CSV-MST-BSTOCK-OK",
+   "content": "支店在庫CSV（正常）",
+   "value": "stock_type=1、branch_cd=支店A、device_type=MODEL1、min_quantity=5"
+  },
+  {
+   "id": "CSV-MST-BREP-OK",
+   "content": "管轄倉庫置換CSV（正常）",
+   "value": "unis_branch_cd 一意、branch_area_cd=1、center_cd=0100080000_01"
+  },
+  {
+   "id": "CSV-MST-CPDEV-OK",
+   "content": "CP検証機CSV（正常）",
+   "value": "model_number=MDL-CP1、serial_cd=MIRSER0009、mirroring_devices_name=検証機B-01"
+  },
+  {
+   "id": "CSV-MST-CARRIER-OK",
+   "content": "キャリアマスタCSV（正常）",
+   "value": "SIM管理側の形式（div=53）"
+  },
+  {
+   "id": "CSV-MST-PROVIDER-OK",
+   "content": "事業者マスタCSV（正常）",
+   "value": "SIM管理側の形式（div=54）"
+  },
+  {
+   "id": "DATA-MST-CAF1",
+   "content": "CAF番号付き契約",
+   "value": "contract_com_devices.com_ngn_common_id=CAF0000001"
+  },
+  {
+   "id": "DATA-MST-SR-BRANCH",
+   "content": "支店在庫依頼",
+   "value": "shipping_requests: request_type_cd=2、serial_cd NULL"
+  },
+  {
+   "id": "DATA-MST-SERIAL-PPPOE",
+   "content": "PPPoE 登録済み端末",
+   "value": "通信プラン US01、PPPoE 登録済み、未完了依頼あり"
+  }
+ ],
+ "openQuestions": [
+  "PARAMETER_ERROR_MSG / SYSTEM_ERROR_MSG は 01_共通.md の原文（「不正なパラメータを検知したため、処理を中断しました。」等）を採用した。",
+  "MIR-02〜04 の redirect がステータス400/500/200で返るため、ブラウザで実際に MIR-01 へ戻るか不明（M-2）。期待結果は「MIR-01へ戻る」と書き known を付けた。",
+  "一括更新CSV・送り状CSV・NP審査CSV・直送カテゴリ等の列構成は本番 csv_formats 次第（Z-15）。CSV準備データは出力ファイルを編集して作る前提にした。",
+  "マスタ系CSVの個別の行エラーメッセージ（必須・桁超過など）の原文が定義書に無い箇所は「行エラー」とだけ書いた。",
+  "JIM-02 で配送業者CD・送り状番号を空にしたとき NULL か空文字か定義書から読めない。",
+  "Presenter_Pagination の既定件数（MST-01 一覧）は未確認のためページャケースを作っていない。"
+ ]
+}

@@ -1,0 +1,5907 @@
+{
+ "source": "04_現地_CP_保守委託_外部委託.md",
+ "groups": [
+  {
+   "id": "branch",
+   "title": "現地（branch）",
+   "lead": "現地ユーザー（ROLE-BRA）で、依頼リスト〜引き当て〜キッティング、支店入庫、回収報告、端末管理リスト、発送状況確認の全画面を確認する。cp・hoshu・external の共通部分もこのグループで代表して確認する。",
+   "concepts": [
+    {
+     "id": "bra-00-auth",
+     "title": "BRA 共通：権限・メニュー・タブ",
+     "screens": [
+      "BRA-01",
+      "BRA-05",
+      "BRA-12"
+     ],
+     "purpose": "branch ロールで現地の各画面を開けること、他ロール・未ログインでは開けないこと、ヘッダーメニューと画面内タブのリンク先を確認する。",
+     "precondition": "ROLE-BRA でログインできる。PC 画面幅。",
+     "conditionColumns": [
+      "ロール",
+      "操作・URL"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ログイン後の遷移",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "ログイン"
+       ],
+       "expected": [
+        "依頼リスト（BRA-01）を表示",
+        "/manage/branch/request"
+       ],
+       "prep": "",
+       "op": "ROLE-BRA のID/パスワードでログインする",
+       "detail": "索引1章: user_div=3 のログイン後遷移先は /manage/branch/request",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ヘッダーメニューのリンク先",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "ヘッダー各メニュー"
+       ],
+       "expected": [
+        "キッティング／在庫管理／発送状況確認を表示",
+        "各リンク先へ遷移"
+       ],
+       "prep": "",
+       "op": "ヘッダーの3メニューを順に押す",
+       "detail": "キッティング=/manage/branch/request、在庫管理=/manage/branch/device/store、発送状況確認=/manage/branch/shipping/request?bcs[]=支店A（自管轄）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "画面内タブ（kitting）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "BRA-01 のタブ"
+       ],
+       "expected": [
+        "依頼リスト／引き当て（非活性）／キッティング～検品",
+        "引き当てタブは押せない"
+       ],
+       "prep": "",
+       "op": "依頼リスト画面のタブを確認する",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "画面内タブ（device）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "BRA-05 のタブ"
+       ],
+       "expected": [
+        "支店入庫処理／端末回収状況登録／端末管理リスト",
+        "各画面へ遷移"
+       ],
+       "prep": "",
+       "op": "支店入庫処理画面のタブを順に押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "画面内タブ（request）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ROLE-BRA",
+        "BRA-12 のタブ"
+       ],
+       "expected": [
+        "依頼検索／発送状況詳細（非活性）",
+        "依頼検索は ?bcs[]=自管轄 付き"
+       ],
+       "prep": "",
+       "op": "依頼検索画面のタブを確認する",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "未ログインで現地画面を開く",
+       "role": "ROLE-GUEST",
+       "conditions": [
+        "未ログイン",
+        "/manage/branch/request"
+       ],
+       "expected": [
+        "―",
+        "/manage/login へリダイレクト"
+       ],
+       "prep": "",
+       "op": "ログアウト状態で URL を直接開く",
+       "detail": "Controller_Base::check_access の未ログイン時動作",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "center ロールで現地画面を開く",
+       "role": "ROLE-CEN",
+       "conditions": [
+        "ROLE-CEN",
+        "/manage/branch/request"
+       ],
+       "expected": [
+        "403 画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "ROLE-CEN でログインし URL を直接開く",
+       "detail": "mosauth の center ロールに Branch_* の権限がないため Exception_403",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "admin ロールで現地画面を開く",
+       "role": "ROLE-ADM",
+       "conditions": [
+        "ROLE-ADM",
+        "/manage/branch/device/list"
+       ],
+       "expected": [
+        "403 画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "ROLE-ADM でログインし URL を直接開く",
+       "detail": "administrator ロールに4グループのコントローラは付与されていない",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "ロール",
+       "values": "ROLE-BRA / ROLE-CEN / ROLE-ADM / ROLE-GUEST",
+       "meaning": "mosauth.php の権限付与どおりに 403・ログイン遷移となることを確認"
+      }
+     ]
+    },
+    {
+     "id": "bra-01-search",
+     "title": "BRA-01 依頼リスト：検索条件",
+     "screens": [
+      "BRA-01"
+     ],
+     "purpose": "未引き当ての自管轄出荷依頼（デジ化・緊急新設・交換）について、検索条件ごとの絞り込みと初回表示・0件表示を確認する。",
+     "precondition": "ROLE-BRA でログイン。DATA-BRA-REQ-D / REQ-E / REQ-C / REQ-SET を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "備考"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初回表示（GETなし）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "パラメータなし",
+        "DATA-BRA-REQ-D ほか"
+       ],
+       "expected": [
+        "「検索してください」表示",
+        "一覧は出ない"
+       ],
+       "prep": "",
+       "op": "/manage/branch/request を開く",
+       "detail": "parts/nosearch。種別チェックは3つとも ON 表示",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別3つ ON で検索",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpd・tpc・tpe=ON",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "3件（デジ化・緊急新設・交換）表示",
+        "件数「3件」"
+       ],
+       "prep": "",
+       "op": "何も変えずに検索",
+       "detail": "request_type_cd IN(3,4,5)",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：デジ化のみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpd=ON、他OFF",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "デジ化の依頼だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "交換・緊急新設をOFFにして検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：交換のみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpc=ON、他OFF",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "交換の依頼だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "デジ化・緊急新設をOFFにして検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：緊急新設のみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpe=ON、他OFF",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "緊急新設の依頼だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "デジ化・交換をOFFにして検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼日 From/To",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "rdf=REQ-D の依頼日、rdt=同日",
+        "REQ-D/E/C（依頼日を分ける）"
+       ],
+       "expected": [
+        "REQ-D だけ表示",
+        "To 当日分も含む"
+       ],
+       "prep": "",
+       "op": "datepicker で日付を選んで検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼日未入力は明日より前",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "依頼日未入力",
+        "DATA-BRA-REQ-TOMORROW"
+       ],
+       "expected": [
+        "明日の依頼日の依頼は出ない",
+        "―"
+       ],
+       "prep": "",
+       "op": "条件なしで検索",
+       "detail": "未入力時は request_date < 明日",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "着荷希望日 From/To",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "cdf/cdt=REQ-E の着荷希望日",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "REQ-E だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "着荷希望日を指定して検索",
+       "detail": "delivery_request_date で絞り込み",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット名（部分一致）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "isn=セット名の一部",
+        "REQ-SET"
+       ],
+       "expected": [
+        "該当セットの依頼だけ表示",
+        "詳細検索エリア"
+       ],
+       "prep": "",
+       "op": "詳細検索を開き入力して検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "型番（部分一致）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "mn=型番の一部",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "該当型番の依頼だけ表示",
+        "互換型番も対象"
+       ],
+       "prep": "",
+       "op": "詳細検索で型番を入力して検索",
+       "detail": "引き当て可能端末マスタがあればその型番群で LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼ID 完全一致",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "rid=REQ-D の依頼ID（D+11桁）",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "REQ-D の1件だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "詳細検索で依頼IDを入力",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "依頼ID 形式不正",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "rid=「D123」",
+        "REQ-D"
+       ],
+       "expected": [
+        "0件表示（nodata）",
+        "メッセージなし"
+       ],
+       "prep": "",
+       "op": "11桁に満たない依頼IDで検索",
+       "detail": "12桁でない／接頭辞不正／数値でない場合は0件扱い",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "顧客CD・企業名/店舗名（部分一致）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ccd=顧客CDの一部、cpn=店舗名の一部",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "両方に合う依頼だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "詳細検索で入力して検索",
+       "detail": "cpn は customer_name・customer_group_name のどちらかに LIKE",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "該当なし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ccd=存在しない値",
+        "REQ-D/E/C"
+       ],
+       "expected": [
+        "parts/nodata（0件）表示",
+        "件数は出ない"
+       ],
+       "prep": "",
+       "op": "検索",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "検索条件クリア",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "検索済み状態",
+        "―"
+       ],
+       "expected": [
+        "未検索（検索してください）に戻る",
+        "/manage/branch/request/"
+       ],
+       "prep": "",
+       "op": "「検索条件クリア」を押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": [
+      {
+       "item": "種別",
+       "values": "tpd / tpc / tpe",
+       "meaning": "request_type_cd 3/5/4 の絞り込み"
+      },
+      {
+       "item": "依頼ID",
+       "values": "接頭辞（D/E/C）+11桁",
+       "meaning": "形式不正は0件扱い"
+      }
+     ]
+    },
+    {
+     "id": "bra-01-list",
+     "title": "BRA-01 依頼リスト：対象データ・一覧表示・ソート・遷移",
+     "screens": [
+      "BRA-01"
+     ],
+     "purpose": "一覧に出る依頼の条件（自管轄・契約状態・完了日・ロック）と、並び順・ソート・行クリックの遷移を確認する。",
+     "precondition": "ROLE-BRA でログインし、種別3つ ON で検索した状態。",
+     "conditionColumns": [
+      "データ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "他支店宛ての依頼は出ない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-OTHERBR（支店B宛て）",
+        "検索"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "request_branch_cd=自管轄（jurisdiction_branch_cd）固定",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "契約キャンセルの依頼は出ない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-CANCEL（契約3）",
+        "検索"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "contracts.contract_status_cd IN('1','2')",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "交換・契約確定(2)は出る",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-C（契約2）",
+        "検索"
+       ],
+       "expected": [
+        "表示される",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "引き当て完了済みは出ない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D に complete_allocation_date 設定",
+        "検索"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "complete_allocation_date/kitting/request/cancel_date が NULL のものだけ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "request_display_flg=0 は出ない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D の request_display_flg=0",
+        "検索"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他ユーザーが10分以内にロック",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-LOCK（ROLE-OTHER が5分前）",
+        "検索"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他ユーザーのロックが10分経過",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-LOCKOLD（11分前）",
+        "検索"
+       ],
+       "expected": [
+        "表示される",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "自分のロック中の依頼",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D の lock_user_id=ROLE-BRA",
+        "検索"
+       ],
+       "expected": [
+        "表示される",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "一覧の列と初期ソート",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D/E/C",
+        "検索"
+       ],
+       "expected": [
+        "種別/管轄/セット名/型番/依頼ID/依頼日/着荷希望日/顧客CD/企業名・店舗名",
+        "依頼日降順→顧客CD昇順"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "管轄列の見出しは「管轄」のみ。依頼IDは D/E/C+11桁",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "列見出しでソート",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D/E/C",
+        "「種別」見出しを2回押す"
+       ],
+       "expected": [
+        "昇順→降順で並び替わる",
+        "同画面"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ソートキー tps/bcss/isns/mns/rids/rds/crds/ccds/cpns",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリックで引き当てへ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D",
+        "行をクリック"
+       ],
+       "expected": [
+        "引き当て画面（BRA-02）を表示",
+        "/manage/branch/assign/serial/{id}＋検索条件"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-02-view",
+     "title": "BRA-02 引き当て：画面表示・ロード時チェック",
+     "screens": [
+      "BRA-02"
+     ],
+     "purpose": "引き当て画面の表示項目・ボタンの活性と、ロード時の自管轄・契約・ロック・引き当て済みチェックを確認する。",
+     "precondition": "ROLE-BRA でログイン。BRA-01 から行クリックで開く。",
+     "conditionColumns": [
+      "データ状態",
+      "操作"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "表示項目",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-D",
+        "開く"
+       ],
+       "expected": [
+        "種別（デジ化）・依頼ID・依頼日・着荷希望日・顧客CD・企業名・店舗名",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "center と違い「出庫先」「宛先シール印刷」はない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "未仮登録の明細",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-SET（未仮登録）",
+        "開く"
+       ],
+       "expected": [
+        "シリアル登録ボタン表示、引き当ては非活性",
+        "初期不良返品リンクなし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "is_read_serial=true の明細にシリアル登録。is_assign_btn_active=false",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアル管理対象外の明細",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-SET の同梱機材明細",
+        "開く"
+       ],
+       "expected": [
+        "「同梱機材引き当て」ボタン表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "uds_non_target_flg='2' かつ serial_cd NULL",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全明細仮登録済み",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-SET 全明細に仮登録（自分のロック）",
+        "開く"
+       ],
+       "expected": [
+        "シリアルNo.表示、引き当て活性",
+        "初期不良返品リンク表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーが10分以内にロック中",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-LOCK",
+        "URL 直打ち"
+       ],
+       "expected": [
+        "―",
+        "依頼リストへ。「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他支店宛ての依頼",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-OTHERBR",
+        "URL 直打ち"
+       ],
+       "expected": [
+        "―",
+        "依頼リストへ。「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "is_branch_active（request_branch_cd≠自管轄）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "デジ化で契約が確定(2)",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D の契約を2に変更",
+        "開く"
+       ],
+       "expected": [
+        "―",
+        "依頼リストへ。「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "デジ化/緊急新設は契約=1 のみ可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "交換で契約が確定(2)",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-C（契約2）",
+        "開く"
+       ],
+       "expected": [
+        "通常どおり表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "交換は契約∈{1,2}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "引き当て済みの依頼",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D に complete_allocation_date 設定",
+        "URL 直打ち"
+       ],
+       "expected": [
+        "―",
+        "依頼リストへ。「他のユーザーによって引き当てが完了しています。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない依頼ID",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "id=999999999",
+        "URL 直打ち"
+       ],
+       "expected": [
+        "―",
+        "依頼リストへ。「他のユーザーによって引き当てが完了しています。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "依頼なしは ASSIGN_OTHER_UPDATE_MSG",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-02-serial",
+     "title": "BRA-02-D1 引き当て：シリアル登録（バーコード読取）",
+     "screens": [
+      "BRA-02-D1"
+     ],
+     "purpose": "バーコード読取で自支店在庫の端末を明細に仮登録できること、各チェックのエラーを確認する。",
+     "precondition": "ROLE-BRA でログインし DATA-BRA-REQ-D の引き当て画面を開いた状態。DATA-BRA-DEV-STK、DATA-BRA-HBS を用意。",
+     "conditionColumns": [
+      "読取値",
+      "端末・依頼の状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "バーコード読取ダイアログ表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "―",
+        "―"
+       ],
+       "expected": [
+        "「ピッと音が鳴るまで…」案内表示",
+        "キーボード入力欄は非表示"
+       ],
+       "prep": "",
+       "op": "「シリアル登録」を押す",
+       "detail": "スキャン画像を5回クリックするとキーボード入力モードに切り替わる",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キーボード入力モード",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「bra-s-0001」を入力",
+        "DEV-STK"
+       ],
+       "expected": [
+        "英大文字化して送信",
+        "仮登録される"
+       ],
+       "prep": "",
+       "op": "画像を5回クリックし入力して Enter",
+       "detail": "英数字・ハイフン以外は除去。空なら送信しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "在庫端末を読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DEV-STK のシリアル",
+        "status=11・契約なし"
+       ],
+       "expected": [
+        "完了ダイアログ→同画面にシリアル表示",
+        "serial_cd/model_number 設定、セット全件ロック"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests.lock_date/lock_user_id をセット全件に設定。遷移先 URL に &ct=1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "互換型番の端末を読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "互換型番の在庫端末",
+        "引き当て可能端末マスタに登録"
+       ],
+       "expected": [
+        "仮登録される",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "依頼型番≠端末型番でも assign_enable_devices にあれば可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未入力",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "空",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "「シリアルNo.を読み取れませんでした。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "バーコードモードでは空送信されない。POST で barcode 空を送った場合",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「NOTEXIST001」",
+        "serials にない"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "型番不一致",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-DEV-OTHERMODEL",
+        "マスタにも互換なし"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "ステータスが11でない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-DEV-NEW（status=1）",
+        "契約なし"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "contract_cd NULL かつ status=11 以外は不可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "他依頼で使用中のシリアル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DEV-STK",
+        "REQ-E に同シリアルを仮登録済み"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーがロック中",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DEV-STK",
+        "読取直前に ROLE-OTHER がロック"
+       ],
+       "expected": [
+        "―",
+        "「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "センター管轄チェックは行わない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DEV-STK（center_cd が別センター）",
+        "status=11"
+       ],
+       "expected": [
+        "仮登録される",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "branch系は is_match_center_cd が常に true（SERIAL_ASSIGN_NO_MATCH_CENTER_MSG なし）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他支店の在庫端末を読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-DEV-OTHERBR-STK（支店B・status11）",
+        "契約なし"
+       ],
+       "expected": [
+        "仮登録される（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serial_save は端末の device_branch_cd を確認していない",
+       "known": "Z-5",
+       "should": "自管轄（支店A）以外の端末は引き当てできないこと（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-02-other-return",
+     "title": "BRA-02-D2/D3/A1 引き当て：同梱機材・初期不良返品・仮引き当て解除",
+     "screens": [
+      "BRA-02-D2",
+      "BRA-02-D3",
+      "BRA-02-A1"
+     ],
+     "purpose": "同梱機材（シリアル管理対象外）の引き当て、仮登録端末の初期不良返品、「依頼リストに戻る」時の仮登録解除を確認する。",
+     "precondition": "ROLE-BRA でログインし DATA-BRA-REQ-SET の引き当て画面を開いた状態。DATA-BRA-HBS を用意。",
+     "conditionColumns": [
+      "操作・選択",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・遷移"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "同梱機材：自支店在庫あり",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "新品(0)を選び「引き当てる」",
+        "支店A・同型番・status11 の端末あり"
+       ],
+       "expected": [
+        "同画面に戻り対象外表示",
+        "その端末を仮登録、unis2_cd 末尾=0"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "既存端末を優先使用。ダミーは作らない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同梱機材：自支店在庫なし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "中古(1)を選び「引き当てる」",
+        "同型番の status11 端末なし"
+       ],
+       "expected": [
+        "同画面に戻る",
+        "ダミー発番、serials INSERT（status11）、在庫+1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serial_cd=NOSERIAL+11桁、center_cd=model_numbers.return_center_cd、device_branch=依頼先管轄、head_branch_stocks.latest_quantity +1",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同梱機材：キャンセル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「キャンセル」",
+        "―"
+       ],
+       "expected": [
+        "ダイアログを閉じる",
+        "DB 変更なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良返品：端末選択で活性",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "端末カードを1枚選択",
+        "全明細仮登録済み"
+       ],
+       "expected": [
+        "「初期不良返品する」が活性",
+        "―"
+       ],
+       "prep": "",
+       "op": "「初期不良返品」リンクを押す",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良返品の実行",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "1台選択し「初期不良返品する」",
+        "仮登録済み DEV-STK"
+       ],
+       "expected": [
+        "完了ダイアログ→依頼リスト「初期不良返品しました。」",
+        "明細の serial_cd/lock 解除、端末 status=8"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.device_status_cd=8、service_status_cd=2。device_branch_cd は変更しない。最小配備数により支店在庫補充依頼を INSERT する場合あり。変更ログ出力",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "初期不良返品：他ユーザーがロック",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「初期不良返品」",
+        "ROLE-OTHER が直前にロック"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼リストに戻る：確認",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「依頼リストに戻る」",
+        "仮登録済み"
+       ],
+       "expected": [
+        "confirm「引き当てが完了していませんが、この画面を離れますか？」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼リストに戻る：OK",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "confirm で OK",
+        "仮登録済み（status11）"
+       ],
+       "expected": [
+        "依頼リストへ遷移",
+        "仮登録の serial_cd/model_number/lock をクリア"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "reset_save（GET Ajax）。is_center=false のためダミーシリアルは削除しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼リストに戻る：キャンセル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "confirm でキャンセル",
+        "仮登録済み"
+       ],
+       "expected": [
+        "画面に留まる",
+        "DB 変更なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-02-assign",
+     "title": "BRA-02-P1 引き当て確定",
+     "screens": [
+      "BRA-02-P1"
+     ],
+     "purpose": "「引き当て」押下で依頼が引き当て完了となり、端末ステータス・支店在庫数が種別に応じて更新されることを確認する。",
+     "precondition": "ROLE-BRA でログイン。対象依頼の全明細を DATA-BRA-DEV-STK 等で仮登録済み。DATA-BRA-HBS（latest_quantity=5）。",
+     "conditionColumns": [
+      "依頼の種別・状態",
+      "マスタ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB 更新"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "デジ化の引き当て確定",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-D",
+        "HBS あり"
+       ],
+       "expected": [
+        "依頼リスト「引き当てが完了しました。」",
+        "端末 status=14、在庫 −1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests.complete_allocation_date 設定。serials: device_status_cd=14、device_branch=依頼先管轄、service_cd、contract_cd、serial_signup_date/count、service_status_cd=1、unis2_cd。head_branch_stocks.latest_quantity 5→4。center_cd は更新しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "緊急新設の引き当て確定",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-E",
+        "HBS あり"
+       ],
+       "expected": [
+        "依頼リスト「引き当てが完了しました。」",
+        "端末 status=16、在庫 −1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "交換の引き当て確定",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-REQ-C",
+        "HBS あり"
+       ],
+       "expected": [
+        "依頼リスト「引き当てが完了しました。」",
+        "端末 status=15、在庫 −1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "NeOS品目の世代更新",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D（引き当て可能端末の最大世代が別品目）",
+        "HBS あり"
+       ],
+       "expected": [
+        "引き当て完了",
+        "neos_item_cd/name を最大世代に更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIM の previous_serial_cd クリア",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D",
+        "sims.previous_serial_cd=引き当てシリアル"
+       ],
+       "expected": [
+        "引き当て完了",
+        "previous_serial_cd=NULL"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "UME(TV) 品目を含む",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "neos_item_cd=UTV43L0_n01 の依頼",
+        "HBS あり"
+       ],
+       "expected": [
+        "引き当て完了",
+        "SQS(api_ux_open) 送信（現行は未送信の可能性）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SQS 送信が redirect の後ろにあり実行されない可能性が高い",
+       "known": "Z-7",
+       "should": "コミット後に SQS(api_ux_open) へ {serialCd, contractCd} が送信されること"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫マスタなし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D",
+        "head_branch_stocks(stock_type=1) なし"
+       ],
+       "expected": [
+        "依頼リスト",
+        "「支店在庫マスタに登録がありません。型番と支店に紐づくマスタの登録をお願いします。」（ロールバック）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他ユーザーがロック中",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D（ROLE-OTHER が確定直前にロック）",
+        "HBS あり"
+       ],
+       "expected": [
+        "依頼リスト",
+        "「他のユーザーが作業中です。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "二重送信・既に引き当て済み",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D（別タブで確定済み）",
+        "HBS あり"
+       ],
+       "expected": [
+        "依頼リスト",
+        "「他のユーザーによって引き当てが完了しています。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "確定前に契約がキャンセル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D の契約を3に変更",
+        "HBS あり"
+       ],
+       "expected": [
+        "依頼リスト",
+        "「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "管轄置換未登録の例外",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "REQ-D",
+        "管轄支店倉庫置換マスタ未登録"
+       ],
+       "expected": [
+        "依頼リスト",
+        "NO_BRANCH_REPLACEMENT_MSG の内容（ロールバック）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "例外JSONの NO_BRANCH_REPLACEMENT_MSG。原文は 「管轄支店倉庫置換マスタにUNIS管轄支店CD({unis_branch_cd})が存在しません。データを登録してください。」",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-03-list",
+     "title": "BRA-03 キッティング～検品（一覧）：検索・表示",
+     "screens": [
+      "BRA-03"
+     ],
+     "purpose": "引き当て済み・キッティング未完了の自管轄依頼が、種別（端末ステータス）・同期状況などの条件で表示されることを確認する。",
+     "precondition": "ROLE-BRA でログイン。DATA-BRA-KIT-D / KIT-C / KIT-E / KIT-DLNG / KIT-CANCEL を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "行の動作"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初回表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "パラメータなし（種別すべて ON）",
+        "KIT-D/C/E/CANCEL"
+       ],
+       "expected": [
+        "4件表示（ページングなし）",
+        "―"
+       ],
+       "prep": "",
+       "op": "/manage/branch/kitting を開く",
+       "detail": "per_page=999999999。種別列は14→デジ化、15→交換、16→緊急新設、契約3/4は「キャンセル」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：デジ化のみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpd=ON、他OFF",
+        "KIT-D/C/E"
+       ],
+       "expected": [
+        "KIT-D だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.device_status_cd=14 かつ契約1,2",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：交換のみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpc=ON、他OFF",
+        "KIT-D/C/E"
+       ],
+       "expected": [
+        "KIT-C だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "status=15",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：緊急新設のみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpe=ON、他OFF",
+        "KIT-D/C/E"
+       ],
+       "expected": [
+        "KIT-E だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "status=16",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別：キャンセルのみ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "tpcc=ON、他OFF",
+        "KIT-CANCEL（14・契約3）"
+       ],
+       "expected": [
+        "KIT-CANCEL を「キャンセル」で表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "status IN(14,16) かつ契約 IN(3,4)",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同期状況：未完了",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "syc[]=3",
+        "KIT-D（完了）/KIT-DLNG（未完了）"
+       ],
+       "expected": [
+        "KIT-DLNG だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアルNo.（部分一致）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "sc=KIT-D のシリアルの一部",
+        "KIT-D/C/E"
+       ],
+       "expected": [
+        "KIT-D だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他支店の依頼は出ない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "条件なし",
+        "支店B宛ての引き当て済み依頼"
+       ],
+       "expected": [
+        "表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "request_branch_cd=自管轄。センター絞り込みはしない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "DL未完了の行",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "条件なし",
+        "KIT-DLNG"
+       ],
+       "expected": [
+        "表示される",
+        "クリックしても反応しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "バーコード検索ボタンがある",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "―",
+        "―"
+       ],
+       "expected": [
+        "「バーコード検索」ボタン表示",
+        "押すとバーコード読取ダイアログ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "SIM紐づけ変更チェックなし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "条件なし",
+        "KIT-D の端末に SIM 紐づけ変更あり"
+       ],
+       "expected": [
+        "SIM紐づけ変更モーダルは出ない",
+        "そのままバーコード読取へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "SIM紐づけ変更チェックは admin/center のみ",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-03-dialogs",
+     "title": "BRA-03-D1～D5 キッティング：行選択・バーコード照合・各ダイアログ",
+     "screens": [
+      "BRA-03-D1",
+      "BRA-03-D2",
+      "BRA-03-D3",
+      "BRA-03-D4",
+      "BRA-03-D5"
+     ],
+     "purpose": "行選択（select_list）とバーコード検索（search_barcode）の判定で、詳細画面・スキャン状況・未引き当て・未DL・キャンセル返却案内に正しく分岐することを確認する。",
+     "precondition": "ROLE-BRA でログインし BRA-03 を表示。DATA-BRA-KIT-* を用意。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "表示されるダイアログ・画面",
+      "DB・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "行選択→バーコード読取→単体",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-D の行をクリックし読取",
+        "1台セット・DL完了"
+       ],
+       "expected": [
+        "キッティング詳細（BRA-04）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット品の途中までの読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-KIT-SET の1台目を読取",
+        "2台＋同梱機材"
+       ],
+       "expected": [
+        "スキャン状況（読取済み/未読取）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "同梱機材（対象外）は自動で読取済扱い。「バーコードの読み取りに進む」で続行",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット品の全台読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-SET の2台目を読取",
+        "1台目読取済み"
+       ],
+       "expected": [
+        "キッティング詳細（BRA-04）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "バーコード検索から読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「バーコード検索」で KIT-C を読取",
+        "交換・DL完了"
+       ],
+       "expected": [
+        "キッティング詳細（BRA-04）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "読取端末の DL 未完了",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "バーコード検索で KIT-DLNG を読取",
+        "DL未完了"
+       ],
+       "expected": [
+        "未DLダイアログ（D4）",
+        "「初期不良返品する」導線あり"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット内の他端末が DL 未完了",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-SET の DL完了端末の行を選択",
+        "もう1台が DL未完了"
+       ],
+       "expected": [
+        "他端末未DLダイアログ（D4 other_dl）",
+        "OK で閉じる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "セット内に未引き当てあり",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "行選択",
+        "セットの1明細が未引き当て"
+       ],
+       "expected": [
+        "未引き当てダイアログ（D3）",
+        "OK で引き当て画面へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル行の選択",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-CANCEL の行をクリック",
+        "14・契約3・シリアル管理対象外"
+       ],
+       "expected": [
+        "キャンセル返却案内（D5）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル返却の実行",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D5 で OK",
+        "KIT-CANCEL"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "端末 status=18、service_status_cd=2"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "device_branch=依頼先管轄（branch 上書き）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "読取端末の契約がキャンセル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "バーコード検索で契約4の端末を読取",
+        "status=16・契約4"
+       ],
+       "expected": [
+        "キャンセル返却案内（D5）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "バーコード検索で「NOTEXIST001」",
+        "―"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "セット外の端末を読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-D 行選択後に KIT-C を読取",
+        "―"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "キャンセル時に端末ステータス変更済み",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D5 表示後、端末を11に変更し OK",
+        "KIT-CANCEL"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "キャンセル時に契約が復活",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D5 表示後、契約を1に変更し OK",
+        "KIT-CANCEL"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他支店の依頼IDで select_list",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "/manage/branch/kitting/select_list/{支店Bの依頼id}",
+        "支店B宛て"
+       ],
+       "expected": [
+        "エラー",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "request_branch_cd≠自管轄",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-03-return",
+     "title": "BRA-03-D6/D7 キッティング：初期不良返品と返品後アクション",
+     "screens": [
+      "BRA-03-D6",
+      "BRA-03-D7"
+     ],
+     "purpose": "キッティング中の端末をバーコード照合で初期不良返品（8）にし、代替端末の引き当てへ進むか選べることを確認する。",
+     "precondition": "ROLE-BRA でログイン。DATA-BRA-KIT-D のキッティング詳細、または未DLダイアログから操作。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "表示されるダイアログ・画面",
+      "DB・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "端末選択ダイアログ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "BRA-04 の「初期不良返品」",
+        "KIT-D"
+       ],
+       "expected": [
+        "端末カードを1台選択",
+        "選択で「初期不良返品する」活性"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "バーコード照合で初期不良返品",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-D を選択し同シリアルを読取",
+        "status=14"
+       ],
+       "expected": [
+        "返品後アクション（D7）",
+        "端末 status=8、依頼の引き当て解除"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests.model_number/serial_cd/complete_allocation_date=NULL。serials.device_status_cd=8、service_status_cd=2、device_branch=依頼先管轄（センターの2:初期不良廃棄とは異なる）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "選択と違うシリアルを読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-D を選択し別シリアルを読取",
+        "―"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "同梱機材の初期不良返品",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "KIT-SET の対象外カードを選択",
+        "シリアル管理対象外"
+       ],
+       "expected": [
+        "同梱機材初期不良返品ダイアログ→D7",
+        "バーコード照合なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "D7「引き当てをする」",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D7 で「引き当てをする」",
+        "返品直後"
+       ],
+       "expected": [
+        "引き当て画面（BRA-02）",
+        "/manage/branch/assign/serial/{id}"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "D7「後で行う」",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D7 で「後で行う」",
+        "返品直後"
+       ],
+       "expected": [
+        "キッティング一覧（BRA-03）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "未DLダイアログからの返品",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D4 の「初期不良返品する」",
+        "KIT-DLNG"
+       ],
+       "expected": [
+        "端末選択ダイアログ（D6）",
+        "以降は同じ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-04-kitting",
+     "title": "BRA-04 キッティング～検品（詳細）・完了・シール印刷",
+     "screens": [
+      "BRA-04",
+      "BRA-04-F1",
+      "BRA-04-P1"
+     ],
+     "purpose": "動作チェック・同梱物チェック・シール印刷を全て行うと完了でき、端末が 17:現地キッティング完了（交換は 19:顧客出庫）になることを確認する。",
+     "precondition": "ROLE-BRA でログインし、BRA-03 の照合を経て対象依頼の詳細を表示。device_checks（div=1, active_flg=1）を2件登録済み。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "表示項目とボタン",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示",
+        "KIT-D"
+       ],
+       "expected": [
+        "宛先シール印刷・Wi-Fi SSIDシール印刷のみ",
+        "URX-03/URX-05 QR印刷ボタンはない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "完了ボタンの活性",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "動作チェック・同梱物・印刷確認を全て ON",
+        "KIT-D"
+       ],
+       "expected": [
+        "「キッティング～検品完了」活性",
+        "1つでも OFF なら非活性"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "宛先シール印刷",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「宛先シール印刷」",
+        "KIT-D"
+       ],
+       "expected": [
+        "PDF 印刷ダイアログ、印刷確認 ON",
+        "contents/pdf/shipment/{id}.pdf"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "printJS 失敗時 alert「印刷ダイアログを開くことができません。シールをダウンロードします。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "Wi-Fi SSIDシール印刷",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「Wi-Fi SSIDシール印刷」",
+        "com_ssid2_enable=1 の端末"
+       ],
+       "expected": [
+        "PDF 印刷、印刷確認 ON",
+        "contents/pdf/wifi/{id}.pdf"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "デジ化の完了",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "全チェック ON で完了",
+        "KIT-D（14）"
+       ],
+       "expected": [
+        "一覧「キッティングが完了しました。」",
+        "端末 status=17、complete_kitting_date"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.device_status_cd=17、service_status_cd=1、device_branch=依頼先管轄。device_check_histories INSERT",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "緊急新設の完了",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "全チェック ON で完了",
+        "KIT-E（16）"
+       ],
+       "expected": [
+        "一覧「キッティングが完了しました。」",
+        "端末 status=17"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "交換の完了",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "全チェック ON で完了",
+        "KIT-C（15）"
+       ],
+       "expected": [
+        "一覧「キッティングが完了しました。」",
+        "端末 status=19、complete_shipping_date も登録"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "チェック履歴の device_check_id",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "全チェック ON で完了",
+        "KIT-D"
+       ],
+       "expected": [
+        "完了",
+        "device_check_histories.device_check_id が空の可能性"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-8",
+       "should": "device_check_id に device_checks.id が登録されること"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "完了前に端末ステータスが変更",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示後に端末を8へ変更し完了",
+        "KIT-D"
+       ],
+       "expected": [
+        "一覧へ",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "status ∉{14,15,16}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "チェックリストがマスタ更新",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示後に device_checks の detail を変更し完了",
+        "KIT-D"
+       ],
+       "expected": [
+        "詳細へ戻る",
+        "「キッティングチェックリストが更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "動作チェック件数不一致",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "check_ok を1件削って POST",
+        "KIT-SET"
+       ],
+       "expected": [
+        "詳細へ戻る",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他支店の依頼を直接開く",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "/manage/branch/kitting/view/{支店Bの依頼id}",
+        "支店B宛て"
+       ],
+       "expected": [
+        "一覧へ",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-05-store-scan",
+     "title": "BRA-05 支店入庫処理：バーコード読取・スキャン状況・返却案内",
+     "screens": [
+      "BRA-05",
+      "BRA-05-D1",
+      "BRA-05-D2"
+     ],
+     "purpose": "センターから届いた端末のバーコード読取で、通常新設（セット）・支店在庫の入庫詳細へ正しく誘導されること、エラーを確認する。",
+     "precondition": "ROLE-BRA でログインし /manage/branch/device/store を表示。DATA-BRA-STORE-* を用意。",
+     "conditionColumns": [
+      "読取値",
+      "端末の状態"
+     ],
+     "expectColumns": [
+      "表示されるダイアログ・画面",
+      "メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "―",
+        "―"
+       ],
+       "expected": [
+        "「入庫処理を行いたい製品のバーコードの読み取りをしてください。」",
+        "「バーコード読み取り」ボタン"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫出庫端末を読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-STORE-S のシリアル",
+        "status=9・契約なし"
+       ],
+       "expected": [
+        "入庫詳細（支店在庫 BRA-07）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設・1台セットを読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-STORE-N のシリアル",
+        "status=10・契約1"
+       ],
+       "expected": [
+        "入庫詳細（通常新設 BRA-06）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設・複数台の1台目",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-STORE-NSET の1台目",
+        "2台＋同梱機材"
+       ],
+       "expected": [
+        "スキャン状況（読取済み/未読取）",
+        "同梱機材は読取済扱い"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設・複数台の全台読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「バーコードの読み取りに進む」で2台目",
+        "1台目読取済み"
+       ],
+       "expected": [
+        "入庫詳細（BRA-06）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全角で読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "STORE-S のシリアルを全角で入力",
+        "status=9"
+       ],
+       "expected": [
+        "入庫詳細（BRA-07）",
+        "半角化して照合"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "mb_convert_kana('rns')",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル返却予定の端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-STORE-18",
+        "status=18"
+       ],
+       "expected": [
+        "返却案内ダイアログ（D2）",
+        "「この端末に紐づく契約がすでにキャンセルされています。{返却センター名}に返却してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "返却先と返却先住所（define.return_center_cd）を表示。DB 更新なし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未入力",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "空",
+        "―"
+       ],
+       "expected": [
+        "完了ダイアログ→BRA-05",
+        "「シリアルNo.を読み取れませんでした。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「NOTEXIST001」",
+        "―"
+       ],
+       "expected": [
+        "完了ダイアログ→BRA-05",
+        "「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "他支店管轄の端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-STORE-OTHERBR",
+        "device_branch=支店B"
+       ],
+       "expected": [
+        "完了ダイアログ→BRA-05",
+        "「端末管理管轄が異なります。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "出庫ステータスでない端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-DEV-STK",
+        "status=11"
+       ],
+       "expected": [
+        "完了ダイアログ→BRA-05",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "status ∉{9,10,18}",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "通常新設出庫なのに契約なし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "status=10・contract_cd NULL の端末",
+        "―"
+       ],
+       "expected": [
+        "完了ダイアログ→BRA-05",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "system_error_log 5",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-06-07-store",
+     "title": "BRA-06/07 入庫処理詳細・入庫実行・初期不良返品",
+     "screens": [
+      "BRA-06",
+      "BRA-07",
+      "BRA-07-D1"
+     ],
+     "purpose": "通常新設（10→12）と支店在庫（9→11）の入庫実行、支店在庫端末の初期不良返品（9→8）と各エラーを確認する。",
+     "precondition": "ROLE-BRA でログイン。BRA-05 の読取から各詳細を表示。DATA-BRA-HBS（latest_quantity=5、min_quantity=1）。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "通常新設詳細の表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示",
+        "DATA-BRA-STORE-NSET"
+       ],
+       "expected": [
+        "種別・出荷先管轄・依頼ID・依頼日・顧客CD等、端末ごとの同梱チェック（無効・ON）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "動作チェックOK・同梱は disabled checked。対象外は「（シリアル管理対象外）」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "工事予定日の表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示",
+        "construction_date 設定済み"
+       ],
+       "expected": [
+        "工事予定日が空表示（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-13",
+       "should": "shipping_requests.construction_date が表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "通常新設の入庫実行",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「支店入庫処理」",
+        "STORE-NSET（10・契約1）"
+       ],
+       "expected": [
+        "BRA-05「支店入庫処理が完了しました。」",
+        "各端末 status=12、service_status_cd=1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "明細ごとに UPDATE serials、変更ログ出力",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "入庫前に契約が確定(2)に変更",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「支店入庫処理」",
+        "STORE-N の契約=2"
+       ],
+       "expected": [
+        "BRA-05",
+        "「契約情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ロールバック・return なしでリダイレクト（要確認No.11）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "入庫前に端末ステータス変更",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「支店入庫処理」",
+        "STORE-N を12に変更済み"
+       ],
+       "expected": [
+        "BRA-05",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "入庫時に端末が18",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「支店入庫処理」",
+        "表示後に STORE-N を18に変更"
+       ],
+       "expected": [
+        "返却案内ダイアログ（処理中断）",
+        "DB 更新なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫詳細の表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示",
+        "DATA-BRA-STORE-S"
+       ],
+       "expected": [
+        "出荷先管轄・端末画像・型番・シリアルNo.",
+        "「支店入庫処理」「初期不良返品」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の入庫実行",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「支店入庫処理」",
+        "STORE-S（9）・HBS あり"
+       ],
+       "expected": [
+        "BRA-05「支店入庫処理が完了しました。」",
+        "端末 status=11、在庫 +1"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "head_branch_stocks.latest_quantity 5→6（branch_cd=端末管轄、stock_type=1）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "支店在庫マスタなし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「支店入庫処理」",
+        "STORE-S・HBS なし"
+       ],
+       "expected": [
+        "BRA-05",
+        "「支店在庫マスタに登録がありません。型番と支店に紐づくマスタの登録をお願いします。」（ロールバック）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない serial_id で view_stock",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "/manage/branch/device/store/view_stock/999999",
+        "―"
+       ],
+       "expected": [
+        "BRA-05",
+        "「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "支店在庫の初期不良返品",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「初期不良返品」→端末選択→実行",
+        "STORE-S（9）・min_quantity=1"
+       ],
+       "expected": [
+        "完了ダイアログ→BRA-05「初期不良返品しました。」",
+        "status=8、補充依頼1件 INSERT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "service_status_cd=2。Common_Stock::force_create_branch_stock で支店在庫補充の shipping_requests を1件 INSERT。変更ログ",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "初期不良返品：ステータスが9でない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「初期不良返品」",
+        "表示後に STORE-S を11に変更"
+       ],
+       "expected": [
+        "エラー→BRA-05",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他支店端末の初期不良返品",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "return/{支店Bの status9 端末}",
+        "device_branch=支店B"
+       ],
+       "expected": [
+        "返品できる（現行）",
+        "status=8"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "return/return_save で自管轄チェックを行っていない",
+       "known": "04要確認-10",
+       "should": "自管轄以外の端末は初期不良返品できないこと（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-08-return-list",
+     "title": "BRA-08 端末回収状況登録：一覧・バーコード読取・D1～D3",
+     "screens": [
+      "BRA-08",
+      "BRA-08-D1",
+      "BRA-08-D2",
+      "BRA-08-D3"
+     ],
+     "purpose": "回収依頼(20)/差し戻し(21)端末の一覧表示、1ヶ月経過警告、読取時の判定・エラー、各ダイアログを確認する。",
+     "precondition": "ROLE-BRA でログインし /manage/branch/device/return を表示。DATA-BRA-RET-* を用意。",
+     "conditionColumns": [
+      "操作・読取値",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "開く",
+        "RET-20/21/LATE"
+       ],
+       "expected": [
+        "一覧は出ない。「一覧を表示」ボタン",
+        "1ヶ月経過警告を表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "「回収依頼日から1ヶ月以上経過している案件があります。早期回収または、回収不可報告をあげてください。」",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "一覧を表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「一覧を表示」",
+        "RET-20/21/LATE"
+       ],
+       "expected": [
+        "3件表示、30日超を先頭に is-error・警告アイコン",
+        "回収依頼日昇順"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "show=1 は JS で URL から除去。対象 device_status_cd IN(20,21)",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "列見出しソート",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「型番」見出しを押す",
+        "RET-20/21"
+       ],
+       "expected": [
+        "型番順に並び替わる",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他支店の回収依頼も表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「一覧を表示」",
+        "DATA-BRA-RET-OTHERBR（支店B）"
+       ],
+       "expected": [
+        "表示される（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄（支店A）の回収依頼だけが表示されること（要確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "差し戻しコメント",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "RET-21 の「差し戻し」リンク",
+        "comments type=3 2件"
+       ],
+       "expected": [
+        "コメントを作成日時降順で表示",
+        "閉じる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリックで回収方法選択",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "RET-20 の行をクリック",
+        "―"
+       ],
+       "expected": [
+        "回収方法選択ダイアログ（D1）",
+        "「バーコード読み取り」「回収不可報告へすすむ」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "D1 から回収不可報告へ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "D1「回収不可報告へすすむ」",
+        "RET-20"
+       ],
+       "expected": [
+        "回収不可報告（BRA-10）",
+        "完了ダイアログ経由"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "読取で回収報告へ",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「バーコード読み取り」で RET-20 を読取",
+        "status=20"
+       ],
+       "expected": [
+        "回収報告（BRA-09）",
+        "完了ダイアログ経由"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "キャンセル返却予定の端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "RET-18 を読取",
+        "status=18"
+       ],
+       "expected": [
+        "キャンセル返却案内（D3）",
+        "返却先センター名・住所"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "顧客出庫の端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DATA-BRA-RET-19 を読取",
+        "status=19"
+       ],
+       "expected": [
+        "―",
+        "「該当の端末は顧客出庫ステータスのため、回収登録できません。再度バーコード（端末シリアル）をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "対象外ステータス",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "DEV-STK を読取",
+        "status=11"
+       ],
+       "expected": [
+        "―",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "行選択と違う端末を読取",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "RET-20 の D1 から RET-21 を読取",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "「読み込んだシリアルNo.では照合が取れませんでした。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "未登録シリアル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「NOTEXIST001」",
+        "―"
+       ],
+       "expected": [
+        "エラーダイアログ",
+        "「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-09-10-report",
+     "title": "BRA-09/10 回収報告・回収不可報告",
+     "screens": [
+      "BRA-09",
+      "BRA-10"
+     ],
+     "purpose": "回収報告（22:回収済）・回収不可報告（23:回収不可）の入力チェック、DB 更新、PPPoE 連携失敗時のロールバックを確認する。",
+     "precondition": "ROLE-BRA でログイン。BRA-08 から DATA-BRA-RET-20 の回収報告／回収不可報告を開く。",
+     "conditionColumns": [
+      "入力値",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "回収報告の表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示",
+        "RET-20"
+       ],
+       "expected": [
+        "顧客CD・企業名・店舗名・型番・NeOS品目CD・シリアル・回収依頼日・状態",
+        "「回収済み」非活性"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "氏名入力で活性",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=「山田」",
+        "RET-20"
+       ],
+       "expected": [
+        "「回収済み」活性",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "回収報告の登録",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=「山田」、comment=「箱あり」",
+        "RET-20"
+       ],
+       "expected": [
+        "BRA-08「回収済み報告が完了しました。」",
+        "status=22、comments(type=1) INSERT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "service_status_cd=2、device_branch=依頼先管轄。検証機紐づけがあれば mirroring_devices_mapping DELETE。Arteria PPPoE 確認・削除",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "差し戻し端末の回収報告",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=「山田」",
+        "RET-21"
+       ],
+       "expected": [
+        "回収済み報告が完了",
+        "status=22"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "氏名未入力",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name 空（POST）",
+        "RET-20"
+       ],
+       "expected": [
+        "同画面再表示（入力保持）",
+        "回収報告氏名の必須エラー"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "Fuel Validation required",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "氏名41文字",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=41文字",
+        "RET-20"
+       ],
+       "expected": [
+        "同画面再表示（入力保持）",
+        "回収報告氏名の桁数エラー"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "max_length 40。40文字は登録可",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "申し送り事項1001文字",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "comment=1001文字",
+        "RET-20"
+       ],
+       "expected": [
+        "同画面再表示（入力保持）",
+        "申し送り事項の桁数エラー"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "PPPoE 削除API 失敗",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=「山田」",
+        "Arteria API がエラー"
+       ],
+       "expected": [
+        "―",
+        "「システムエラーを検知したため、処理を中断しました。」（ロールバック）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "対象依頼なし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "report/{id} 表示中に端末を22へ変更し登録",
+        "―"
+       ],
+       "expected": [
+        "―",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "回収不可報告の表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "表示",
+        "RET-20（過去の回収不可コメントあり）"
+       ],
+       "expected": [
+        "過去コメント(type=2)を降順表示",
+        "回収不可理由欄"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "回収不可報告の登録",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=「山田」、comment=「閉店」",
+        "RET-20"
+       ],
+       "expected": [
+        "BRA-08「回収不可報告が完了しました。」",
+        "status=23、lost_report_date、comments(type=2)"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "回収不可理由未入力",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "name=「山田」、comment 空",
+        "RET-20"
+       ],
+       "expected": [
+        "同画面再表示（入力保持）",
+        "回収不可理由の必須エラー"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-11-list",
+     "title": "BRA-11 端末管理リスト：検索・一覧",
+     "screens": [
+      "BRA-11"
+     ],
+     "purpose": "端末の検索条件・一覧列・ボタン表示条件を確認する（検索条件・列は CEN 端末管理リストと同等。日時更新列なし）。",
+     "precondition": "ROLE-BRA でログイン。DATA-BRA-LIST-11 / 14 / 10 / 12 / 17 / 19 / 1、DATA-BRA-LIST-OTHERBR を用意。",
+     "conditionColumns": [
+      "検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "ボタン"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初回表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "パラメータなし",
+        "LIST-*"
+       ],
+       "expected": [
+        "「検索してください」表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "管轄で絞り込み",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "bcs[]=支店A",
+        "LIST-* / LIST-OTHERBR"
+       ],
+       "expected": [
+        "支店Aの端末だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "管轄検索は branch2 部品",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "管轄未指定で全国表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "型番のみ指定",
+        "LIST-OTHERBR（支店B）"
+       ],
+       "expected": [
+        "支店Bの端末も表示（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄の端末だけが表示されること（要確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "端末ステータスで絞り込み",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "des[]=11,14",
+        "LIST-*"
+       ],
+       "expected": [
+        "status 11・14 の端末だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "状態・契約・顧客CD・企業名",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "den=1、cts[]=1、ccd、cpn",
+        "LIST-*"
+       ],
+       "expected": [
+        "全条件に合う端末だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアルNo.（ダミー除外）",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "sc=「NOSERIAL」",
+        "ダミーシリアル端末"
+       ],
+       "expected": [
+        "ダミーは表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "一覧列",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "検索",
+        "LIST-*"
+       ],
+       "expected": [
+        "管轄/型番/シリアルNo./顧客CD/企業名店舗名/状態/端末ステータス/契約ステータス/操作",
+        "「日時更新」列なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良ボタンの表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "検索",
+        "LIST-11/14/1"
+       ],
+       "expected": [
+        "11・14 に「初期不良」、1 にはなし",
+        "branch は 11/14/15/16"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "修理依頼ボタンの表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "検索",
+        "LIST-10/12/17/19"
+       ],
+       "expected": [
+        "4件とも「修理依頼」表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ソート",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「型番」見出し",
+        "LIST-*"
+       ],
+       "expected": [
+        "型番順に並び替わる",
+        "初期は型番昇順"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-11-failure-repair",
+     "title": "BRA-11-D1/D2 端末管理リスト：初期不良登録・修理依頼",
+     "screens": [
+      "BRA-11-D1",
+      "BRA-11-D2"
+     ],
+     "purpose": "初期不良（11/14/15/16→8）と修理依頼（交換依頼の生成＋20:回収依頼）の DB 更新とエラーを確認する。",
+     "precondition": "ROLE-BRA でログインし BRA-11 で検索済み。DATA-BRA-BR-REPL、DATA-BRA-HBS を用意。",
+     "conditionColumns": [
+      "操作",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "DB・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "初期不良：支店在庫入庫(11)",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「初期不良」→OK",
+        "LIST-11・min_quantity=1"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=8、補充依頼 INSERT"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "service_status_cd=2。PPPoE 削除API",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：デジ化引き当て済(14)",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「初期不良」→OK",
+        "LIST-14（キッティング未完了依頼あり）"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "status=8、依頼から serial_cd 等を外す"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serial_cd/complete_allocation_date/complete_kitting_date=NULL、種別≠2 なら model_number も NULL。管轄はセンターへ移さない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "初期不良：キャンセル",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「初期不良」→キャンセル",
+        "LIST-11"
+       ],
+       "expected": [
+        "ダイアログを閉じる",
+        "DB 変更なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "初期不良：対象外ステータス",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "failure/{LIST-1 の id} を直接開く",
+        "status=1"
+       ],
+       "expected": [
+        "完了ダイアログ→一覧",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "修理依頼の実行",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「修理依頼」→OK",
+        "LIST-17・置換マスタあり"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "交換依頼 INSERT、端末 status=20"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "shipping_requests: request_type_cd=5、request_branch=置換マスタの branch_cd、construction_date=翌日。serials: collect_request_date、device_branch=置換マスタ管轄",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "修理依頼：直送データあり",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「修理依頼」→OK",
+        "LIST-19・direct_shipments あり"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "direct_shipments の依頼ID更新"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "修理依頼：置換マスタなし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「修理依頼」→OK",
+        "LIST-12・branch_replacements なし"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「管轄支店倉庫置換マスタにUNIS管轄支店CD({unis_branch_cd})が存在しません。データを登録してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "修理依頼：対象外ステータス",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "repair/{LIST-11 の id}",
+        "status=11"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "修理依頼：存在しない端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "repair/999999",
+        "―"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「読み込んだシリアルNo.はシステムに登録されていないため、使用できません。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "修理依頼：契約なし",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「修理依頼」→OK",
+        "LIST-10 の契約を削除"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "修理依頼：センターCD取得不可",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「修理依頼」→OK",
+        "振り分けでセンターCDが取れない"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「システムエラーを検知したため、処理を中断しました。」（ロールバック）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他支店端末の修理依頼",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「修理依頼」→OK",
+        "LIST-OTHERBR（支店B・17）"
+       ],
+       "expected": [
+        "登録できる（現行）",
+        "status=20"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄以外の端末は操作できないこと（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-11-csv",
+     "title": "BRA-11-F1 端末管理リスト：CSVダウンロード",
+     "screens": [
+      "BRA-11-F1"
+     ],
+     "purpose": "serials.csv の出力範囲（選択行・検索条件・自管轄）と列を確認する。",
+     "precondition": "ROLE-BRA でログインし BRA-11 で検索済み。LIST-* / LIST-OTHERBR を用意。",
+     "conditionColumns": [
+      "選択・検索条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "出力ファイル",
+      "内容"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "選択行だけ出力",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "2行選択",
+        "LIST-*"
+       ],
+       "expected": [
+        "serials.csv（SJIS-win）",
+        "選択した2件のみ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "列は CEN 端末管理リストCSVと同等（管理区分〜DL完了日時の15列）",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "選択なし・検索条件で出力",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "選択なし、des[]=11",
+        "LIST-*"
+       ],
+       "expected": [
+        "serials.csv",
+        "条件に合う支店Aの端末"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "他支店端末は出力されない",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "選択なし、型番のみ指定",
+        "LIST-OTHERBR"
+       ],
+       "expected": [
+        "serials.csv",
+        "支店Bの端末は含まれない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "Branch CSV: device_branch_cd=自管轄",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "ダミーシリアル端末",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ダミー端末を含む条件",
+        "NOSERIAL 端末"
+       ],
+       "expected": [
+        "serials.csv",
+        "シリアルNo.列は空"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "件数表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "2行選択",
+        "LIST-*"
+       ],
+       "expected": [
+        "「2件CSVをダウンロードする」",
+        "未選択時は検索件数"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "bra-12-13-shipping",
+     "title": "BRA-12/13 依頼検索・発送状況詳細",
+     "screens": [
+      "BRA-12",
+      "BRA-13",
+      "BRA-13-D1"
+     ],
+     "purpose": "依頼検索の初回表示・検索条件・依頼ステータス表示と、発送状況詳細の表示・エラーを確認する（CEN 依頼検索と同等）。",
+     "precondition": "ROLE-BRA でログイン。DATA-BRA-SHIP（種別1〜5 支店A、種別3 支店B）を用意。",
+     "conditionColumns": [
+      "操作・条件",
+      "データ状態"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・メッセージ"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "ヘッダーから開く",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "ヘッダー「発送状況確認」",
+        "DATA-BRA-SHIP"
+       ],
+       "expected": [
+        "「検索してください」表示",
+        "?bcs[]=支店A 付き"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "bcs のみの場合は検索しない",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全種別で検索",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "種別5つ ON・bcs[]=支店A",
+        "DATA-BRA-SHIP"
+       ],
+       "expected": [
+        "支店Aの5件表示",
+        "依頼日降順"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "出荷先管轄を外して検索",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "bcs[] 未選択・依頼日指定",
+        "DATA-BRA-SHIP"
+       ],
+       "expected": [
+        "支店Bの依頼も表示（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄の依頼だけが表示されること（要確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "依頼ステータスで絞り込み",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "rsn[]=7（支店作業中）",
+        "DATA-BRA-SHIP"
+       ],
+       "expected": [
+        "種別3/4/5の引き当て済み・未出庫だけ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼ステータスの表示",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "検索",
+        "種別3 引き当て済み・顧客出庫なし"
+       ],
+       "expected": [
+        "「支店作業中」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "シリアルNo.で検索",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "sc=シリアルの一部",
+        "DATA-BRA-SHIP"
+       ],
+       "expected": [
+        "該当依頼だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "依頼ID 形式不正",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "rid=「X1」",
+        "―"
+       ],
+       "expected": [
+        "0件表示",
+        "メッセージなし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "検索条件クリアで開く",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「検索条件クリア」（GETなし）",
+        "―"
+       ],
+       "expected": [
+        "center のビューが描画される（現行・要確認）",
+        "フォーム送信先 /manage/center/shipping/request（403）"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "04要確認-8",
+       "should": "branch の依頼検索画面が未検索状態で表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "発送状況詳細",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "一覧の行をクリック",
+        "種別3 キッティング済み"
+       ],
+       "expected": [
+        "種別・出庫先・依頼ID・型番・シリアル・キッティング場所・各完了日",
+        "/manage/branch/shipping/request/view/{id}"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "依頼検索に戻る",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "「依頼検索に戻る」",
+        "―"
+       ],
+       "expected": [
+        "検索条件を保持して一覧",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "存在しない依頼ID",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "view/999999",
+        "―"
+       ],
+       "expected": [
+        "依頼検索へ",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "種別切替ボタン",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "詳細を表示",
+        "種別1 未引き当て"
+       ],
+       "expected": [
+        "緊急新設/通常新設の切替ボタンは表示されない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ボタンはビューでコメントアウト",
+       "known": "Z-14",
+       "should": "廃止機能ならコード・ルートを削除（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  },
+  {
+   "id": "local-diff",
+   "title": "CP・保守委託・外部委託（branch との差分）",
+   "lead": "cp・hoshu・external は branch を継承しているため、branch との差分（機能の有無、絞り込み範囲、hoshu のキーボード入力・確認チェック、external のデジ化限定）だけを確認する。",
+   "concepts": [
+    {
+     "id": "loc-01-matrix",
+     "title": "機能×グループ 有無（2. マトリクス）",
+     "screens": [
+      "CPK-*",
+      "HSU-*",
+      "EXT-*"
+     ],
+     "purpose": "機能の有無と URL 直打ち時の動きを確認する。cp に発送状況確認がない、external に回収がない。",
+     "precondition": "各ロールでログイン済み。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "異常",
+       "name": "cp：発送状況確認（依頼検索）",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "/manage/cp/shipping/request"
+       ],
+       "expected": [
+        "403 画面またはルートなし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "cp ロールに Cp_Shipping_Request 権限なし・コントローラなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "cp：branch の依頼検索を開く",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "/manage/branch/shipping/request"
+       ],
+       "expected": [
+        "403 画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "external：端末回収状況登録",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "/manage/external/device/return"
+       ],
+       "expected": [
+        "403 画面またはルートなし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "External_Device_Return の権限・コントローラなし",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "external：branch の回収画面",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "/manage/branch/device/return"
+       ],
+       "expected": [
+        "403 画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：入庫・回収・端末管理を開ける",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "/manage/cp/device/store・return・list"
+       ],
+       "expected": [
+        "各画面を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：全機能を開ける",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "request・device/store・return・list・shipping/request"
+       ],
+       "expected": [
+        "各画面を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：依頼リスト・入庫・端末管理・依頼検索",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "request・device/store・device/list・shipping/request"
+       ],
+       "expected": [
+        "各画面を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "他グループの画面",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "/manage/branch/request"
+       ],
+       "expected": [
+        "403 画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "branch が cp 画面",
+       "role": "ROLE-BRA",
+       "conditions": [
+        "branch",
+        "/manage/cp/request"
+       ],
+       "expected": [
+        "403 画面",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "発送状況詳細の種別切替（hoshu/external）",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "発送状況詳細を表示"
+       ],
+       "expected": [
+        "切替ボタンなし（ダイアログビューもない）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-14",
+       "should": "廃止機能なら削除（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-02-menu",
+     "title": "ログイン後遷移・ヘッダーメニュー・タブ（0.3）",
+     "screens": [
+      "CPK-01",
+      "HSU-11",
+      "EXT-01"
+     ],
+     "purpose": "グループごとのログイン後遷移先、ヘッダーメニュー、画面内タブの違いを確認する。",
+     "precondition": "各ロールのユーザーを用意。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "cp ログイン後",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "ログイン"
+       ],
+       "expected": [
+        "CP検証機リスト（MIR-01）",
+        "/manage/cp/mirroring/device"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu ログイン後",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "ログイン"
+       ],
+       "expected": [
+        "端末管理リスト（HSU-11）",
+        "/manage/hoshu/device/list"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external ログイン後",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "ログイン"
+       ],
+       "expected": [
+        "依頼リスト（EXT-01）",
+        "/manage/external/request"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp ヘッダー",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "ヘッダー"
+       ],
+       "expected": [
+        "キッティング／在庫管理／CP検証機管理",
+        "発送状況確認なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu ヘッダー：発送状況確認",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "「発送状況確認」"
+       ],
+       "expected": [
+        "/manage/hoshu/shipping/request（bcs 指定なし）",
+        "未検索表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external ヘッダー：発送状況確認",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "「発送状況確認」"
+       ],
+       "expected": [
+        "/manage/external/shipping/request",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external の device タブ",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "支店入庫処理画面のタブ"
+       ],
+       "expected": [
+        "支店入庫処理／端末管理リスト",
+        "端末回収状況登録タブなし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp の request タブ",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "各画面のタブ"
+       ],
+       "expected": [
+        "依頼検索・発送状況詳細タブなし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-51-request",
+     "title": "5.1 依頼リストの差分",
+     "screens": [
+      "CPK-01",
+      "HSU-01",
+      "EXT-01"
+     ],
+     "purpose": "cp は検証機に絞られ日付ラベルが「工事予定日」、external はデジ化のみ、hoshu は branch と同じであることを確認する。",
+     "precondition": "各ロールでログイン。支店A宛ての種別3/4/5 依頼（検証機登録端末の契約と未登録の契約）を用意（DATA-LOC-REQ-*）。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "cp：検証機の契約だけ",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "DATA-LOC-REQ-MIR / REQ-NOMIR"
+       ],
+       "expected": [
+        "REQ-MIR だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.contract_cd INNER JOIN mirroring_devices",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：日付ラベルと列",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "検索"
+       ],
+       "expected": [
+        "検索・列とも「工事予定日」",
+        "検索は delivery_request_date"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：工事予定日の値",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "construction_date 設定済み"
+       ],
+       "expected": [
+        "工事予定日列が空表示（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-13",
+       "should": "construction_date が表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "external：種別チェックはデジ化のみ",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "検索フォーム"
+       ],
+       "expected": [
+        "種別はデジ化だけ（交換・緊急新設なし）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：デジ化だけ表示",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "DATA-LOC-REQ-D/E/C"
+       ],
+       "expected": [
+        "REQ-D だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "request_type_cd IN('3')",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：日付ラベル・工事予定日",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "construction_date 設定済み"
+       ],
+       "expected": [
+        "「工事予定日」、値は空表示（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-13",
+       "should": "construction_date が表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：branch と同じ",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "DATA-LOC-REQ-D/E/C"
+       ],
+       "expected": [
+        "3件表示、ラベル「着荷希望日」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "行クリックの遷移先",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "cp/hoshu/external",
+        "行クリック"
+       ],
+       "expected": [
+        "各グループの引き当て画面",
+        "/manage/<g>/assign/serial/{id}"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-52-assign",
+     "title": "5.2 引き当ての差分（hoshu の確認チェック）",
+     "screens": [
+      "HSU-02",
+      "HSU-02-D1",
+      "CPK-02",
+      "EXT-02"
+     ],
+     "purpose": "hoshu の引き当て時の確認チェック2種、キーボード入力前提を確認する。cp/external の表示差分と URL 直打ちも確認する。",
+     "precondition": "各ロールでログインし、支店A宛ての依頼の引き当て画面を開く。DATA-LOC-DEV-STK（支店A・status11）。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "hoshu：引き当てボタン初期非活性",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "全明細仮登録済み"
+       ],
+       "expected": [
+        "確認チェック「シリアルを画像またはテキストで取得しましたか」表示、引き当て非活性",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：確認チェック ON で活性",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "確認チェック ON"
+       ],
+       "expected": [
+        "引き当てボタン活性",
+        "押すと引き当て確定"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "js-hoshu-serial-check",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：ダイアログがキーボード入力モード",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "「シリアル登録」"
+       ],
+       "expected": [
+        "最初からキーボード入力欄を表示",
+        "バーコード案内は非表示"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "hoshu：電話照合チェックなしで Enter",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "シリアル入力・チェック OFF"
+       ],
+       "expected": [
+        "「確認チェックを入れてから Enter を押してください」",
+        "送信しない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：電話照合チェックありで Enter",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "「シリアルを電話で読み上げ、…確認しましたか」ON"
+       ],
+       "expected": [
+        "送信され仮登録",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp/external：工事予定日表示",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp・external",
+        "引き当て画面"
+       ],
+       "expected": [
+        "「工事予定日」、値は空（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-13",
+       "should": "construction_date が表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "external：デジ化のみ確定",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "種別3を確定"
+       ],
+       "expected": [
+        "引き当て完了",
+        "端末 status=14"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：検証機以外の依頼を URL 直打ち",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "検証機でない契約の依頼 id"
+       ],
+       "expected": [
+        "引き当て画面を表示・処理できる（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "検証機以外の依頼は処理できないこと（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-53-kitting",
+     "title": "5.3 キッティングの差分",
+     "screens": [
+      "CPK-03",
+      "HSU-03",
+      "EXT-03",
+      "EXT-04"
+     ],
+     "purpose": "hoshu にバーコード検索ボタンがない、cp は検証機のみ、external はデジ化/キャンセルのみであることを確認する。",
+     "precondition": "各ロールでログイン。支店A宛ての引き当て済み依頼（14/15/16、検証機/非検証機）DATA-LOC-KIT-*。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "hoshu：バーコード検索なし",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "キッティング一覧"
+       ],
+       "expected": [
+        "「バーコード検索」ボタンなし",
+        "行選択のみ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：行選択はキーボード入力",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "行クリック"
+       ],
+       "expected": [
+        "キーボード入力モードのダイアログ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：検証機だけ表示",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "DATA-LOC-KIT-MIR / KIT-NOMIR"
+       ],
+       "expected": [
+        "KIT-MIR だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：工事予定日",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "一覧・詳細"
+       ],
+       "expected": [
+        "「工事予定日」、値は空（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-13",
+       "should": "construction_date が表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "external：種別チェック",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "検索フォーム"
+       ],
+       "expected": [
+        "デジ化・キャンセルのみ",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：デジ化未チェックで検索",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "tpd=OFF、KIT-C(15)/KIT-E(16)"
+       ],
+       "expected": [
+        "交換・緊急新設の行が表示される（現行・要確認）",
+        "選択すると処理不可"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "Presenter の既定 $tp が branch と同じ",
+       "known": "04要確認-5",
+       "should": "デジ化（14）とキャンセルの行だけが表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "external：デジ化の完了",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "KIT-D 全チェック ON"
+       ],
+       "expected": [
+        "「キッティングが完了しました。」",
+        "端末 status=17"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "全グループ：SIM紐づけ変更チェックなし",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "cp/hoshu/external",
+        "SIM 紐づけ変更あり"
+       ],
+       "expected": [
+        "モーダルは出ない",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-54-devlist",
+     "title": "5.4 端末管理リストの差分",
+     "screens": [
+      "CPK-11",
+      "HSU-11",
+      "EXT-11"
+     ],
+     "purpose": "検索範囲（cp=検証機、external=自管轄）、初期不良ボタンの不整合、CSV 範囲、hoshu の修理依頼の送付先を確認する。",
+     "precondition": "各ロールでログイン。支店A/支店Bの端末（検証機/非検証機、各ステータス）DATA-LOC-DEV-*、DATA-LOC-BR-REPL（置換先＝支店C）。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "cp：検証機だけ・全管轄",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "LOC-DEV-MIR-A / MIR-B / NOMIR-A"
+       ],
+       "expected": [
+        "MIR-A・MIR-B を表示",
+        "非検証機は出ない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄の検証機だけが表示されること（要確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "external：管轄検索なし・自管轄のみ",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "支店A/支店Bの端末"
+       ],
+       "expected": [
+        "管轄検索欄なし、支店Aだけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "serials.device_branch_cd=自管轄",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：全国表示",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "支店Bの端末"
+       ],
+       "expected": [
+        "表示される（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄の端末だけが表示されること（要確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "cp：初期不良ボタンが status1 にも出る",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "status=1 の検証機端末"
+       ],
+       "expected": [
+        "「初期不良」ボタン表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "ビューは center と同じ 11 種",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "バリデーション",
+       "name": "cp：status1 で初期不良を押す",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "status=1"
+       ],
+       "expected": [
+        "完了ダイアログ",
+        "「端末情報が更新されました。お手数ですが、最初からやり直してください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "04要確認-3",
+       "should": "ボタンの表示条件とコントローラの許可（11/14/15/16）が一致すること"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "external：status9 で初期不良を押す",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "status=9 の支店A端末"
+       ],
+       "expected": [
+        "ボタン表示・押すと 「端末情報が更新されました。お手数ですが、最初からやり直してください。」",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "04要確認-3",
+       "should": "ボタンの表示条件とコントローラの許可が一致すること"
+      },
+      {
+       "kind": "正常",
+       "name": "cp：CSV の出力範囲",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "選択なし・検索条件で CSV"
+       ],
+       "expected": [
+        "支店Aの端末（非検証機も含む）を出力（現行）",
+        "画面一覧と範囲が異なる"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "04要確認-4",
+       "should": "画面一覧と同じ範囲（検証機）で出力されること"
+      },
+      {
+       "kind": "正常",
+       "name": "external：CSV",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "選択なしで CSV"
+       ],
+       "expected": [
+        "支店Aの端末だけ出力",
+        "External CSV クラス"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：修理依頼の送付先",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "status=17 の端末で修理依頼"
+       ],
+       "expected": [
+        "一覧へ戻る",
+        "request_branch=支店A（自管轄）、端末の管轄は変更しない、status=20"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "branch は置換マスタの管轄（支店C）を設定する",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "hoshu：管轄未設定で修理依頼",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu（jurisdiction_branch_cd 未設定）",
+        "修理依頼"
+       ],
+       "expected": [
+        "エラー（例外）",
+        "依頼は作成されない"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "jurisdiction 未設定は例外→SYSTEM_ERROR_MSG 相当（要確認）",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-55-return",
+     "title": "5.5 端末回収状況登録の差分",
+     "screens": [
+      "CPK-08",
+      "HSU-08",
+      "HSU-09"
+     ],
+     "purpose": "cp は検証機のみ・ボタン配置差、hoshu は「シリアル読み取り」表記・キーボード入力であることを確認する。external は回収なし（loc-01 で確認）。",
+     "precondition": "ROLE-CP / ROLE-HSU でログイン。回収依頼(20)の端末（検証機/非検証機）DATA-LOC-RET-*。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "cp：検証機の回収依頼だけ",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "LOC-RET-MIR / RET-NOMIR"
+       ],
+       "expected": [
+        "RET-MIR だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "cp：「一覧を表示」の配置",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "画面表示"
+       ],
+       "expected": [
+        "説明文の直下にボタン",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：読取ボタン表記",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "画面表示"
+       ],
+       "expected": [
+        "「シリアル読み取り」",
+        "押すとキーボード入力モード"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：回収報告",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "シリアル入力→報告登録"
+       ],
+       "expected": [
+        "「回収済み報告が完了しました。」",
+        "status=22"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：他支店の回収依頼も表示",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "支店B の回収依頼"
+       ],
+       "expected": [
+        "表示される（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄だけが表示されること（要確認）"
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-56-store",
+     "title": "5.6 支店入庫処理の差分",
+     "screens": [
+      "HSU-05",
+      "HSU-06",
+      "EXT-05-D1",
+      "EXT-05-D2"
+     ],
+     "purpose": "hoshu の表記・キーボード入力、external の返却案内文言とスキャン状況画像の不具合候補を確認する。",
+     "precondition": "ROLE-HSU / ROLE-EXT でログイン。支店Aの出庫端末（9/10/18）DATA-LOC-STORE-*。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "hoshu：説明文とボタン",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "画面表示"
+       ],
+       "expected": [
+        "「…シリアルを入力してください。」「シリアル読み取り」",
+        "キーボード入力モード"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：戻るリンク",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "入庫詳細（通常新設）"
+       ],
+       "expected": [
+        "「シリアル読み取りに戻る」",
+        "HSU-05 へ"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：キャンセル返却案内",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "status=18 の端末を読取"
+       ],
+       "expected": [
+        "「この端末に紐づく契約がすでにキャンセルされています。速やかにセンターに端末を返却してください。」",
+        "返却先・住所の表示なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：スキャン状況の端末画像",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "通常新設セットの1台目を読取"
+       ],
+       "expected": [
+        "画像が出ない／Notice の可能性（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "04要確認-6",
+       "should": "branch と同様に端末画像が表示されること"
+      },
+      {
+       "kind": "正常",
+       "name": "external：入庫実行",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "status=9 の端末"
+       ],
+       "expected": [
+        "「支店入庫処理が完了しました。」",
+        "status=11"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "external：forward を直接呼ぶ",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "/manage/external/device/store/forward"
+       ],
+       "expected": [
+        "/manage/branch/device/return/report/ へ遷移→403（要確認）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "04要確認-7",
+       "should": "external 用の遷移先が設定されること（または未使用なら削除）"
+      },
+      {
+       "kind": "バリデーション",
+       "name": "cp：他支店の端末",
+       "role": "ROLE-CP",
+       "conditions": [
+        "cp",
+        "支店Bの status10 端末"
+       ],
+       "expected": [
+        "―",
+        "「端末管理管轄が異なります。再度、端末をご確認ください。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "検証機絞り込みはない（自管轄チェックのみ）",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    },
+    {
+     "id": "loc-57-shipping",
+     "title": "5.7 依頼検索の差分",
+     "screens": [
+      "HSU-12",
+      "EXT-12",
+      "EXT-13"
+     ],
+     "purpose": "hoshu は bcs 指定なしで独自ビュー、external は支店在庫・デジ化のみ・自管轄強制であることを確認する。",
+     "precondition": "ROLE-HSU / ROLE-EXT でログイン。支店A/支店B の種別1〜5 依頼 DATA-LOC-SHIP。",
+     "conditionColumns": [
+      "グループ",
+      "操作・データ"
+     ],
+     "expectColumns": [
+      "画面の表示",
+      "遷移・DB"
+     ],
+     "cases": [
+      {
+       "kind": "正常",
+       "name": "hoshu：初回表示",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "ヘッダーから開く"
+       ],
+       "expected": [
+        "hoshu ビューで「検索してください」",
+        "bcs 指定なし"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "hoshu：管轄なしで検索",
+       "role": "ROLE-HSU",
+       "conditions": [
+        "hoshu",
+        "依頼日のみ指定"
+       ],
+       "expected": [
+        "支店Bの依頼も表示（現行）",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "Z-5",
+       "should": "自管轄の依頼だけが表示されること（要確認）"
+      },
+      {
+       "kind": "正常",
+       "name": "external：種別チェック",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "検索フォーム"
+       ],
+       "expected": [
+        "支店在庫・デジ化のみ、出荷先管轄検索なし",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：自管轄・種別2,3だけ",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "DATA-LOC-SHIP で検索"
+       ],
+       "expected": [
+        "支店Aの種別2・3だけ表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "request_branch_cd=自管轄、request_type_cd IN(2,3)",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "異常",
+       "name": "external：他支店の詳細を直打ち",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "view/{支店Bの依頼id}"
+       ],
+       "expected": [
+        "依頼検索へ",
+        "「システムエラーを検知したため、処理を中断しました。」"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      },
+      {
+       "kind": "正常",
+       "name": "external：自管轄の詳細",
+       "role": "ROLE-EXT",
+       "conditions": [
+        "external",
+        "支店A 種別3"
+       ],
+       "expected": [
+        "発送状況詳細を表示",
+        "―"
+       ],
+       "prep": "",
+       "op": "",
+       "detail": "",
+       "known": "",
+       "should": ""
+      }
+     ],
+     "conditionDefs": []
+    }
+   ]
+  }
+ ],
+ "prepData": [
+  {
+   "id": "DATA-BRA-REQ-D",
+   "content": "デジ化の未引き当て依頼",
+   "value": "request_type_cd=3、id=D+11桁、request_branch_cd=支店A、契約 contract_status_cd=1、complete_allocation_date 等すべて NULL、request_display_flg=1、ロックなし、依頼日=昨日、明細1件（シリアル管理対象）"
+  },
+  {
+   "id": "DATA-BRA-REQ-E",
+   "content": "緊急新設の未引き当て依頼",
+   "value": "request_type_cd=4、支店A、契約1、依頼日=2日前"
+  },
+  {
+   "id": "DATA-BRA-REQ-C",
+   "content": "交換の未引き当て依頼",
+   "value": "request_type_cd=5、支店A、契約2（確定）、依頼日=3日前"
+  },
+  {
+   "id": "DATA-BRA-REQ-SET",
+   "content": "デジ化のセット依頼",
+   "value": "request_type_cd=3、支店A、契約1、明細3件（シリアル管理対象2＋同梱機材 uds_non_target_flg='2' 1件）"
+  },
+  {
+   "id": "DATA-BRA-REQ-OTHERBR",
+   "content": "他支店宛ての依頼",
+   "value": "request_type_cd=3、request_branch_cd=支店B、契約1"
+  },
+  {
+   "id": "DATA-BRA-REQ-LOCK",
+   "content": "他ユーザーロック中の依頼",
+   "value": "request_type_cd=3、支店A、lock_user_id=ROLE-OTHER、lock_date=5分前"
+  },
+  {
+   "id": "DATA-BRA-REQ-LOCKOLD",
+   "content": "ロック10分経過の依頼",
+   "value": "request_type_cd=3、支店A、lock_user_id=ROLE-OTHER、lock_date=11分前"
+  },
+  {
+   "id": "DATA-BRA-REQ-CANCEL",
+   "content": "契約キャンセルの依頼",
+   "value": "request_type_cd=3、支店A、契約 contract_status_cd=3、未引き当て"
+  },
+  {
+   "id": "DATA-BRA-REQ-TOMORROW",
+   "content": "依頼日が明日の依頼",
+   "value": "request_type_cd=3、支店A、契約1、request_date=明日"
+  },
+  {
+   "id": "DATA-BRA-DEV-STK",
+   "content": "支店A の支店在庫端末",
+   "value": "serial_cd=BRA-S-0001、model_number=REQ-D の型番、device_status_cd=11、contract_cd=NULL、device_branch_cd=支店A（同型番2台目 BRA-S-0002 も用意）"
+  },
+  {
+   "id": "DATA-BRA-DEV-OTHERMODEL",
+   "content": "型番違いの在庫端末",
+   "value": "device_status_cd=11、契約なし、依頼型番と異なり互換マスタにもない型番"
+  },
+  {
+   "id": "DATA-BRA-DEV-NEW",
+   "content": "新品入庫の端末",
+   "value": "device_status_cd=1、契約なし、依頼と同型番"
+  },
+  {
+   "id": "DATA-BRA-DEV-OTHERBR-STK",
+   "content": "支店B の支店在庫端末",
+   "value": "device_status_cd=11、契約なし、device_branch_cd=支店B、依頼と同型番"
+  },
+  {
+   "id": "DATA-BRA-HBS",
+   "content": "支店在庫マスタ",
+   "value": "head_branch_stocks: branch_cd=支店A、型番=依頼型番、stock_type=1、latest_quantity=5、min_quantity=1"
+  },
+  {
+   "id": "DATA-BRA-KIT-D",
+   "content": "キッティング待ち（デジ化）",
+   "value": "引き当て済み（complete_allocation_date あり）、request_type_cd=3、支店A、端末 status=14、契約1、DL完了、1台セット"
+  },
+  {
+   "id": "DATA-BRA-KIT-C",
+   "content": "キッティング待ち（交換）",
+   "value": "request_type_cd=5、端末 status=15、契約2、DL完了"
+  },
+  {
+   "id": "DATA-BRA-KIT-E",
+   "content": "キッティング待ち（緊急新設）",
+   "value": "request_type_cd=4、端末 status=16、契約1、DL完了"
+  },
+  {
+   "id": "DATA-BRA-KIT-DLNG",
+   "content": "DL未完了",
+   "value": "status=14、契約1、dl_non_target_flg=0、uidm_sync_comple_date=NULL"
+  },
+  {
+   "id": "DATA-BRA-KIT-CANCEL",
+   "content": "契約キャンセルのキッティング待ち",
+   "value": "status=14、契約3、シリアル管理対象外の明細"
+  },
+  {
+   "id": "DATA-BRA-KIT-SET",
+   "content": "キッティング待ちセット",
+   "value": "status=14、契約1、端末2台＋同梱機材1件、DL完了"
+  },
+  {
+   "id": "DATA-BRA-STORE-N",
+   "content": "通常新設出庫（1台）",
+   "value": "端末 status=10、device_branch_cd=支店A、契約1、request_type_cd=1 の依頼、キッティング済み（device_check_histories あり）"
+  },
+  {
+   "id": "DATA-BRA-STORE-NSET",
+   "content": "通常新設出庫（セット）",
+   "value": "status=10、支店A、契約1、端末2台＋同梱機材"
+  },
+  {
+   "id": "DATA-BRA-STORE-S",
+   "content": "支店在庫出庫",
+   "value": "status=9、contract_cd=NULL、device_branch_cd=支店A"
+  },
+  {
+   "id": "DATA-BRA-STORE-OTHERBR",
+   "content": "他支店の通常新設出庫",
+   "value": "status=10、device_branch_cd=支店B、契約1"
+  },
+  {
+   "id": "DATA-BRA-STORE-18",
+   "content": "キャンセル返却予定の端末",
+   "value": "status=18、device_branch_cd=支店A、model_numbers.return_center_cd 設定"
+  },
+  {
+   "id": "DATA-BRA-RET-20",
+   "content": "回収依頼",
+   "value": "status=20、collect_request_date=10日前、依頼・契約あり"
+  },
+  {
+   "id": "DATA-BRA-RET-21",
+   "content": "差し戻し",
+   "value": "status=21、comments type=3 を2件"
+  },
+  {
+   "id": "DATA-BRA-RET-LATE",
+   "content": "回収依頼（1ヶ月超）",
+   "value": "status=20、collect_request_date=35日前"
+  },
+  {
+   "id": "DATA-BRA-RET-19",
+   "content": "顧客出庫の端末",
+   "value": "status=19"
+  },
+  {
+   "id": "DATA-BRA-RET-18",
+   "content": "キャンセル返却予定（回収）",
+   "value": "status=18、依頼あり"
+  },
+  {
+   "id": "DATA-BRA-RET-OTHERBR",
+   "content": "支店B の回収依頼",
+   "value": "status=20、device_branch_cd=支店B"
+  },
+  {
+   "id": "DATA-BRA-LIST-*",
+   "content": "端末管理リスト用端末",
+   "value": "支店A の端末を status 1/10/11/12/14/17/19 で各1台（LIST-1、LIST-10 …）。14 は引き当て中の依頼あり"
+  },
+  {
+   "id": "DATA-BRA-LIST-OTHERBR",
+   "content": "支店B の端末",
+   "value": "status=17、device_branch_cd=支店B"
+  },
+  {
+   "id": "DATA-BRA-BR-REPL",
+   "content": "管轄支店倉庫置換マスタ",
+   "value": "branch_replacements: unis_branch_cd=契約.customer_branch_cd、branch_cd=支店A"
+  },
+  {
+   "id": "DATA-BRA-SHIP",
+   "content": "依頼検索用データ",
+   "value": "支店A 宛ての種別1〜5 各1件（進捗が異なる）＋支店B 宛ての種別3 1件"
+  },
+  {
+   "id": "DATA-LOC-REQ-MIR / REQ-NOMIR",
+   "content": "cp 用依頼",
+   "value": "支店A・種別3・契約1。MIR は契約の端末が mirroring_devices に登録、NOMIR は未登録"
+  },
+  {
+   "id": "DATA-LOC-REQ-D/E/C",
+   "content": "差分確認用依頼",
+   "value": "支店A の種別3/4/5 未引き当て依頼各1件、construction_date 設定"
+  },
+  {
+   "id": "DATA-LOC-DEV-STK",
+   "content": "支店A の在庫端末",
+   "value": "status=11、契約なし"
+  },
+  {
+   "id": "DATA-LOC-KIT-*",
+   "content": "差分確認用キッティング待ち",
+   "value": "支店A の status 14/15/16（契約1,2）、検証機登録あり（MIR）・なし（NOMIR）"
+  },
+  {
+   "id": "DATA-LOC-DEV-*",
+   "content": "差分確認用端末",
+   "value": "MIR-A（支店A・検証機）、MIR-B（支店B・検証機）、NOMIR-A（支店A・非検証機）、status 1/9/11/17 を含む"
+  },
+  {
+   "id": "DATA-LOC-BR-REPL",
+   "content": "置換マスタ（hoshu 比較用）",
+   "value": "unis_branch_cd=契約.customer_branch_cd、branch_cd=支店C"
+  },
+  {
+   "id": "DATA-LOC-RET-*",
+   "content": "差分確認用回収依頼",
+   "value": "status=20、検証機（MIR）・非検証機（NOMIR）、支店B 1件"
+  },
+  {
+   "id": "DATA-LOC-STORE-*",
+   "content": "差分確認用入庫端末",
+   "value": "支店A の status 9/10（セット）/18、支店B の status10"
+  },
+  {
+   "id": "DATA-LOC-SHIP",
+   "content": "差分確認用依頼検索データ",
+   "value": "支店A・支店B の種別1〜5 各1件"
+  }
+ ],
+ "openQuestions": [
+  "回収報告・回収不可報告の Fuel Validation エラー文言の原文は画面定義書に記載がなく、ケースでは「必須エラー」「桁数エラー」と書いた。",
+  "hoshu の修理依頼で jurisdiction_branch_cd 未設定時の画面表示（例外後のメッセージ）は定義書に明記がない。",
+  "external の依頼リスト・引き当ては交換・緊急新設を扱わないため、URL 直打ちでの挙動（種別4/5の依頼 id）は定義書から判断できずケース化していない。",
+  "cp/external の発送状況確認（403 か 404 か）は、cp はコントローラ自体がないためルート解決の結果次第（要確認）。"
+ ]
+}
