@@ -47,7 +47,6 @@
 | [0041](0041-reflect-plan-item-change-before-allocation.md) | 引き当て前のプラン変更・品目変更を、出荷依頼に反映できるようにUDSを改修する | Accepted | UDS, NeOS | 引き当て前, プラン変更, 品目変更, 出荷依頼, 明細変更 |
 | [0042](0042-announce-use-detail-change-until-shipping-confirmed.md) | 数量が変わる場合、顧客出庫の確定までは、キャンセル＋新規契約ではなく明細変更で行うよう営業に周知する | Accepted | NeOS, UDS | 営業周知, 明細変更, 顧客出庫, キャンセル, 運用ルール |
 | [0043](0043-handling-quantity-plan-change-after-allocation.md) | 引き当て後に、明細変更で個数やプランが変わったときのUDSでの扱い | Proposed | UDS, NeOS | 引き当て後, 数量変更, アラート, ステータス引き戻し, 返品, カメラ |
-| [0044](0044-usc05-build-out-then-running-change.md) | USC 05型カメラは、残りの部品で作れる分を作り切ってから、新型へ緩やかにランニングチェンジする | Accepted | UDS | USC 05, USC 06, ランニングチェンジ, カメラ, 在庫, 発注 |
 
 ## メタデータ（各ADR冒頭のYAMLフロントマター）
 | 項目 | 内容 |
